@@ -34,6 +34,21 @@ try {
   assert.equal(verification[2].rows.length, 0);
   checks += 4;
 
+  const summary = await db.exec(await readFile(new URL('../verify-foundation-summary.sql', import.meta.url), 'utf8'));
+  assert.equal(summary[0].rows.length, 6);
+  assert.ok(summary[0].rows.every((row) => row.result === 'PASS'));
+  checks += 2;
+
+  const developmentSetup = await readFile(new URL('../setup-development-tenant.sql', import.meta.url), 'utf8');
+  const firstSetup = await db.exec(developmentSetup);
+  const developmentTenant = firstSetup.at(-1).rows[0];
+  assert.equal(developmentTenant.name, 'AutoGuardian Development');
+  assert.equal(developmentTenant.currency_code, 'USD');
+  const repeatSetup = await db.exec(developmentSetup);
+  assert.equal(repeatSetup.at(-1).rows[0].tenant_id, developmentTenant.tenant_id);
+  assert.equal((await db.query("select count(*)::int as n from app.tenants where code='AUTOGUARDIAN_DEV'")).rows[0].n, 1);
+  checks += 4;
+
   await db.exec(`insert into auth.users values ('${id(1)}'), ('${id(2)}');
     insert into app.tenants (id,code,name_en,country_code,currency_code,time_zone) values
     ('${id(11)}','TEST_A','Test A','CD','CDF','Africa/Kinshasa'),

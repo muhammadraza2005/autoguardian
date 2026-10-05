@@ -2,6 +2,10 @@
 
 These scripts create the core database in an existing **development Supabase project**. They do not connect the mobile app, implement a backend, configure an SMS provider, or change a remote project automatically.
 
+After applying the foundation, follow [phone-login setup](PHONE-LOGIN-SETUP.md). Its [single-grid verification query](verify-foundation-summary.sql) makes every database check visible in one result.
+
+The next backend slice is available in [backend/README.md](../backend/README.md). It includes optional [migration 003](migrations/202610050003_identity_api.sql) for the restricted identity API, applied after 001/002. The mobile app remains unconnected.
+
 ## Run in Supabase
 
 1. Open your development project → **SQL Editor** → **New query**. Use the `postgres` database role.
@@ -24,11 +28,11 @@ Keep `app` and `private` out of **Data API → Exposed schemas**. Authentication
 
 ## Access and next implementation step
 
-This stage deliberately has **no runtime allow policies**. The SQL Editor administrator can manage data; the mobile app cannot query these tables. Business roles in `app.roles` are a catalog, not executable permission rules. Public signup will receive only `VERIFIER` through an authenticated backend provisioning endpoint; this script does not auto-create profiles or assign roles on Auth signup because the authority must be resolved and verified first.
+Migrations 001/002 deliberately have **no runtime allow policies**. The SQL Editor administrator can manage data; the mobile app cannot query these tables. Optional migration 003 adds identity-only policies for the restricted backend role, not for mobile clients. Business roles in `app.roles` are a catalog, not executable permission rules. Public signup receives only `VERIFIER` through the backend provisioning endpoint; these scripts do not auto-create profiles or assign roles on Auth signup because the authority must be resolved and verified first.
 
-Next, implement a non-owner, non-BYPASSRLS backend database role, transaction-local verified tenant/actor context, and tested tenant policies together with the first authenticated endpoint. The API must enforce role validity, organization/ownership scope, account state and step-up authentication. Never use a Supabase service key as proof of tenant isolation or place it in the mobile app. Default privileges here apply to objects created by the migration owner; another creator must apply equivalent defaults.
+Migration 003 and the identity API use a non-owner, non-BYPASSRLS database role and transaction-local verified tenant/actor context. Their access is limited to the first identity endpoints. Broader domain policies and organization/ownership scope, session revocation and step-up authentication remain future work. Never use a Supabase service key as proof of tenant isolation or place it in the mobile app. Default privileges here apply to objects created by the migration owner; another creator must apply equivalent defaults.
 
-No authority or privileged user is seeded: we need the authority name/code, country/currency/time zone and an existing Auth user's UUID before preparing the bootstrap SQL. UUIDs from Auth must reference actual accounts, not values copied from the frontend fixtures.
+Migrations do not seed authorities or privileged users. For development, run [setup-development-tenant.sql](setup-development-tenant.sql) to create **AutoGuardian Development** with the SRS's proposed CD/USD/Africa/Kinshasa defaults. It returns the UUID needed by the backend. This does not create any Auth account or assign any role. User profile provisioning requires an actual verified Auth identity, not a UUID copied from frontend fixtures.
 
 ## Rules still pending
 
