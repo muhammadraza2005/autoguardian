@@ -6,6 +6,7 @@ Native setup and launcher: [Android setup](docs/ANDROID-SETUP.md).
 Numbered APK deliveries: [client APK builds](docs/CLIENT-APK-BUILDS.md).
 Supabase database setup: [SQL scripts and execution order](supabase/README.md).
 Identity backend setup: [API endpoints and configuration](backend/README.md).
+Real development email login: [test account and launch instructions](docs/DEVELOPMENT-EMAIL-LOGIN.md).
 
 The Android-first React Native foundation is in [mobile/](mobile/README.md).
 The product screens are ready for Gemini to implement.

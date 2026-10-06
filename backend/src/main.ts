@@ -1,9 +1,14 @@
 import { Pool } from 'pg';
 import { createApp } from './app';
 import { PostgresAccountStore } from './account';
-import { SupabaseIdentityVerifier } from './auth';
+import { SupabaseIdentityVerifier, developmentEmailAllowed } from './auth';
+import { PostgresVehicleStore } from './vehicles';
+import { DevelopmentDraftVerifier, PostgresEnrollmentStore } from './enrollments';
+import { configuredEvidence, PostgresEvidenceStore } from './evidence';
+import { PostgresSealStore } from './seals';
 
 async function main() {
+  const allowDevelopmentEmail = developmentEmailAllowed(process.env);
   const required = ['SUPABASE_URL', 'SUPABASE_PUBLISHABLE_KEY', 'DATABASE_URL', 'AUTOGUARDIAN_TENANT_ID'] as const;
   for (const key of required) if (!process.env[key]?.trim()) throw new Error(`Missing ${key}`);
   const tenant = process.env.AUTOGUARDIAN_TENANT_ID!;
@@ -15,7 +20,11 @@ async function main() {
   const accounts = new PostgresAccountStore(pool, tenant);
   try {
     await accounts.checkConnection();
-    const app = await createApp(new SupabaseIdentityVerifier(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!), accounts);
+    const identity = new SupabaseIdentityVerifier(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, allowDevelopmentEmail);
+    const app = await createApp(identity, accounts, process.env.CORS_ORIGIN,
+      new PostgresVehicleStore(pool, tenant), { auth: new DevelopmentDraftVerifier(identity,allowDevelopmentEmail),
+        store: new PostgresEnrollmentStore(pool,tenant), seals:new PostgresSealStore(pool,tenant),
+        evidence: configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail) });
     const shutdown = app.close.bind(app);
     app.close = async () => { await shutdown(); await pool.end(); };
     await app.listen(port, process.env.HOST ?? '127.0.0.1');

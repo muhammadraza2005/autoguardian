@@ -15,6 +15,8 @@ type ApiOptions = {
   idempotencyKey?: string;
 };
 
+export type AuthenticatedRequest = <T>(path: string, options?: Omit<ApiOptions, 'accessToken'>) => Promise<T>;
+
 // Supply a current verified session token at call time. No token logging or storage here.
 export async function apiRequest<T>(path: string, options: ApiOptions): Promise<T> {
   if (runtime.isDemo) throw new Error('Live API calls are disabled in design preview.');
@@ -23,7 +25,9 @@ export async function apiRequest<T>(path: string, options: ApiOptions): Promise<
     throw new Error('Use a relative API path.');
   }
   const url = new URL(runtime.apiBaseUrl.replace(/\/$/, '') + path);
-  if (url.protocol !== 'https:') throw new Error('The live API must use HTTPS.');
+  const developmentLoopback = runtime.developmentEmailAuth && url.protocol === 'http:'
+    && ['localhost', '127.0.0.1', '10.0.2.2'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !developmentLoopback) throw new Error('The live API must use HTTPS.');
   const response = await fetch(url.toString(), {
     method: options.method ?? 'GET',
     signal: options.signal,
@@ -39,4 +43,3 @@ export async function apiRequest<T>(path: string, options: ApiOptions): Promise<
   if (!response.ok) throw new ApiError(response.status, 'The request could not be completed.');
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
-

@@ -7,10 +7,12 @@ import { canAccessSection } from '@/features/auth/access';
 import { colors } from '@/theme/tokens';
 import { AppHeader } from '@/components/ui/Stitch';
 import { StitchTabBar } from '@/components/ui/StitchTabBar';
+import { runtime } from '@/config/runtime';
 
 export default function ConsumerLayout() {
   const { t } = useTranslation();
   const { session } = useSession();
+  if (!runtime.isDemo) return <Redirect href="/live-account" />;
   if (!canAccessSection(session, 'consumer')) return <Redirect href="/welcome" />;
   return (
     <Tabs tabBar={(props) => <StitchTabBar {...props} />} screenOptions={{

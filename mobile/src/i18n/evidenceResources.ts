@@ -1,0 +1,28 @@
+export const evidenceEn={
+  openUploads:'Upload documents and photos',
+  openHint:'Use “Upload documents and photos” at the top of this screen to add sample files. Save any draft changes first.',
+  saveFirst:'Save this draft, then choose “Upload documents and photos” on its card in the drafts list.',
+  title:'Draft documents and photos',samples:'Development testing: use sample files only. These uploads do not verify identity or approve enrollment.',
+  nativePending:'File uploads are currently available in the development browser. Secure capture on mobile devices is pending.',
+  loading:'Loading attachments…',setupPending:'Uploads are unavailable until private storage is configured.',empty:'No files have been uploaded.',
+  failed:'The file could not be processed. Use a JPG, PNG or PDF up to 2 MB, check the connection and try again.',
+  staged:'Saved for review — not approved',pending:'Upload not confirmed',download:'Download sample for review',
+  saved:'File saved for review.',working:'Processing file…',uncertain:'Upload was not confirmed. Retry the same file, or refresh to check its status.',
+  retry:'Retry the same upload',refresh:'Refresh attachments',
+  kinds:{OWNER_ID:'Owner identity document',REGISTRATION_DOCUMENT:'Vehicle registration document',VEHICLE_PHOTO:'Vehicle photo',SEAL_FITTING_PHOTO:'Seal fitting photo'},
+  add:{OWNER_ID:'Add sample identity document',REGISTRATION_DOCUMENT:'Add sample registration document',VEHICLE_PHOTO:'Add sample vehicle photo',SEAL_FITTING_PHOTO:'Add sample fitting photo'},
+};
+export const evidenceFr={
+  openUploads:'Envoyer des documents et photos',
+  openHint:'Utilisez « Envoyer des documents et photos » en haut de cet écran pour ajouter des fichiers fictifs. Enregistrez d’abord vos modifications.',
+  saveFirst:'Enregistrez ce brouillon, puis choisissez « Envoyer des documents et photos » sur sa fiche dans la liste des brouillons.',
+  title:'Documents et photos du brouillon',samples:'Tests de développement : utilisez uniquement des fichiers fictifs. Ces envois ne vérifient pas l’identité et ne valident pas l’inscription.',
+  nativePending:'L’envoi est disponible dans le navigateur de développement. La capture sécurisée sur mobile reste en attente.',
+  loading:'Chargement des pièces jointes…',setupPending:'L’envoi est indisponible tant que le stockage privé n’est pas configuré.',empty:'Aucun fichier envoyé.',
+  failed:'Impossible de traiter le fichier. Utilisez un JPG, PNG ou PDF de 2 Mo maximum, vérifiez la connexion et réessayez.',
+  staged:'Enregistré pour examen — non approuvé',pending:'Envoi non confirmé',download:'Télécharger le fichier fictif pour examen',
+  saved:'Fichier enregistré pour examen.',working:'Traitement du fichier…',uncertain:'L’envoi n’a pas été confirmé. Réessayez le même fichier ou actualisez son état.',
+  retry:'Réessayer le même envoi',refresh:'Actualiser les pièces jointes',
+  kinds:{OWNER_ID:'Pièce d’identité du propriétaire',REGISTRATION_DOCUMENT:'Document d’immatriculation',VEHICLE_PHOTO:'Photo du véhicule',SEAL_FITTING_PHOTO:'Photo de pose du scellé'},
+  add:{OWNER_ID:'Ajouter une pièce d’identité fictive',REGISTRATION_DOCUMENT:'Ajouter un document d’immatriculation fictif',VEHICLE_PHOTO:'Ajouter une photo de véhicule fictive',SEAL_FITTING_PHOTO:'Ajouter une photo de pose fictive'},
+};

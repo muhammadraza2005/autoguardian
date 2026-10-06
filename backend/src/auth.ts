@@ -7,7 +7,7 @@ export interface IdentityVerifier {
 
 export class SupabaseIdentityVerifier implements IdentityVerifier {
   private readonly client;
-  constructor(url: string, key: string) {
+  constructor(url: string, key: string, private readonly allowDevelopmentEmail = false) {
     this.client = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       global: { fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(10000) }) },
@@ -25,9 +25,17 @@ export class SupabaseIdentityVerifier implements IdentityVerifier {
       throw new ServiceUnavailableException({ code: 'AUTH_UNAVAILABLE' });
     }
     if (error || !data.user) throw new UnauthorizedException({ code: 'INVALID_SESSION' });
-    if (data.user.is_anonymous || !data.user.phone || !data.user.phone_confirmed_at) {
+    const verifiedPhone = Boolean(data.user.phone && data.user.phone_confirmed_at);
+    const developmentEmail = this.allowDevelopmentEmail && Boolean(data.user.email && data.user.email_confirmed_at);
+    if (data.user.is_anonymous || (!verifiedPhone && !developmentEmail)) {
       throw new ForbiddenException({ code: 'VERIFIED_PHONE_REQUIRED' });
     }
     return data.user.id;
   }
+}
+
+export function developmentEmailAllowed(env: NodeJS.ProcessEnv): boolean {
+  if (env.ALLOW_DEV_EMAIL_AUTH !== 'true') return false;
+  if (env.NODE_ENV !== 'development') throw new Error('Development email auth requires NODE_ENV=development.');
+  return true;
 }

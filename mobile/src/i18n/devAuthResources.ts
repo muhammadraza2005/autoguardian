@@ -1,0 +1,28 @@
+export const devAuthEn = {
+  title: 'Development email login',
+  description: 'Use your Supabase test account. Phone OTP remains required for the final app.',
+  email: 'Email', password: 'Password', signIn: 'Sign in', working: 'Signing in…',
+  failed: 'Sign-in failed. Check your email and password, and that the test account is confirmed.',
+  profileError: 'Your profile could not be loaded. Check the backend connection and try again.',
+  loading: 'Loading your account…', retry: 'Try again', signOut: 'Sign out',
+  signOutError: 'Sign-out could not finish. Please try again.',
+  account: 'Connected account', verified: 'Your real account and roles were loaded from the backend.',
+  profileId: 'Profile ID', tenant: 'Development group ID', roles: 'Current roles',
+  noRoles: 'No active roles are assigned.',
+  next: 'Vehicle and other business screens are not connected yet. Sample data remains in the separate design preview.',
+  refresh: 'Refresh profile',
+};
+export const devAuthFr = {
+  title: 'Connexion email de développement',
+  description: 'Utilisez votre compte de test Supabase. Le code SMS reste requis pour l’application finale.',
+  email: 'Email', password: 'Mot de passe', signIn: 'Se connecter', working: 'Connexion…',
+  failed: 'Échec de connexion. Vérifiez vos identifiants et la confirmation du compte de test.',
+  profileError: 'Impossible de charger votre profil. Vérifiez la connexion au serveur puis réessayez.',
+  loading: 'Chargement du compte…', retry: 'Réessayer', signOut: 'Se déconnecter',
+  signOutError: 'La déconnexion a échoué. Veuillez réessayer.',
+  account: 'Compte connecté', verified: 'Votre compte réel et vos rôles ont été chargés depuis le serveur.',
+  profileId: 'Identifiant du profil', tenant: 'Identifiant du groupe de développement', roles: 'Rôles actuels',
+  noRoles: 'Aucun rôle actif attribué.',
+  next: 'Les écrans métier ne sont pas encore connectés. Les données fictives restent dans l’aperçu séparé.',
+  refresh: 'Actualiser le profil',
+};

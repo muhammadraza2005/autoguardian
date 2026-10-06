@@ -7,15 +7,12 @@ import { colors } from '@/theme/tokens';
 
 export function AppHeader({ subtitle, owner = false }: { subtitle?: string; owner?: boolean }) {
   const { t, i18n } = useTranslation();
-  return <SafeAreaView edges={['top']} style={s.headerSafe}>
+  return <SafeAreaView edges={['top', 'left', 'right']} style={s.headerSafe}>
     <View style={s.header}>
-      <View style={s.row}><Ionicons name="shield-outline" size={25} color={colors.accent} /><AppText style={s.brand}>AutoGuardian</AppText></View>
-      <View style={s.row}>
-        {owner && <AppText style={s.owner}>{t('stitch.ownerAccount')}</AppText>}
-        <View style={s.languages}>{['fr', 'en'].map(lang => <Pressable key={lang} accessibilityRole="button" accessibilityLabel={lang === 'en' ? 'English' : 'Français'} onPress={() => void i18n.changeLanguage(lang)} style={[s.language, i18n.language.startsWith(lang) && s.languageActive]}><AppText style={[s.languageText, i18n.language.startsWith(lang) && s.languageTextActive]}>{lang.toUpperCase()}</AppText></Pressable>)}</View>
-      </View>
+      <View style={s.brandRow}><Ionicons name="shield-outline" size={24} color={colors.accent} /><AppText numberOfLines={1} style={s.brand}>AutoGuardian</AppText></View>
+      <View style={s.languages}>{['fr', 'en'].map(lang => <Pressable key={lang} accessibilityRole="button" accessibilityLabel={lang === 'en' ? 'English' : 'Français'} accessibilityState={{ selected: i18n.language.startsWith(lang) }} onPress={() => void i18n.changeLanguage(lang)} style={[s.language, i18n.language.startsWith(lang) && s.languageActive]}><AppText style={[s.languageText, i18n.language.startsWith(lang) && s.languageTextActive]}>{lang.toUpperCase()}</AppText></Pressable>)}</View>
     </View>
-    {subtitle && <View style={s.subheader}><AppText style={s.subheaderText}>{subtitle}</AppText><AppText style={s.subheaderMuted}>{t('stitch.platform')}</AppText></View>}
+    {(subtitle || owner) && <View style={s.subheader}>{subtitle && <AppText style={s.subheaderText}>{subtitle}</AppText>}{owner ? <AppText style={s.owner}>{t('stitch.ownerAccount')}</AppText> : <AppText style={s.subheaderMuted}>{t('stitch.platform')}</AppText>}</View>}
   </SafeAreaView>;
 }
 
@@ -45,11 +42,11 @@ export const stitchStyles = StyleSheet.create({
   badge: {backgroundColor:'#E5EEFF', color:colors.primary, borderWidth:1, borderColor:'#B2C7EE', borderRadius:4, paddingHorizontal:8, paddingVertical:4, fontSize:11, lineHeight:16},
 });
 const s = StyleSheet.create({
-  headerSafe:{backgroundColor:colors.primary}, header:{minHeight:56,paddingHorizontal:16,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:8},
-  row:{flexDirection:'row',alignItems:'center',gap:8}, brand:{fontSize:18,lineHeight:24,fontWeight:'700',color:'white',letterSpacing:-0.5},
-  languages:{flexDirection:'row',borderWidth:1,borderColor:'#405571',borderRadius:5,padding:2}, language:{minHeight:40,minWidth:32,alignItems:'center',justifyContent:'center',borderRadius:3}, languageActive:{backgroundColor:colors.accent}, languageText:{color:'#BCC8D8',fontSize:12,fontWeight:'600'}, languageTextActive:{color:colors.primary},
-  owner:{fontSize:10,lineHeight:14,color:'white',maxWidth:66,backgroundColor:'#203F65',padding:4,borderRadius:3},
-  subheader:{backgroundColor:'#001632',paddingHorizontal:16,paddingVertical:7,flexDirection:'row',justifyContent:'space-between',gap:8}, subheaderText:{color:'white',fontSize:11,lineHeight:16,flexShrink:1}, subheaderMuted:{color:'#A3B1C5',fontSize:10,lineHeight:16,flexShrink:1,textAlign:'right'},
+  headerSafe:{backgroundColor:colors.primary,width:'100%',flexShrink:0}, header:{minHeight:64,paddingHorizontal:16,paddingVertical:4,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:12},
+  brandRow:{flex:1,minWidth:0,flexDirection:'row',alignItems:'center',gap:8}, brand:{flexShrink:1,fontSize:18,lineHeight:24,fontWeight:'700',color:'white',letterSpacing:-0.5},
+  languages:{flexShrink:0,flexDirection:'row',borderWidth:1,borderColor:'#405571',borderRadius:5,padding:2}, language:{minHeight:48,minWidth:48,paddingHorizontal:6,alignItems:'center',justifyContent:'center',borderRadius:3}, languageActive:{backgroundColor:colors.accent}, languageText:{color:'#BCC8D8',fontSize:12,lineHeight:18,fontWeight:'600'}, languageTextActive:{color:colors.primary},
+  owner:{fontSize:12,lineHeight:18,color:'white',flexShrink:1,backgroundColor:'#203F65',padding:4,borderRadius:3},
+  subheader:{backgroundColor:'#001632',paddingHorizontal:16,paddingVertical:7,flexDirection:'row',flexWrap:'wrap',alignItems:'center',justifyContent:'space-between',gap:8}, subheaderText:{color:'white',fontSize:12,lineHeight:18,flexShrink:1}, subheaderMuted:{color:'#A3B1C5',fontSize:12,lineHeight:18,flexShrink:1,textAlign:'right'},
   page:{flex:1,backgroundColor:'white'},content:{padding:16,gap:16,paddingBottom:28,flexGrow:1},card:{backgroundColor:'white',borderWidth:1,borderColor:colors.border,borderRadius:8,padding:14,gap:14},
   heading:{fontSize:20,lineHeight:28,fontWeight:'700',color:colors.primary},copy:{fontSize:14,lineHeight:21},label:{fontSize:13,lineHeight:18,fontWeight:'600',color:colors.primary},
   detail:{flexDirection:'row',justifyContent:'space-between',gap:12,paddingVertical:7,borderBottomWidth:1,borderBottomColor:colors.border},detailLabel:{color:colors.textMuted,flexShrink:0,fontSize:12},detailValue:{fontWeight:'600',textAlign:'right',flexShrink:1,fontSize:13},

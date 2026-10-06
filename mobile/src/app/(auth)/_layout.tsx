@@ -7,7 +7,7 @@ import { AppHeader } from '@/components/ui/Stitch';
 
 export default function AuthLayout() {
   const { t } = useTranslation();
-  if (!runtime.isDemo) {
+  if (!runtime.isDemo && !runtime.developmentEmailAuth) {
     return <Screen><AppText variant="heading">{t('access.title')}</AppText><AppText>{t('welcome.description')}</AppText></Screen>;
   }
   return <Stack screenOptions={{ header: () => <AppHeader subtitle={t('stitch.protection')} /> }}>

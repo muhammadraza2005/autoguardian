@@ -1,1 +1,1 @@
-export { default } from '@/features/auth/PhoneAccessScreen';
+export { default } from '@/features/auth/AuthEntry';

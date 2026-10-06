@@ -17,7 +17,7 @@ Use [the Gemini prompt](../docs/GEMINI-FRONTEND-PROMPT.md) from the repository r
 - Shared white/navy/yellow tokens and accessible native UI primitives.
 - English/French resources, English development preview and proposed French live default.
 - TanStack Query provider, React Hook Form and Zod dependencies.
-- Supabase client factory with native SecureStore session adapter and web memory adapter.
+- Supabase client factory with native SecureStore, tab-scoped development web auth and memory-only production web auth.
 - Typed API boundary; no secrets or invented domain endpoints.
 - Camera/QR, photos/documents, filesystem/image manipulation, network state and push dependencies.
 - SQLCipher native plugin and development/preview/production EAS profiles.
@@ -75,7 +75,7 @@ public URLs and mode; never service-role/provider/signing secrets.
 The runtime enables synthetic previews only when __DEV__ is true and mode is not live.
 Release bundles always disable fixtures even if EXPO_PUBLIC_APP_MODE=demo.
 Live mode starts at Welcome with no session/grants until genuine auth/role loading is connected.
-The browser uses memory-only session storage. Test actual auth payload sizes on native SecureStore;
+The development browser keeps auth in the current tab across refreshes, with scoped working copies of synthetic form fields/references. Production browser auth remains in memory. Test actual auth payload sizes on native SecureStore;
 large values can fail and may need a reviewed encrypted adapter. Handle auth lifecycle and cleanup.
 
 Section gates are navigation guards, not final authorization. Real grants must be derived

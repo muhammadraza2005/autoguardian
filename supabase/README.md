@@ -4,7 +4,9 @@ These scripts create the core database in an existing **development Supabase pro
 
 After applying the foundation, follow [phone-login setup](PHONE-LOGIN-SETUP.md). Its [single-grid verification query](verify-foundation-summary.sql) makes every database check visible in one result.
 
-The next backend slice is available in [backend/README.md](../backend/README.md). It includes optional [migration 003](migrations/202610050003_identity_api.sql) for the restricted identity API, applied after 001/002. The mobile app remains unconnected.
+The backend is documented in [backend/README.md](../backend/README.md). It includes [migration 003](migrations/202610050003_identity_api.sql) for the restricted identity API, applied after 001/002. The mobile development email flow connects identity/profile loading and, after 004, owned-vehicle list/detail screens.
+
+Vehicle list/detail backend endpoints are also available. After 003 and the restricted database login setup, run [migration 004](migrations/202610060004_owned_vehicle_reads.sql) once as `postgres` to add a separate reader role with current-owner policies. It grants no mobile/client permissions and permits no vehicle writes. Optional [setup-development-vehicle.sql](setup-development-vehicle.sql) links one synthetic vehicle and an OWNER role to the existing development test profile; it never activates real enrollment.
 
 ## Run in Supabase
 
@@ -50,3 +52,12 @@ node supabase/tests/foundation.mjs
 ```
 
 Official references: [Supabase user data](https://supabase.com/docs/guides/auth/managing-user-data), [RLS and grants](https://supabase.com/docs/guides/database/postgres/row-level-security), [securing domain data](https://supabase.com/docs/guides/database/secure-data).
+## Enrollment drafts
+
+The development owner selector uses migration 006 and `setup-development-owner.sql`; the user has confirmed its setup. Optional attachment staging now uses [007](migrations/202610060007_enrollment_attachments.sql) and [private bucket setup](setup-development-evidence-bucket.sql), once in that order. See [upload guide](../docs/DEVELOPMENT-EVIDENCE-UPLOADS.md). Only synthetic sample uploads are enabled for this development increment; real evidence and activation remain pending.
+
+After migrations 001–004, run [005: enrollment drafts](migrations/202610060005_enrollment_drafts.sql) once as `postgres` in development. Then run [setup-development-agent.sql](setup-development-agent.sql) once to give the known test profile a development organization-scoped agent grant and accreditation. See [development enrollment guide](../docs/DEVELOPMENT-ENROLLMENT-DRAFTS.md) for expected output and app verification. Drafts do not create registered vehicles or ownership. The current draft API stays disabled in production pending stronger agent login.
+
+## Development seal stock and fitting
+
+After 007, run [008](migrations/202610060008_development_seal_fitting.sql) once, then [sample stock setup](setup-development-seal-stock.sql) as postgres in the development project. Expect 12 standard and 8 alarm sample seals. Follow the [app verification guide](../docs/DEVELOPMENT-SEAL-FITTING.md). No production stock issuance or enrollment activation is performed.

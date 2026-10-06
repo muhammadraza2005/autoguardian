@@ -16,6 +16,6 @@ export function getSupabaseClient() {
   });
   return client;
 }
-// Integrate phone OTP, native AppState refresh lifecycle and verified API grants next.
+// Phone OTP integration remains pending. SessionProvider manages AppState refresh
+// and loads profiles/roles through the backend.
 // Domain operations go through the backend API; never expose private tables or service keys.
-

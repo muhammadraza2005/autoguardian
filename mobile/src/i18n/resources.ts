@@ -1,9 +1,19 @@
 import { stitchEn, stitchFr } from './stitchResources';
 import { flowEn, flowFr } from './flowResources';
+import { devAuthEn, devAuthFr } from './devAuthResources';
+import { vehicleEn, vehicleFr } from './vehicleResources';
+import { enrollmentEn, enrollmentFr } from './enrollmentResources';
+import { evidenceEn, evidenceFr } from './evidenceResources';
+import { sealEn, sealFr } from './sealResources';
 export const resources = {
   en: {
     translation: {
       stitch: stitchEn,
+      devAuth: devAuthEn,
+      ownedVehicles: vehicleEn,
+      liveEnrollment: enrollmentEn,
+      liveEvidence: evidenceEn,
+      liveSeals: sealEn,
       flow: flowEn,
       brand: 'AutoGuardian',
       common: {
@@ -50,6 +60,11 @@ export const resources = {
   fr: {
     translation: {
       stitch: stitchFr,
+      devAuth: devAuthFr,
+      ownedVehicles: vehicleFr,
+      liveEnrollment: enrollmentFr,
+      liveEvidence: evidenceFr,
+      liveSeals: sealFr,
       flow: flowFr,
       brand: 'AutoGuardian',
       common: {
