@@ -9,6 +9,43 @@ import { IdentityVerifier } from './auth';
 import { VehicleStore, vehicleId, vehiclePage } from './vehicles';
 import { EnrollmentStore, draftId, draftInput } from './enrollments';
 import { SealStore, sealFittingInput } from './seals';
+import { ReadinessStore } from './readiness';
+import { OwnerService } from './owner';
+
+@Controller('enrollment-drafts/:id/owner')
+class OwnerController {
+  constructor(@Inject('DRAFT_AUTH') private readonly auth: IdentityVerifier,
+    @Inject('OWNER') private readonly owner: OwnerService) {}
+  private query(query: Record<string, unknown>) {
+    if (Object.keys(query).length) throw new BadRequestException({ code: 'UNEXPECTED_QUERY_FIELDS' });
+  }
+  @Get() async read(@Headers('authorization') header: string | undefined, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+    const actor = await this.auth.verify(header); this.query(query);
+    return this.owner.read(actor, draftId(id));
+  }
+  @Post() @HttpCode(200) async save(@Headers('authorization') header: string | undefined, @Param('id') id: string,
+    @Headers('idempotency-key') key: string | undefined, @Body() body: unknown, @Query() query: Record<string, unknown>) {
+    const actor = await this.auth.verify(header); this.query(query);
+    return this.owner.save(actor, draftId(id), draftId(key), body);
+  }
+  @Post('consent') @HttpCode(200) async consent(@Headers('authorization') header: string | undefined, @Param('id') id: string,
+    @Headers('idempotency-key') key: string | undefined, @Body() body: unknown, @Query() query: Record<string, unknown>) {
+    const actor = await this.auth.verify(header); this.query(query);
+    return this.owner.consent(actor, draftId(id), draftId(key), body);
+  }
+}
+
+@Controller('enrollment-drafts/:id/readiness')
+class ReadinessController {
+  constructor(@Inject('DRAFT_AUTH') private readonly auth: IdentityVerifier,
+    @Inject('READINESS') private readonly readiness: ReadinessStore) {}
+  @Get() async read(@Headers('authorization') header: string | undefined, @Param('id') id: string,
+    @Query() query: Record<string, unknown>) {
+    const actor = await this.auth.verify(header);
+    if (Object.keys(query).length) throw new BadRequestException({ code: 'UNEXPECTED_QUERY_FIELDS' });
+    return this.readiness.read(actor, draftId(id));
+  }
+}
 
 @Controller('seal-stock')
 class SealStockController {
@@ -134,14 +171,17 @@ class ApiErrors implements ExceptionFilter {
 }
 
 export async function createApp(auth: IdentityVerifier, accounts: AccountStore, corsOrigin?: string, vehicles?: VehicleStore,
-  enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore }) {
+  enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore; readiness?:ReadinessStore; owner?:OwnerService }) {
   @Module({ controllers: [AccountController, ...(vehicles ? [VehicleController] : []), ...(enrollments ? [EnrollmentController] : []),
-    ...(enrollments?.evidence?[EvidenceController]:[]),...(enrollments?.seals?[SealStockController,SealFittingController]:[])], providers: [
+    ...(enrollments?.evidence?[EvidenceController]:[]),...(enrollments?.seals?[SealStockController,SealFittingController]:[]),
+    ...(enrollments?.readiness?[ReadinessController]:[]), ...(enrollments?.owner?[OwnerController]:[])], providers: [
     { provide: 'AUTH', useValue: auth }, { provide: 'ACCOUNTS', useValue: accounts },
     ...(vehicles ? [{ provide: 'VEHICLES', useValue: vehicles }] : []),
     ...(enrollments ? [{provide:'DRAFT_AUTH',useValue:enrollments.auth},{provide:'ENROLLMENTS',useValue:enrollments.store}] : []),
     ...(enrollments?.evidence?[{provide:'EVIDENCE',useValue:enrollments.evidence}]:[]),
     ...(enrollments?.seals?[{provide:'SEALS',useValue:enrollments.seals}]:[]),
+    ...(enrollments?.readiness?[{provide:'READINESS',useValue:enrollments.readiness}]:[]),
+    ...(enrollments?.owner?[{provide:'OWNER',useValue:enrollments.owner}]:[]),
   ] }) class AppModule {}
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false });
   app.useBodyParser('json',{limit:enrollments?.evidence?'3mb':'100kb'});

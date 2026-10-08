@@ -57,7 +57,7 @@ Favor clear typography, simple forms and prominent actions. Use native-feeling A
 
 Keep pages lightweight and usable on a small entry-level phone. Avoid large decorative images, complex animation and dense dashboards in the consumer app. Use clear labels instead of icon-only navigation. Authority branding is configurable: logo, bilingual authority name, colors and legal notices come from authority settings.
 
-Create English screens first. Provide French variants for critical flows and reusable components with room for longer translations. English-first mockups do not override the SRS's configurable runtime language, whose proposed initial default is French.
+Create English screens first. Provide French variants for critical flows and reusable components with room for longer translations. The project owner selected English as the app's initial runtime language on 9 October 2026, replacing the proposed French default. French remains available through the language switch.
 
 ## 4. Shared states and components
 

@@ -1,4 +1,5 @@
-import { ScrollView, View, Pressable, StyleSheet, type ViewProps, type TextProps, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, View, Pressable, StyleSheet, type TextInput, type ViewProps, type TextProps, type StyleProp, type ViewStyle } from 'react-native';
+import { createContext, useCallback, useContext, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
@@ -16,8 +17,22 @@ export function AppHeader({ subtitle, owner = false }: { subtitle?: string; owne
   </SafeAreaView>;
 }
 
+const RevealFieldContext=createContext<(target:View|null,input?:TextInput|null)=>void>(()=>{});
+export function useRevealField(){return useContext(RevealFieldContext);}
 export function StitchPage({ children, style }: ViewProps) {
-  return <ScrollView style={s.page} contentContainerStyle={[s.content, style]} keyboardShouldPersistTaps="handled">{children}</ScrollView>;
+  const scroll=useRef<ScrollView>(null),content=useRef<View>(null);
+  const revealField=useCallback((target:View|null,input?:TextInput|null)=>{
+    input?.focus();
+    const root=content.current;
+    if(target && root)target.measureLayout(root,(_x,y)=>{
+      scroll.current?.scrollTo({y:Math.max(0,y-12),animated:false});
+    });
+  },[]);
+  return <RevealFieldContext.Provider value={revealField}>
+    <ScrollView ref={scroll} style={s.page} contentContainerStyle={{flexGrow:1}} keyboardShouldPersistTaps="handled">
+      <View ref={content} collapsable={false} style={[s.content,style]}>{children}</View>
+    </ScrollView>
+  </RevealFieldContext.Provider>;
 }
 export function Card({ children, style }: ViewProps) { return <View style={[s.card, style]}>{children}</View>; }
 export function Copy({ children, style, ...props }: TextProps) { return <AppText {...props} style={[s.copy, style]}>{children}</AppText>; }

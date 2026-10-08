@@ -5,6 +5,9 @@ import { vehicleEn, vehicleFr } from './vehicleResources';
 import { enrollmentEn, enrollmentFr } from './enrollmentResources';
 import { evidenceEn, evidenceFr } from './evidenceResources';
 import { sealEn, sealFr } from './sealResources';
+import { readinessEn, readinessFr } from './readinessResources';
+import { ownerEn, ownerFr } from './ownerResources';
+import { wizardEn, wizardFr } from './wizardResources';
 export const resources = {
   en: {
     translation: {
@@ -14,6 +17,9 @@ export const resources = {
       liveEnrollment: enrollmentEn,
       liveEvidence: evidenceEn,
       liveSeals: sealEn,
+      liveReadiness: readinessEn,
+      liveOwner: ownerEn,
+      enrollmentWizard: wizardEn,
       flow: flowEn,
       brand: 'AutoGuardian',
       common: {
@@ -65,6 +71,9 @@ export const resources = {
       liveEnrollment: enrollmentFr,
       liveEvidence: evidenceFr,
       liveSeals: sealFr,
+      liveReadiness: readinessFr,
+      liveOwner: ownerFr,
+      enrollmentWizard: wizardFr,
       flow: flowFr,
       brand: 'AutoGuardian',
       common: {

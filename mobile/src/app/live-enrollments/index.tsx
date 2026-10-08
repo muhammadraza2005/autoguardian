@@ -1,1 +1,2 @@
-export { EnrollmentDraftList as default } from '@/features/enrollment/LiveDraftScreens';
+import { Redirect } from 'expo-router';
+export default function LegacyEnrollments(){return <Redirect href="/agent"/>;}

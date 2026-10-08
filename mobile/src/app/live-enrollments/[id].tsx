@@ -1,1 +1,1 @@
-export { EditEnrollmentDraft as default } from '@/features/enrollment/LiveDraftScreens';
+export { LegacyVehicle as default } from '@/features/enrollment/LegacyEnrollmentRedirect';

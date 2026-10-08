@@ -1,1 +1,1 @@
-export {DevelopmentSealStock as default} from '@/features/enrollment/LiveSealScreens';
+export { LegacyStock as default } from '@/features/enrollment/LegacyEnrollmentRedirect';

@@ -15,6 +15,7 @@ import {readSealFitting,readSealStock,saveSealFitting,sealFittingBodySchema,type
 import {availableSealChoices} from './sealChoices';
 import {profileScope} from '@/features/auth/authEvents';
 import {workingCopies} from './workingCopies';
+import { colors } from '@/theme/tokens';
 
 function SealPage({children}:{children:React.ReactNode}){
   const {t}=useTranslation();const router=useRouter();
@@ -26,7 +27,7 @@ function SealError({error}:{error:unknown}){
   const {t}=useTranslation();const status=error instanceof ApiError?error.status:undefined;
   return <Notice tone="danger">{t('liveSeals.'+(status===503?'setup':status===403||status===401?'denied':status===404?'unavailable':status===409?'conflict':status===422?'selectionUnavailable':status===400?'invalid':'failed'))}</Notice>;
 }
-export function DevelopmentSealStock(){
+export function DevelopmentSealStock({embedded=false}:{embedded?:boolean}={}){
   const {t}=useTranslation();const {profile,request}=useSession();
   const {organizationId}=useLocalSearchParams<{organizationId?:string|string[]}>();
   const organizations=[...new Set(profile?.roles.filter(r=>r.code==='ENROLLMENT_AGENT' && r.organizationId).map(r=>r.organizationId!)??[])];
@@ -36,9 +37,9 @@ export function DevelopmentSealStock(){
     queryFn:({pageParam,signal})=>readSealStock(request,organization,pageParam,signal),getNextPageParam:page=>page.nextCursor??undefined,
     enabled:Boolean(profile && allowed),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
   const items=!query.isError?query.data?.pages.flatMap(page=>page.items)??[]:[];
-  return <SealPage><Heading>{t('liveSeals.stock')}</Heading><Notice tone="warning">{t('liveSeals.notice')}</Notice>
+  const content=<><Heading>{t('liveSeals.stock')}</Heading><Notice tone="warning">{t('liveSeals.notice')}</Notice>
     {organizations.length>1 && <Card><Label>{t('liveSeals.organization')}</Label>{organizations.map(org=><Action key={org} secondary={org!==organization}
-      label={org} onPress={()=>setOrganization(org)}/>)}</Card>}
+      label={t('enrollmentWizard.organization',{number:organizations.indexOf(org)+1})} onPress={()=>setOrganization(org)}/>)}</Card>}
     {!allowed && <Notice tone="danger">{t('liveSeals.denied')}</Notice>}
     {allowed && query.isPending && <Copy>{t('liveSeals.loading')}</Copy>}
     {allowed && query.isError && <SealError error={query.error}/>}
@@ -49,9 +50,11 @@ export function DevelopmentSealStock(){
     </Card>)}
     {query.hasNextPage && <Action secondary label={t('liveSeals.loadMore')} disabled={query.isFetching} onPress={()=>void query.fetchNextPage()}/>}
     {allowed && <Action secondary label={t('liveSeals.refreshStock')} disabled={query.isFetching} onPress={()=>void query.refetch()}/>}
-  </SealPage>;
+  </>;
+  return embedded?<StitchPage>{content}</StitchPage>:<SealPage>{content}</SealPage>;
 }
-export function EnrollmentSealFitting(){
+export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDirtyChange}:{embedded?:boolean;
+  onSaved?:(result:SealFitting)=>void;onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}={}){
   const {t}=useTranslation();const router=useRouter();const {profile,request}=useSession();
   const {id}=useLocalSearchParams<{id?:string|string[]}>();const parsed=z.uuid().safeParse(id);const safeId=parsed.success?parsed.data:undefined;
   const draft=useQuery({queryKey:['enrollment-draft',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>readDraft(request,safeId!,signal),
@@ -61,31 +64,35 @@ export function EnrollmentSealFitting(){
   const evidence=useQuery({queryKey:['enrollment-evidence',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>listEvidence(request,safeId!,signal),
     enabled:Boolean(profile && safeId && fitting.data && !fitting.isError),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
   const loading=draft.isFetching || fitting.isFetching;const error=draft.error??fitting.error;
-  return <SealPage><Heading>{t('liveSeals.title')}</Heading><Notice tone="warning">{t('liveSeals.notice')}</Notice>
+  const content=<><Heading>{t('liveSeals.title')}</Heading><Notice tone="warning">{t('liveSeals.notice')}</Notice>
     {!safeId && <Notice tone="danger">{t('liveSeals.unavailable')}</Notice>}
     {Boolean(safeId) && loading && <Copy>{t('liveSeals.loading')}</Copy>}
     {Boolean(safeId) && !loading && Boolean(error) && <SealError error={error}/>}
     {safeId && !loading && !error && draft.data && fitting.data && <>
       <Heading>{draft.data.vehicle.plate??draft.data.vehicle.chassisIdentifier}</Heading>
       <Copy>{t('liveSeals.codeExplanation')}</Copy>
-      <Action secondary label={t('liveSeals.stock')} icon="cube-outline" onPress={()=>router.push({pathname:'/live-enrollments/stock',params:{organizationId:draft.data.organizationId}})}/>
+      <Action secondary label={t('liveSeals.stock')} icon="cube-outline" onPress={()=>router.navigate({pathname:'/agent/seal-stock',params:{organizationId:draft.data.organizationId}})}/>
       <FittingEditor key={fitting.dataUpdatedAt} fitting={fitting.data} organizationId={draft.data.organizationId}
+        onSaved={onSaved} onBusyChange={onBusyChange} onDirtyChange={onDirtyChange}
         photos={evidence.isError?[]:evidence.data?.items.filter(p=>p.kind==='SEAL_FITTING_PHOTO' && p.status==='STAGED')??[]}/>
-      <Card><Heading>{t('liveSeals.progress')}</Heading>
+      {!embedded && <Card><Heading>{t('liveSeals.progress')}</Heading>
         <DetailRow label={t('liveSeals.metadata')} value={t('liveSeals.complete')}/>
         <DetailRow label={t('liveSeals.documents')} value={t(fitting.data.sampleDocumentsSaved?'liveSeals.complete':'liveSeals.pending')}/>
         <DetailRow label={t('liveSeals.fitting')} value={t(fitting.data.sealDraftComplete?'liveSeals.complete':'liveSeals.pending')}/>
         <DetailRow label={t('liveSeals.owner')} value={t('liveSeals.pending')}/>
         <DetailRow label={t('liveSeals.payment')} value={t('liveSeals.pending')}/>
         <Notice>{t('liveSeals.inactive')}</Notice>
-      </Card>
+      </Card>}
     </>}
     {safeId && <Action secondary label={t('liveSeals.reload')} disabled={loading} onPress={()=>{
       workingCopies.remove(profile?profileScope(profile):'','seals',safeId);void draft.refetch();void fitting.refetch();void evidence.refetch();
     }}/>}
-  </SealPage>;
+  </>;
+  return embedded?content:<SealPage>{content}</SealPage>;
 }
-function FittingEditor({fitting,photos,organizationId}:{fitting:SealFitting;photos:z.infer<typeof evidenceMetadata>[];organizationId:string}){
+function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDirtyChange}:{fitting:SealFitting;
+  photos:z.infer<typeof evidenceMetadata>[];organizationId:string;onSaved?:(result:SealFitting)=>void;
+  onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}){
   const {t}=useTranslation();const router=useRouter();const cache=useQueryClient();const {profile,request}=useSession();
   const scope=profile?profileScope(profile):'';
   const [restored]=useState(()=>{
@@ -109,10 +116,19 @@ function FittingEditor({fitting,photos,organizationId}:{fitting:SealFitting;phot
     onSuccess:result=>{finished.current=true;workingCopies.remove(scope,'seals',fitting.draftId);attempt.current=null;setUncertain(false);
       cache.setQueryData(['seal-fitting',profile?.tenantId,profile?.id,result.draftId],result);
       void cache.invalidateQueries({queryKey:['seal-stock',profile?.tenantId,profile?.id]});
-      router.dismissTo('/live-enrollments');},
+      void cache.invalidateQueries({queryKey:['enrollment-readiness',profile?.tenantId,profile?.id]});
+      if(onSaved)onSaved(result);else router.dismissTo('/agent');},
     onError:error=>{const definite=error instanceof ApiError && [400,401,403,404,409,422,503].includes(error.status);
       setUncertain(!definite);if(definite)attempt.current=null;}});
   const locked=save.isPending || uncertain || Object.values(uploading).some(Boolean);
+  const callbacks=useRef({onBusyChange,onDirtyChange});
+  useEffect(()=>{callbacks.current={onBusyChange,onDirtyChange};},[onBusyChange,onDirtyChange]);
+  const dirty=chosen!==fitting.package || slots.some(slot=>{
+    const saved=fitting.placements.find(p=>p.position===slot.position);
+    return slot.sealCode!==(saved?.sealCode??'') || slot.photoId!==(saved?.photoId??null);
+  });
+  useEffect(()=>{callbacks.current.onBusyChange?.(locked);callbacks.current.onDirtyChange?.(dirty);},[locked,dirty]);
+  useEffect(()=>()=>{callbacks.current.onBusyChange?.(false);callbacks.current.onDirtyChange?.(false);},[]);
   useEffect(()=>{
     if(!finished.current)workingCopies.write(scope,fitting.draftId,{kind:'seals',draftRevision:fitting.draftRevision,
       fittingRevision:fitting.fittingRevision,package:chosen,slots,pending:attempt.current});
@@ -141,7 +157,11 @@ function FittingEditor({fitting,photos,organizationId}:{fitting:SealFitting;phot
       {stock.isError && <SealError error={stock.error}/>}
       {slots.map(slot=>{
         const choices=availableSealChoices(chosen,slot.position,slots,seals,fitting.placements);
-        return <Card key={slot.position}><Heading>{t('liveSeals.position',{number:slot.position})}</Heading>
+        const complete=Boolean(slot.sealCode && slot.photoId && allPhotos.some(p=>p.id===slot.photoId));
+        return <Card key={slot.position} style={{borderColor:complete?colors.border:colors.primary,borderWidth:complete?1:2}}>
+        <Heading>{t('liveSeals.position',{number:slot.position})}</Heading>
+        <Notice icon={complete?'checkmark-circle-outline':'ellipsis-horizontal-circle-outline'} tone={complete?'neutral':'warning'}>
+          {t(complete?'liveSeals.photoAttached':'enrollmentWizard.needsWork')}</Notice>
         <Label>{t('liveSeals.code')}</Label><Copy>{t('liveSeals.codeHint')}</Copy>
         <Copy selectable>{slot.sealCode||t('liveSeals.noSeal')}</Copy>
         <Action secondary label={t(slot.sealCode?'liveSeals.changeSeal':'liveSeals.chooseSeal')} disabled={locked || stock.isPending || stock.isError}

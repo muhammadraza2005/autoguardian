@@ -1,1 +1,1 @@
-export { EnrollmentDraftAttachments as default } from '@/features/enrollment/LiveDraftScreens';
+export { LegacyDocuments as default } from '@/features/enrollment/LegacyEnrollmentRedirect';

@@ -5,13 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { useSession } from '@/features/auth/SessionProvider';
 import { canAccessSection } from '@/features/auth/access';
 import { colors } from '@/theme/tokens';
-import { AppHeader } from '@/components/ui/Stitch';
+import { AppHeader, Copy, StitchPage } from '@/components/ui/Stitch';
 import { StitchTabBar } from '@/components/ui/StitchTabBar';
+import { runtime } from '@/config/runtime';
+import { developmentAgentAllowed } from '@/features/enrollment/wizard';
 
 export default function SectionLayout() {
   const { t } = useTranslation();
-  const { session } = useSession();
-  if (!canAccessSection(session, 'agent')) return <Redirect href="/permission-denied" />;
+  const { session, profile, loading, error } = useSession();
+  if(!runtime.isDemo && loading)return <StitchPage><Copy>{t('devAuth.loading')}</Copy></StitchPage>;
+  if(!runtime.isDemo && (error || !profile))return <Redirect href="/live-account"/>;
+  if (!(runtime.isDemo ? canAccessSection(session, 'agent') : developmentAgentAllowed(runtime.developmentEmailAuth,profile)))
+    return <Redirect href="/permission-denied" />;
   
   return (
     <Tabs tabBar={(props) => <StitchTabBar {...props} accent />} screenOptions={{
@@ -32,4 +37,3 @@ export default function SectionLayout() {
     </Tabs>
   );
 }
-

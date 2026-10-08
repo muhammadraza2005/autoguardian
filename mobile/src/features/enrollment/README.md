@@ -2,4 +2,11 @@
 Gemini implements the role-scoped UI from frontend.md section 6. Native dependencies are installed, not an implemented offline system.
 SQLCipher is enabled in Expo config. Do not open a database without generating/protecting a random key and verifying cipher support.
 The live development browser now saves synthetic drafts, owner choices, encrypted sample attachments, and provisional seal fittings through the restricted backend. See `docs/DEVELOPMENT-SEAL-FITTING.md` for the latest setup and test procedure. Signed-in upload/download testing succeeded for the earlier sample upload increment.
-Native offline database/file encryption, durable sync and production authentication remain pending. Use synthetic data only; the design preview stays separate and in memory. Never label a draft enrolled or protected merely because a fitting draft is complete.
+The connected development flow now runs in the designed agent shell at `/agent`,
+with Vehicle, Owner, Documents, Seals and Review steps. Legacy development URLs
+redirect to the matching step. Progress comes from saved readiness, never merely
+from opening a screen. Owner details and sample consent use the same server APIs;
+unsaved identity fields remain only in memory. See
+`docs/CONNECTED-ENROLLMENT-WIZARD.md` at the repository root.
+
+Native offline database/file encryption, durable sync and production authentication remain pending. Use synthetic data only; the disconnected design preview remains development-only and in memory. Never label a draft enrolled or protected merely because a fitting draft is complete.

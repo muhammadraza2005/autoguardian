@@ -6,6 +6,8 @@ import { PostgresVehicleStore } from './vehicles';
 import { DevelopmentDraftVerifier, PostgresEnrollmentStore } from './enrollments';
 import { configuredEvidence, PostgresEvidenceStore } from './evidence';
 import { PostgresSealStore } from './seals';
+import { PostgresReadinessStore } from './readiness';
+import { configuredOwner, PostgresOwnerStore } from './owner';
 
 async function main() {
   const allowDevelopmentEmail = developmentEmailAllowed(process.env);
@@ -24,6 +26,8 @@ async function main() {
     const app = await createApp(identity, accounts, process.env.CORS_ORIGIN,
       new PostgresVehicleStore(pool, tenant), { auth: new DevelopmentDraftVerifier(identity,allowDevelopmentEmail),
         store: new PostgresEnrollmentStore(pool,tenant), seals:new PostgresSealStore(pool,tenant),
+        readiness: new PostgresReadinessStore(pool,tenant),
+        owner: configuredOwner(process.env,new PostgresOwnerStore(pool,tenant),allowDevelopmentEmail),
         evidence: configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail) });
     const shutdown = app.close.bind(app);
     app.close = async () => { await shutdown(); await pool.end(); };

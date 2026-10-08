@@ -1,5 +1,24 @@
 # AutoGuardian database foundation
 
+## Owner details and sample consent (migration 010)
+
+After 009, apply [010](migrations/202610080010_enrollment_owner_consent.sql) once
+as postgres in development, then restart the backend. It adds encrypted owner
+details, immutable bilingual sample consent versions, append-only recording/read/
+withdrawal events and generation-bound evidence invalidation. Restricted functions
+enforce agent/draft scope, current owner eligibility, revisions and request keys.
+Readiness adds two sample checks while production consent/phone remain unavailable.
+Hosted 010 installation and signed-in acceptance are pending; see
+[setup and walkthrough](../docs/DEVELOPMENT-OWNER-CONSENT.md).
+
+## Enrollment readiness (migration 009)
+
+After 008, apply [009](migrations/202610080009_enrollment_readiness.sql) once as
+postgres in development. It adds only a restricted read-only checklist function;
+no tables or activation writes. Hosted 009 installation was subsequently confirmed
+by a read-only runtime check; the current app also requires 010.
+See [readiness setup and acceptance](../docs/DEVELOPMENT-ENROLLMENT-READINESS.md).
+
 These scripts create the core database in an existing **development Supabase project**. They do not connect the mobile app, implement a backend, configure an SMS provider, or change a remote project automatically.
 
 After applying the foundation, follow [phone-login setup](PHONE-LOGIN-SETUP.md). Its [single-grid verification query](verify-foundation-summary.sql) makes every database check visible in one result.

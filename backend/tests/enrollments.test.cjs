@@ -46,7 +46,8 @@ test('draft migration can be installed by a non-superuser schema owner, as on ho
       grant create on database postgres to migration_author;set role migration_author;`);
     for(const f of ['202610050001_core_foundation.sql','202610050002_default_permissions.sql','202610050003_identity_api.sql',
       '202610060004_owned_vehicle_reads.sql','202610060005_enrollment_drafts.sql','202610060006_development_owner_selection.sql',
-      '202610060007_enrollment_attachments.sql','202610060008_development_seal_fitting.sql']) {
+      '202610060007_enrollment_attachments.sql','202610060008_development_seal_fitting.sql',
+      '202610080009_enrollment_readiness.sql','202610080010_enrollment_owner_consent.sql']) {
       await db.exec(await fs.readFile(path.resolve(__dirname,'../../supabase/migrations',f),'utf8'));
     }
     assert.equal((await db.query("select pg_has_role('migration_author','autoguardian_enrollment_executor','MEMBER') member")).rows[0].member,true);

@@ -1,5 +1,26 @@
 # AutoGuardian backend
 
+## Owner details and sample consent (8 October 2026)
+
+After migration 010, accredited development agents can use `GET/POST
+/v1/enrollment-drafts/:id/owner` and `POST /v1/enrollment-drafts/:id/owner/consent`.
+Writes require a UUID `Idempotency-Key` and the current draft revision; consent
+also requires the owner generation. Details validate individual/company identity,
+international phone and FR/EN language, then encrypt before SQL using separate keys
+derived from `ENROLLMENT_EVIDENCE_KEY_HEX`. Reads are audited and responses no-store.
+Consent records are agent-recorded samples, with immutable text versions, explicit
+terms/data acknowledgments and append-only withdrawal. Owner/detail changes
+invalidate evidence and consent and stale fitting. OTP and production consent
+remain unverified. See [setup, API behavior and acceptance](../docs/DEVELOPMENT-OWNER-CONSENT.md).
+
+## Enrollment readiness (8 October 2026)
+
+`GET /v1/enrollment-drafts/:id/readiness` returns a scoped server-calculated
+development checklist and explicit production blockers. Apply migrations 009–010 after
+008, then restart the backend. It uses the existing development accredited-agent
+gate and restricted database executor. Submission/activation remain unavailable;
+there is no submit endpoint. See [setup and acceptance](../docs/DEVELOPMENT-ENROLLMENT-READINESS.md).
+
 The NestJS backend supports identity and reading currently owned vehicles. The mobile development email flow calls its identity endpoints; connecting vehicle screens, phone login, SMS and deployment remain pending. See [development email login](../docs/DEVELOPMENT-EMAIL-LOGIN.md).
 
 | Endpoint | Behavior |

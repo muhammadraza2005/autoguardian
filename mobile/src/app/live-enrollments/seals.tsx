@@ -1,1 +1,1 @@
-export {EnrollmentSealFitting as default} from '@/features/enrollment/LiveSealScreens';
+export { LegacySeals as default } from '@/features/enrollment/LegacyEnrollmentRedirect';

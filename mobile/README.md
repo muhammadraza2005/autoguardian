@@ -1,5 +1,25 @@
 # AutoGuardian mobile foundation
 
+The development enrollment flow now uses the original agent header, bottom tabs,
+cards and five-step wizard at `/agent`: Vehicle, Owner, Documents, Seals and Review.
+Its forms use the existing backend APIs and saved readiness; old
+`/live-enrollments` links redirect to the corresponding wizard step. The separate
+synthetic preview remains available in demo mode. See the
+[connected wizard guide](../docs/CONNECTED-ENROLLMENT-WIZARD.md).
+No new migration is needed for this UI integration. Phone OTP remains deferred.
+
+The latest enrollment increment adds **Owner details and sample consent** to
+connected drafts and readiness review. Individual/company fields, FR/EN preference
+and separate versioned sample acknowledgments are saved through the backend.
+Unsaved identity details remain in screen memory, without browser working-copy
+persistence. Save these before staging evidence; changing them invalidates samples
+and consent and makes fitting stale. Apply migration 010 and backend setup; see
+[owner/consent acceptance](../docs/DEVELOPMENT-OWNER-CONSENT.md). Phone OTP remains
+deferred and production consent unverified. Submission remains
+disabled. Older foundation descriptions below predate the connected identity,
+vehicle, draft, sample evidence and provisional seal work; use the root README
+and feature guides for current status.
+
 Gemini has since added a partial frontend prototype. See the current
 [frontend audit](../docs/FRONTEND-AUDIT.md) and [local Android setup](../docs/ANDROID-SETUP.md).
 For standalone numbered client demos, see [client APK builds](../docs/CLIENT-APK-BUILDS.md).
@@ -15,7 +35,7 @@ Use [the Gemini prompt](../docs/GEMINI-FRONTEND-PROMPT.md) from the repository r
 - Expo Router with Check / My vehicles / Alerts / Account.
 - Guarded agent, institutional and administration entry routes.
 - Shared white/navy/yellow tokens and accessible native UI primitives.
-- English/French resources, English development preview and proposed French live default.
+- English/French resources with English as the default in preview and live modes; French remains selectable.
 - TanStack Query provider, React Hook Form and Zod dependencies.
 - Supabase client factory with native SecureStore, tab-scoped development web auth and memory-only production web auth.
 - Typed API boundary; no secrets or invented domain endpoints.
