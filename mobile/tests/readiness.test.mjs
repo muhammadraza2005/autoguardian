@@ -1,16 +1,22 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {checkCodes,productionCheckCodes,readReadiness,readinessSchema} from '../src/features/enrollment/readiness.ts';
 import {readinessEn,readinessFr} from '../src/i18n/readinessResources.ts';
+import {evidenceRequirements} from '../src/features/enrollment/evidenceChecklist.ts';
 const id='00000000-0000-4000-8000-000000000001',other='00000000-0000-4000-8000-000000000002';
 const snapshot={draftId:id,draftRevision:1,fittingRevision:0,package:null,
   vehicle:{chassisIdentifier:'SAMPLE',plate:null,category:'CAR'},sampleOnly:true,canSubmit:false,enrollmentActive:false,
+  evidenceChecklist:{version:1,complete:false,items:evidenceRequirements.map(r=>({code:r.code,status:'MISSING'}))},
+  sealValidation:{version:1,required:true,complete:false,physicalVerified:false,issues:['PACKAGE_REQUIRED'],
+    slots:[1,2,3,4].map(position=>({position,issues:['SEAL_REQUIRED','PHOTO_REQUIRED']}))},
   checks:checkCodes.map(code=>({code,status:productionCheckCodes.includes(code)?'UNAVAILABLE':code==='VEHICLE_DRAFT'?'COMPLETE':'MISSING'}))};
 test('readiness rejects incomplete checklists, active claims and production success from sample data',()=>{
   assert.equal(readinessSchema.parse(snapshot).canSubmit,false);
   for(const patch of [{canSubmit:true},{enrollmentActive:true},{sampleOnly:false},
     {checks:snapshot.checks.slice(1)},{checks:snapshot.checks.map(c=>c.code==='PAYMENT'?{...c,status:'COMPLETE'}:c)},
     {checks:snapshot.checks.map(c=>c.code==='OWNER_PHONE'?{...c,code:'PAYMENT'}:c)},
-    {checks:snapshot.checks.map(c=>c.code==='SEAL_FITTING'?{...c,status:'COMPLETE'}:c)}])
+    {checks:snapshot.checks.map(c=>c.code==='SEAL_FITTING'?{...c,status:'COMPLETE'}:c)},
+    {checks:snapshot.checks.map(c=>c.code==='VEHICLE_PHOTO_SAMPLE'?{...c,status:'COMPLETE'}:c)},
+    {evidenceChecklist:undefined}])
     assert.throws(()=>readinessSchema.parse({...snapshot,...patch}));
 });
 test('readiness uses the scoped read endpoint, validates route identity and propagates unavailable access',async()=>{

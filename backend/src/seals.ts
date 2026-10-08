@@ -5,7 +5,7 @@ export const sealPackages=['NONE','STANDARD','ONE_ALARM','FOUR_ALARMS'] as const
 export type SealFittingInput={expectedDraftRevision:number;expectedFittingRevision:number;package:typeof sealPackages[number];
   placements:{position:number;sealCode:string;photoId:string|null}[]};
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-export function sealFittingInput(value:unknown):SealFittingInput {
+export function sealFittingInput(value:unknown,validateOnly=false):SealFittingInput {
   const invalid=()=>{throw new BadRequestException({code:'INVALID_SEAL_FITTING'});};
   if(!value || typeof value!=='object' || Array.isArray(value)) return invalid();
   const v=value as SealFittingInput;
@@ -22,13 +22,14 @@ export function sealFittingInput(value:unknown):SealFittingInput {
     if(!/^DEV-SEAL-[A-Z0-9-]{1,40}$/.test(sealCode)) return invalid();
     return {position:p.position,sealCode,photoId:p.photoId?.toLowerCase()??null};
   }).sort((a,b)=>a.position-b.position);
-  if(new Set(placements.map(p=>p.position)).size!==placements.length || new Set(placements.map(p=>p.sealCode)).size!==placements.length
-    || new Set(placements.flatMap(p=>p.photoId?[p.photoId]:[])).size!==placements.filter(p=>p.photoId).length) return invalid();
+  if(new Set(placements.map(p=>p.position)).size!==placements.length || (!validateOnly && (new Set(placements.map(p=>p.sealCode)).size!==placements.length
+    || new Set(placements.flatMap(p=>p.photoId?[p.photoId]:[])).size!==placements.filter(p=>p.photoId).length))) return invalid();
   return {...v,placements};
 }
 export interface SealStore {
   stock(actor:string,organizationId:string,page:{limit:number;cursor?:string}):Promise<unknown>;
   fitting(actor:string,draftId:string):Promise<unknown>;
+  validate(actor:string,draftId:string,input:SealFittingInput):Promise<unknown>;
   save(actor:string,draftId:string,key:string,input:SealFittingInput):Promise<unknown>;
 }
 export class PostgresSealStore implements SealStore {
@@ -37,6 +38,9 @@ export class PostgresSealStore implements SealStore {
     return this.call(actor,'development_seal_stock_page',[organizationId,page.limit,page.cursor??null]);
   }
   fitting(actor:string,draftId:string) {return this.call(actor,'draft_seal_fitting_read',[draftId]);}
+  validate(actor:string,draftId:string,input:SealFittingInput) {
+    return this.call(actor,'validate_draft_seal_fitting',[draftId,input.expectedDraftRevision,input.expectedFittingRevision,input.package,JSON.stringify(input.placements)]);
+  }
   save(actor:string,draftId:string,key:string,input:SealFittingInput) {
     return this.call(actor,'save_draft_seal_fitting',[draftId,key,input.expectedDraftRevision,input.expectedFittingRevision,input.package,JSON.stringify(input.placements)]);
   }
@@ -47,9 +51,12 @@ export class PostgresSealStore implements SealStore {
       await client.query(`select set_config('autoguardian.tenant_id',$1,true),set_config('autoguardian.auth_user_id',$2,true)`,[this.tenantId,actor]);
       const allowed=await client.query('select private.enrollment_agent_id(null) as actor');
       if(!allowed.rows[0].actor) throw new ForbiddenException({code:'AGENT_ACCESS_REQUIRED'});
-      // fn is selected only by the three fixed methods above, never from request data.
+      // fn is selected only by the fixed methods above, never from request data.
       const result=await client.query(`select private.${fn}(${values.map((_,i)=>'$'+(i+1)).join(',')}) as result`,values);
-      await client.query('commit');return result.rows[0].result;
+      const value=result.rows[0].result;
+      if(fn!=='development_seal_stock_page' && value?.sealValidation?.version!==1)
+        throw new ServiceUnavailableException({code:'SEAL_SETUP_REQUIRED'});
+      await client.query('commit');return value;
     } catch(error) {
       await client.query('rollback');const e=error as {code?:string;message?:string};
       if(e.code==='AG403')throw new ForbiddenException({code:'AGENT_ACCESS_REQUIRED'});

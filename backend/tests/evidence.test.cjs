@@ -4,6 +4,8 @@ const sharp=require('sharp');const {PGlite}=require('@electric-sql/pglite');
 const {UnauthorizedException}=require('@nestjs/common');const {createApp}=require('../dist/app');
 const {draftInput,DevelopmentDraftVerifier,PostgresEnrollmentStore}=require('../dist/enrollments');
 const {EvidenceService,PostgresEvidenceStore,evidenceCipher,evidenceInput,digest,configuredEvidence,EVIDENCE_MAX}=require('../dist/evidence');
+const {PostgresReadinessStore}=require('../dist/readiness');
+const {PostgresSealStore}=require('../dist/seals');
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant='ce31527e-d1b5-4379-9ddd-1458cfb73431',profile='369cbe75-32c8-40b4-a9ee-f2d9bde379db',org='014db61a-4c68-48cb-86b6-46837f4da873';
 const pdf=Buffer.from('%PDF-1.4\nSynthetic test only\n%%EOF\n');
@@ -12,9 +14,7 @@ async function foundation() {
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create role autoguardian_identity_login nologin;create schema auth;create table auth.users(id uuid primary key);`);
-  for(const file of ['202610050001_core_foundation.sql','202610050002_default_permissions.sql','202610050003_identity_api.sql',
-    '202610060004_owned_vehicle_reads.sql','202610060005_enrollment_drafts.sql','202610060006_development_owner_selection.sql',
-    '202610060007_enrollment_attachments.sql']) {
+  for(const file of (await fs.readdir(path.resolve(__dirname,'../../supabase/migrations'))).filter(f=>f.endsWith('.sql')).sort()) {
     await db.exec(await fs.readFile(path.resolve(__dirname,'../../supabase/migrations',file),'utf8'));
   }
   await db.exec(`insert into auth.users values ('${id(1)}'),('${id(2)}');
@@ -37,6 +37,8 @@ test('attachment validation strips image metadata, rejects invalid/active conten
   assert.equal(result.mime,'image/jpeg');assert.equal((await sharp(result.bytes).metadata()).exif,undefined);
   assert.equal((await evidenceInput(payload)).mime,'application/pdf');
   for(const body of [{...payload,fileName:'Private'}, {...payload,kind:'VEHICLE_PHOTO'},
+    ...['VEHICLE_FRONT','VEHICLE_REAR','VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO']
+      .map(kind=>({...payload,kind})),
     {...payload,dataBase64:'invalid'}, {...payload,dataBase64:Buffer.from('not an image').toString('base64')},
     {...payload,dataBase64:Buffer.from('%PDF-1.4\n/JavaScript\n%%EOF').toString('base64')}]) {
     await assert.rejects(()=>evidenceInput(body),e=>e.getStatus()===400);
@@ -48,7 +50,8 @@ test('authenticated encryption rejects tampering, wrong keys, owner changes and 
   const cipher=evidenceCipher(randomBytes(32));const encrypted=cipher.encrypt(pdf,row);
   assert.equal(encrypted.includes(pdf),false);assert.deepEqual(cipher.decrypt(encrypted,row),pdf);
   const changed=Buffer.from(encrypted);changed[changed.length-1]^=1;
-  for(const [bytes,record] of [[changed,row],[encrypted,{...row,draft_id:id(42)}],[encrypted,{...row,owner_profile_id:id(22)}]]) {
+  for(const [bytes,record] of [[changed,row],[encrypted,{...row,draft_id:id(42)}],[encrypted,{...row,owner_profile_id:id(22)}],
+    [encrypted,{...row,kind:'PURCHASE_PROOF'}]]) {
     assert.throws(()=>cipher.decrypt(bytes,record),e=>e.getStatus()===503);
   }
   assert.throws(()=>evidenceCipher(randomBytes(32)).decrypt(encrypted,row),e=>e.getStatus()===503);
@@ -120,4 +123,71 @@ test('private bucket setup overrides broad client policies without exposing ciph
     }
     assert.equal((await db.query("select public from storage.buckets where id='development-enrollment-evidence'")).rows[0].public,false);
   } finally {await db.close();}
+});
+
+test('detailed evidence requires six distinct saved photos and either registration or purchase proof, with safe retries and owner invalidation',async()=>{
+  const {db,pool,store,draft,drafts}=await foundation();
+  const objects=new Map();let interrupted=false;
+  const storage={check:async()=>{},put:async(p,b)=>{if(!objects.has(p))objects.set(p,b);},get:async p=>{
+    if(interrupted)throw new Error('Interrupted read-back');return objects.get(p);
+  }};
+  const service=new EvidenceService(store,storage,evidenceCipher(randomBytes(32)));
+  const readiness=new PostgresReadinessStore(pool,tenant),seals=new PostgresSealStore(pool,tenant);
+  const state=(value,code)=>value.evidenceChecklist.items.find(item=>item.code===code).status;
+  try {
+    let value=await service.list(id(1),draft.id);assert.equal(value.evidenceChecklist.items.length,8);
+    assert.ok(value.evidenceChecklist.items.every(item=>item.status==='MISSING'));
+    await service.upload(id(1),draft.id,id(201),payload);
+    await service.upload(id(1),draft.id,id(202),{...payload,kind:'PURCHASE_PROOF'});
+    const photo=async n=>({dataBase64:(await sharp({create:{width:8,height:8,channels:3,
+      background:{r:n*30,g:60,b:120}}}).png().toBuffer()).toString('base64')});
+    const front={...await photo(1),kind:'VEHICLE_FRONT'};
+    await service.upload(id(1),draft.id,id(203),{...front,kind:'VEHICLE_PHOTO'});
+    assert.equal(state(await service.list(id(1),draft.id),'VEHICLE_FRONT'),'MISSING');
+    interrupted=true;await assert.rejects(()=>service.upload(id(1),draft.id,id(204),front));
+    value=await service.list(id(1),draft.id);assert.equal(state(value,'VEHICLE_FRONT'),'PENDING');
+    assert.equal(value.evidenceChecklist.complete,false);
+    assert.equal((await readiness.read(id(1),draft.id)).checks.find(c=>c.code==='VEHICLE_PHOTO_SAMPLE').status,'MISSING');
+    interrupted=false;await service.upload(id(1),draft.id,id(204),front);await service.upload(id(1),draft.id,id(204),front);
+    assert.equal(state(await service.list(id(1),draft.id),'VEHICLE_FRONT'),'COMPLETE');
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(204),{...front,kind:'VEHICLE_REAR'}),e=>e.getStatus()===409);
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(205),{...front,kind:'VEHICLE_REAR'}),e=>e.getStatus()===409);
+    for(const [n,kind] of ['VEHICLE_REAR','VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO'].entries())
+      await service.upload(id(1),draft.id,id(210+n),{...await photo(n+2),kind});
+    value=await service.list(id(1),draft.id);assert.equal(value.evidenceChecklist.complete,true);
+    let review=await readiness.read(id(1),draft.id);assert.deepEqual(review.evidenceChecklist,value.evidenceChecklist);
+    assert.equal(review.checks.find(c=>c.code==='REGISTRATION_SAMPLE').status,'COMPLETE');
+    assert.equal(review.checks.find(c=>c.code==='VEHICLE_PHOTO_SAMPLE').status,'COMPLETE');
+    assert.equal((await seals.fitting(id(1),draft.id)).sampleDocumentsSaved,true);
+    assert.equal(review.canSubmit,false);assert.equal(review.enrollmentActive,false);
+    // More than ten files are needed for all documents plus four fitting photos.
+    for(let n=0;n<4;n++)await service.upload(id(1),draft.id,id(230+n),{...await photo(n+1),kind:'SEAL_FITTING_PHOTO'});
+    assert.equal((await service.list(id(1),draft.id)).items.length,13);
+    for(let n=0;n<17;n++)await service.upload(id(1),draft.id,id(250+n),payload);
+    assert.equal((await service.list(id(1),draft.id)).items.length,30);
+    await service.upload(id(1),draft.id,id(201),payload); // Retry still works at the limit.
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(280),payload),e=>e.getStatus()===409);
+    await assert.rejects(()=>service.list(id(2),draft.id),e=>e.getStatus()===403);
+    for(const role of ['anon','authenticated','service_role','autoguardian_enrollment_api']) {
+      await db.exec('begin;set local role '+role);
+      await assert.rejects(()=>db.query('select private.enrollment_evidence_checklist($1)',[draft.id]),e=>e.code==='42501');
+      await db.exec('rollback');
+    }
+    // Owner edits advance the generation; stale files and retry keys cannot resurrect evidence.
+    await db.query('update app.enrollment_drafts set owner_generation=owner_generation+1,revision=revision+1 where id=$1',[draft.id]);
+    value=await service.list(id(1),draft.id);assert.deepEqual(value.items,[]);
+    assert.ok(value.evidenceChecklist.items.every(item=>item.status==='MISSING'));
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(201),payload),e=>e.getStatus()===409);
+    await service.upload(id(1),draft.id,id(281),{...payload,kind:'REGISTRATION_DOCUMENT'});
+    assert.equal(state(await service.list(id(1),draft.id),'REGISTRATION_PROOF'),'COMPLETE');
+    review=await readiness.read(id(1),draft.id);assert.equal(review.evidenceChecklist.complete,false);
+    for(const table of ['app.vehicles','app.ownerships','private.owners'])assert.equal((await db.query('select count(*)::int n from '+table)).rows[0].n,0);
+  } finally {await db.close();}
+});
+
+test('evidence endpoints report missing checklist setup without enabling uploads',async()=>{
+  const store={list:async()=>({items:[]})};
+  const service=new EvidenceService(store,{check:async()=>{},put:async()=>{},get:async()=>{}},evidenceCipher(randomBytes(32)));
+  for(const operation of [()=>service.list(id(1),id(2)),()=>service.upload(id(1),id(2),id(3),payload)])
+    await assert.rejects(operation,e=>e.getStatus()===503 && e.getResponse().code==='EVIDENCE_SETUP_REQUIRED');
 });

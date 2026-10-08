@@ -12,6 +12,7 @@ import { readReadiness } from './readiness';
 import { DraftEditor, ErrorNotice } from './LiveDraftScreens';
 import EnrollmentOwnerScreen from './EnrollmentOwnerScreen';
 import { EvidencePanel } from './EvidencePanel';
+import { documentEvidenceKinds } from './evidenceChecklist';
 import { EnrollmentSealFitting } from './LiveSealScreens';
 import EnrollmentReviewScreen from './EnrollmentReviewScreen';
 import { enrollmentRoute, enrollmentSteps, savedWizardSteps, wizardParams, type EnrollmentStep } from './wizard';
@@ -84,7 +85,7 @@ export default function EnrollmentWizardScreen() {
       {!id && step!=='vehicle' && <Notice>{t('enrollmentWizard.saveFirst')}</Notice>}
       {id && step==='owner' && <EnrollmentOwnerScreen embedded onBusyChange={setBusy} onDirtyChange={setDirty}/>}
       {id && step==='documents' && <><Notice>{t('enrollmentWizard.ownerFirst')}</Notice>
-        <EvidencePanel draftId={id} kinds={['OWNER_ID','REGISTRATION_DOCUMENT','VEHICLE_PHOTO']}
+        <EvidencePanel draftId={id} kinds={documentEvidenceKinds}
           disabled={!readiness.data?.checks.some(c=>c.code==='OWNER_DETAILS_SAMPLE' && c.status==='COMPLETE') || readiness.isFetching || readiness.isError}
           onBusyChange={setBusy} onUploaded={()=>void refreshReadiness()}/></>}
       {id && step==='seals' && <EnrollmentSealFitting embedded onBusyChange={setBusy} onDirtyChange={setDirty}

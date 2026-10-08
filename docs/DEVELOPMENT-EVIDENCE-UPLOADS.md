@@ -1,5 +1,10 @@
 # Development document and photo uploads
 
+The original staging guide below describes migration 007. The current wizard
+requires migrations through 011 and uses the [detailed eight-item checklist](DEVELOPMENT-EVIDENCE-CHECKLIST.md),
+with a registration/purchase alternative, six named photo requirements and a
+30-file limit per current owner generation. Follow that guide for current acceptance.
+
 This increment stages **synthetic sample files only**, using temporary development email authentication. It does not verify identity, clear malware, grant ownership, process payment or activate enrollment. Phone OTP remains deferred at the user's request. Production agent factors, real identity capture, native encrypted offline storage and production key management remain pending.
 
 ## Supabase setup

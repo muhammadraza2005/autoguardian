@@ -6,7 +6,9 @@ import sharp from 'sharp';
 import { Pool, PoolClient } from 'pg';
 export const EVIDENCE_MAX=2097152;
 export const EVIDENCE_BUCKET='development-enrollment-evidence';
-export const evidenceKinds=['OWNER_ID','REGISTRATION_DOCUMENT','VEHICLE_PHOTO','SEAL_FITTING_PHOTO'] as const;
+export const evidencePhotoKinds=['VEHICLE_PHOTO','SEAL_FITTING_PHOTO','VEHICLE_FRONT','VEHICLE_REAR',
+  'VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO'] as const;
+export const evidenceKinds=['OWNER_ID','REGISTRATION_DOCUMENT','PURCHASE_PROOF',...evidencePhotoKinds] as const;
 type Kind=typeof evidenceKinds[number];
 type Metadata={id:string;kind:Kind;mimeType:string;byteSize:number;status:'PENDING'|'STAGED';createdAt:string};
 type RecordRow={id:string;tenant_id:string;draft_id:string;owner_profile_id:string;kind:Kind;mime_type:string;byte_size:number;
@@ -48,7 +50,7 @@ export async function evidenceInput(body:unknown) {
   if(!raw.length || raw.length>EVIDENCE_MAX || raw.toString('base64')!==dataBase64) throw new BadRequestException({code:'INVALID_EVIDENCE'});
   let bytes:Buffer;let mime:string;
   if(raw.subarray(0,5).toString()==='%PDF-') {
-    if(['VEHICLE_PHOTO','SEAL_FITTING_PHOTO'].includes(kind) || !/%%EOF\s*$/.test(raw.subarray(-1024).toString('latin1'))
+    if((evidencePhotoKinds as readonly string[]).includes(kind) || !/%%EOF\s*$/.test(raw.subarray(-1024).toString('latin1'))
       || /\/(JavaScript|JS|Launch|EmbeddedFiles|RichMedia|Encrypt)\b/i.test(raw.toString('latin1'))) {
       throw new BadRequestException({code:'INVALID_EVIDENCE'});
     }
@@ -96,7 +98,9 @@ export class SupabaseEvidenceStorage implements EvidenceStorage {
 }
 export class PostgresEvidenceStore {
   constructor(private readonly pool:Pool,private readonly tenantId:string) {}
-  list(actor:string,id:string):Promise<{items:Metadata[]}> {return this.call(actor,'enrollment_attachment_list',[id]);}
+  list(actor:string,id:string):Promise<{items:Metadata[];evidenceChecklist:{version:number;complete:boolean;items:{code:string;status:string}[]}}> {
+    return this.call(actor,'enrollment_attachment_list',[id]);
+  }
   reserve(actor:string,id:string,key:string,input:Awaited<ReturnType<typeof evidenceInput>>):Promise<RecordRow> {
     return this.call(actor,'enrollment_attachment_reserve',[id,key,input.kind,input.mime,input.bytes.length,input.sha]);
   }
@@ -116,6 +120,7 @@ export class PostgresEvidenceStore {
       if(code==='AG404') throw new NotFoundException({code:'EVIDENCE_NOT_FOUND'});
       if(code==='AG403') throw new ForbiddenException({code:'AGENT_ACCESS_REQUIRED'});
       if(code==='AG409' || code==='23505') throw new ConflictException({code:'EVIDENCE_CONFLICT'});
+      if(code==='42883' || code==='42P01') throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});
       if(code==='AG422') throw new UnprocessableEntityException({code:'OWNER_PROFILE_UNAVAILABLE'});
       if(code==='AG400' || code==='23514') throw new BadRequestException({code:'INVALID_EVIDENCE'});
       throw error;
@@ -127,6 +132,7 @@ export class EvidenceService {
     private readonly cipher?:ReturnType<typeof evidenceCipher>) {}
   async list(actor:string,id:string) {
     const result=await this.store.list(actor,id);
+    if(result.evidenceChecklist?.version!==1) throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});
     let enabled=false;
     if(this.storage && this.cipher) {try {await this.storage.check();enabled=true;} catch { /* Keep setup failures generic. */ }}
     return {...result,uploadsEnabled:enabled,sampleOnly:true,maxBytes:EVIDENCE_MAX};
@@ -134,7 +140,9 @@ export class EvidenceService {
   async upload(actor:string,id:string,key:string,body:unknown) {
     if(!this.storage || !this.cipher) throw unavailable();
     // Check draft authorization before parsing or handing bytes to privileged Storage.
-    await this.store.list(actor,id);await this.storage.check();
+    const saved=await this.store.list(actor,id);
+    if(saved.evidenceChecklist?.version!==1) throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});
+    await this.storage.check();
     const input=await evidenceInput(body);const row=await this.store.reserve(actor,id,key,input);
     if(row.status!=='STAGED') {
       await this.storage.put(row.object_path,this.cipher.encrypt(input.bytes,row));

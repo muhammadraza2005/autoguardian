@@ -1,5 +1,13 @@
 # Development seal stock and fitting
 
+Current increment: apply missing migrations through 012 and follow
+[seal validation setup and acceptance](DEVELOPMENT-SEAL-VALIDATION.md). The connected
+wizard now supports QR/manual code entry, per-position diagnostics, and rejection
+of identical image content used for multiple seals. The current attachment limit
+is 30 per owner generation; the detailed eight-item evidence checklist replaces
+the original aggregate document summary described below. The numbered fitting
+positions remain development placeholders.
+
 This step adds real server persistence for **synthetic stock and provisional enrollment drafts**. Phone OTP and the remaining encryption verification work remain deferred at the user's request. Production activation, payment, physical seal validation and signed QR generation are separate work. No core vehicle, ownership, subscription or active seal is created here.
 
 ## Run in Supabase

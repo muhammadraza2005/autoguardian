@@ -16,7 +16,7 @@ export class PostgresReadinessStore implements ReadinessStore {
       const allowed = await client.query('select private.enrollment_agent_id(null) as actor');
       if (!allowed.rows[0].actor) throw new ForbiddenException({ code: 'AGENT_ACCESS_REQUIRED' });
       const result = await client.query('select private.enrollment_readiness($1) as result', [draftId]);
-      if (!result.rows[0].result?.checks?.some((check: {code:string}) => check.code === 'OWNER_DETAILS_SAMPLE')) {
+      if (result.rows[0].result?.evidenceChecklist?.version !== 1 || result.rows[0].result?.sealValidation?.version !== 1) {
         throw new ServiceUnavailableException({ code: 'READINESS_SETUP_REQUIRED' });
       }
       await client.query('commit');

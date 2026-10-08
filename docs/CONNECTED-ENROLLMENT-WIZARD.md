@@ -10,18 +10,29 @@ The synthetic design preview remains available only in development demo mode.
 1. Start **Start Backend.cmd** and **Preview Live Login.cmd**.
 2. Sign in with the accredited development agent account. Open **Enrollment
    drafts** from the account, or visit `http://localhost:8081/agent` in that tab.
+   Eligible agents now land in `/agent` automatically after sign-in. The old
+   `/live-account` URL opens Account inside the merged agent tabs.
 3. Use the **Enrollments**, **New enrollment**, **Seal stock** and **Account** tabs.
    **Start a new enrollment** explicitly starts a new vehicle draft;
    **Continue enrollment** resumes the selected server draft.
 4. The wizard steps are **Vehicle → Owner → Documents → Seals → Review**.
    Save vehicle changes to continue to Owner. Save fictional owner details and
    record the separate sample acknowledgments before continuing to Documents.
-5. Stage fictional identity, registration and vehicle samples. Pending uploads
+5. Stage fictional owner ID, registration or purchase proof, and six distinct
+   front/rear/left/right/chassis/plate photos. See the
+   [detailed evidence checklist](DEVELOPMENT-EVIDENCE-CHECKLIST.md). Pending uploads
    do not complete a step. Save package/fitting selections; a complete sample
    fitting advances to Review, while a partial fitting stays editable.
 6. Review uses saved server data. **Refresh readiness** obtains a new snapshot
    and hides old results while loading or after an error. A changed draft revision
    makes previous fitting stale until resaved.
+
+Apply missing migrations through 012 for the current Seals/Review contracts. Seals
+now supports QR/manual development codes, assigned-stock checks and four distinct
+fitting photos. The server returns numbered diagnostics in both steps; invalid
+stock/types/photos block saving, while missing entries allow a partial draft.
+See [seal validation](DEVELOPMENT-SEAL-VALIDATION.md) for camera, stock and duplicate
+image acceptance. These checks do not verify physical positions or authenticity.
 
 Step buttons allow returning to saved draft sections. Unsaved changes and pending
 operations disable wizard step changes. Vehicle and fitting working copies retain
@@ -37,7 +48,7 @@ missing drafts and revoked access do not fall back to fixtures.
 ## Boundaries and setup
 
 No SQL migration or backend API change is introduced by this UI integration.
-Existing migrations 001–010 and backend development settings remain prerequisites;
+Existing migrations 001–011 and backend development settings remain prerequisites;
 see [owner/consent setup](DEVELOPMENT-OWNER-CONSENT.md),
 [sample evidence setup](DEVELOPMENT-EVIDENCE-UPLOADS.md) and
 [seal fitting setup](DEVELOPMENT-SEAL-FITTING.md).
@@ -68,7 +79,7 @@ URL, so complete the manual walkthrough below before calling this fully accepted
 
 - Create a dedicated fictional draft; save vehicle, owner details and sample
   acknowledgments. Confirm each save and forward step uses the saved draft ID.
-- Upload the three sample document types; save no-seals or a complete four-seal
+- Complete the eight required evidence items; save no-seals or a complete four-seal
   sample fitting. Confirm pending uploads and partial/stale fitting do not count.
 - Edit owner details and check that old consent/evidence disappear and fitting
   needs resaving. Verify failed/ambiguous saves retain the existing retry behavior.

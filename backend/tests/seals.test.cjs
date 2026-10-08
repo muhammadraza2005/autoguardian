@@ -56,7 +56,7 @@ test('stock, fitting reservations and photos persist atomically without activati
     for(let n=1;n<=4;n++){
       const photo=id(100+n);photos.push(photo);
       await db.exec(`insert into private.enrollment_attachments(id,tenant_id,draft_id,agent_user_id,organization_id,owner_profile_id,kind,mime_type,byte_size,sha256,object_path,status)
-        values('${photo}','${tenant}','${draft.id}','${profile}','${org}','${profile}','SEAL_FITTING_PHOTO','image/jpeg',10,'${'a'.repeat(64)}','synthetic-${n}','STAGED');`);
+        values('${photo}','${tenant}','${draft.id}','${profile}','${org}','${profile}','SEAL_FITTING_PHOTO','image/jpeg',10,'${String(n).padStart(64,'a')}','synthetic-${n}','STAGED');`);
     }
     await assert.rejects(()=>seals.save(id(1),second.id,id(94),input('STANDARD',[placement(1,'DEV-SEAL-STD-005',photos[0])])),e=>e.getStatus()===422);
     const complete=input('STANDARD',photos.map((photo,i)=>placement(i+1,'DEV-SEAL-STD-00'+(i+1),photo)),1);
@@ -90,6 +90,7 @@ test('seal APIs enforce identity, agent/organization/tenant scope and deny direc
       insert into app.agent_accreditations(tenant_id,user_id,organization_id) values('${tenant}','${id(22)}','${org}');`);
     assert.equal((await seals.stock(id(2),org,{limit:20})).items.length,0);
     await assert.rejects(()=>seals.fitting(id(2),draft.id),e=>e.getStatus()===404);
+    await assert.rejects(()=>seals.validate(id(2),draft.id,input()),e=>e.getStatus()===404);
     await assert.rejects(()=>seals.save(id(2),draft.id,id(90),input('NONE')),e=>e.getStatus()===404);
     await assert.rejects(()=>seals.stock(id(1),id(900),{limit:20}),e=>e.getStatus()===403);
     await assert.rejects(()=>new PostgresSealStore(pool,id(900)).fitting(id(1),draft.id),e=>e.getStatus()===403);
@@ -102,11 +103,83 @@ test('seal APIs enforce identity, agent/organization/tenant scope and deny direc
     const route=base+'/v1/enrollment-drafts/'+draft.id+'/seals';
     assert.equal((await fetch(route)).status,401);assert.equal((await fetch(base+'/v1/seal-stock?organizationId='+org)).status,401);
     const headers={Authorization:'Bearer agent','Content-Type':'application/json','Idempotency-Key':id(99)};
+    assert.equal((await fetch(route+'/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(input())})).status,401);
+    assert.equal((await fetch(route+'/validate?unexpected=1',{method:'POST',headers,body:JSON.stringify(input())})).status,400);
+    const checked=await fetch(route+'/validate',{method:'POST',headers,body:JSON.stringify(input())});
+    assert.equal(checked.status,200);assert.equal(checked.headers.get('cache-control'),'no-store');
+    assert.equal((await checked.json()).sealValidation.complete,false);
+    assert.equal((await seals.fitting(id(1),draft.id)).fittingRevision,0);
     assert.equal((await fetch(route+'?unexpected=1',{headers})).status,400);
     assert.equal((await fetch(route,{method:'POST',headers,body:JSON.stringify(input('NONE'))})).status,200);
     assert.equal((await fetch(base+'/v1/seal-stock?organizationId='+org,{headers})).status,200);
     await db.exec(`update app.agent_accreditations set status='SUSPENDED' where user_id='${profile}'`);
     assert.equal((await fetch(route,{headers})).status,403);
+    assert.equal((await fetch(route+'/validate',{method:'POST',headers,body:JSON.stringify(input())})).status,403);
     assert.equal((await fetch(base+'/v1/seal-stock?organizationId='+org,{headers})).status,403);
   }finally{if(app)await app.close();await db.close();}
+});
+
+test('read-only diagnostics cover invalid stock and distinct image content; failed saves roll back and retries reflect revocation',async()=>{
+  const {db,drafts,seals,draft,draftBody}=await foundation();
+  const issues=(value,position)=>value.sealValidation.slots.find(s=>s.position===position).issues;
+  try {
+    const initial=await seals.fitting(id(1),draft.id);
+    assert.deepEqual(initial.sealValidation.issues,['PACKAGE_REQUIRED']);
+    const bad=sealFittingInput({...input(),placements:[placement(1,'DEV-SEAL-STD-001'),placement(2,'DEV-SEAL-STD-001'),
+      placement(3,'DEV-SEAL-ALM-001'),placement(4,'DEV-SEAL-UNKNOWN')]},true);
+    let result=await seals.validate(id(1),draft.id,bad);
+    assert.ok(issues(result,1).includes('DUPLICATE_SEAL'));assert.ok(issues(result,2).includes('DUPLICATE_SEAL'));
+    assert.ok(issues(result,3).includes('PACKAGE_TYPE_MISMATCH'));assert.ok(issues(result,4).includes('SEAL_UNAVAILABLE'));
+    await db.exec("update private.development_seal_stock set status='REVOKED' where code='DEV-SEAL-STD-001'; update private.development_seal_stock set status='DESTROYED' where code='DEV-SEAL-STD-002'");
+    result=await seals.validate(id(1),draft.id,input('STANDARD',[placement(1,'DEV-SEAL-STD-001'),placement(2,'DEV-SEAL-STD-002')]));
+    assert.ok(issues(result,1).includes('SEAL_REVOKED'));assert.ok(issues(result,2).includes('SEAL_DESTROYED'));
+    await db.exec("update private.development_seal_stock set status='IN_STOCK'");
+    const photos=[id(501),id(502),id(503),id(504)];
+    for(let n=0;n<4;n++) await db.query(`insert into private.enrollment_attachments
+      (id,tenant_id,draft_id,agent_user_id,organization_id,owner_profile_id,kind,mime_type,byte_size,sha256,object_path,status)
+      values($1,$2,$3,$4,$5,$4,'SEAL_FITTING_PHOTO','image/jpeg',10,$6,$7,'STAGED')`,
+      [photos[n],tenant,draft.id,profile,org,(n<2?'a':String(n)).repeat(64),'test-'+n]);
+    const complete=input('STANDARD',photos.map((photo,n)=>placement(n+1,'DEV-SEAL-STD-00'+(n+1),photo)));
+    result=await seals.validate(id(1),draft.id,complete);
+    assert.ok(issues(result,1).includes('DUPLICATE_PHOTO'));assert.ok(issues(result,2).includes('DUPLICATE_PHOTO'));
+    await assert.rejects(()=>seals.save(id(1),draft.id,id(510),complete),e=>e.getStatus()===400);
+    assert.equal((await seals.fitting(id(1),draft.id)).fittingRevision,0);
+    for(const table of ['draft_seal_packages','draft_seal_events','draft_seal_placements'])
+      assert.equal((await db.query('select count(*)::int n from private.'+table)).rows[0].n,0);
+    await db.query("update private.enrollment_attachments set sha256=$1 where id=$2",['b'.repeat(64),photos[1]]);
+    await db.query("update private.enrollment_attachments set status='PENDING' where id=$1",[photos[3]]);
+    assert.ok(issues(await seals.validate(id(1),draft.id,complete),4).includes('PHOTO_PENDING'));
+    await db.query("update private.enrollment_attachments set status='STAGED' where id=$1",[photos[3]]);
+    result=await seals.validate(id(1),draft.id,complete);assert.equal(result.sealValidation.complete,true);
+    assert.equal(result.sealValidation.physicalVerified,false);
+    assert.ok(!/sealCode|photoId|sha256|object_path/.test(JSON.stringify(result)));
+    assert.equal((await db.query('select count(*)::int n from private.draft_seal_events')).rows[0].n,0);
+    const saved=await seals.save(id(1),draft.id,id(510),complete);assert.equal(saved.sealDraftComplete,true);
+    await db.exec("update private.development_seal_stock set status='REVOKED' where code='DEV-SEAL-STD-001'");
+    const replay=await seals.save(id(1),draft.id,id(510),complete);
+    assert.equal(replay.sealDraftComplete,false);assert.equal(replay.fittingRevision,1);assert.ok(issues(replay,1).includes('SEAL_REVOKED'));
+    assert.equal((await db.query('select count(*)::int n from private.draft_seal_events')).rows[0].n,1);
+    const second=(await drafts.save(id(1),draftInput({...draftBody,vehicle:{...draftBody.vehicle,chassisIdentifier:'DIAGNOSTIC-2',plate:'CHECK-2'}}),undefined,id(511))).draft;
+    result=await seals.validate(id(1),second.id,input('STANDARD',[placement(1,'DEV-SEAL-STD-003',photos[2])]));
+    assert.ok(issues(result,1).includes('SEAL_RESERVED'));assert.ok(issues(result,1).includes('PHOTO_UNAVAILABLE'));
+    await drafts.save(id(1),draftInput({...draftBody,expectedRevision:1},true),draft.id);
+    await assert.rejects(()=>seals.validate(id(1),draft.id,complete),e=>e.getStatus()===409);
+    assert.deepEqual((await seals.fitting(id(1),draft.id)).sealValidation.issues,['STALE_FITTING']);
+    // Reassigned stock disappears under RLS, including knowledge of its status/code.
+    await db.query('update private.development_seal_stock set assigned_agent_id=$1 where code=$2',[id(22),'DEV-SEAL-STD-001']);
+    result=await seals.validate(id(1),draft.id,input('STANDARD',[placement(1,'DEV-SEAL-STD-001')],1,2));
+    assert.ok(issues(result,1).includes('SEAL_UNAVAILABLE'));assert.ok(!issues(result,1).includes('SEAL_REVOKED'));
+    await db.exec(`insert into app.role_assignments(tenant_id,user_id,role_code,organization_id) values('${tenant}','${id(22)}','ENROLLMENT_AGENT','${org}');
+      insert into app.agent_accreditations(tenant_id,user_id,organization_id) values('${tenant}','${id(22)}','${org}');`);
+    const transferredDraft=(await drafts.save(id(2),draftInput({...draftBody,vehicle:{...draftBody.vehicle,chassisIdentifier:'TRANSFERRED-STOCK',plate:'CHECK-3'}}),undefined,id(512))).draft;
+    result=await seals.validate(id(2),transferredDraft.id,input('STANDARD',[placement(1,'DEV-SEAL-STD-001')]));
+    assert.ok(issues(result,1).includes('SEAL_RESERVED'));
+    assert.equal((await seals.stock(id(2),org,{limit:20})).items[0].available,false);
+    await assert.rejects(()=>seals.fitting(id(2),draft.id),e=>e.getStatus()===404);
+    for(const role of ['anon','authenticated','service_role','autoguardian_enrollment_api']) {
+      await db.exec('begin;set local role '+role);
+      await assert.rejects(()=>db.query('select private.draft_seal_validation($1,$2,$3,true)',[draft.id,'NONE','[]']),e=>e.code==='42501');
+      await db.exec('rollback');
+    }
+  } finally {await db.close();}
 });

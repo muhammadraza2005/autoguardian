@@ -9,6 +9,8 @@ import { ApiError } from '@/services/api/client';
 import { Action, AppHeader, Card, Copy, DetailRow, Heading, Label, Notice, StitchPage } from '@/components/ui/Stitch';
 import { readReadiness, sampleCheckCodes, productionCheckCodes, type EnrollmentReadiness } from './readiness';
 import { enrollmentRoute } from './wizard';
+import { EvidenceRequirementList } from './EvidenceRequirementList';
+import { SealValidationSummary } from './SealValidationSummary';
 
 export default function EnrollmentReviewScreen({embedded=false}:{embedded?:boolean}={}) {
   const { t } = useTranslation(); const router = useRouter(); const { profile, request } = useSession();
@@ -53,6 +55,8 @@ export default function EnrollmentReviewScreen({embedded=false}:{embedded?:boole
       <Heading>{t('liveReadiness.samples')}</Heading>
       <Copy>{t('liveReadiness.savedOnly')}</Copy>
       <Card>{checklist(sampleCheckCodes, data)}</Card>
+      <EvidenceRequirementList value={data.evidenceChecklist}/>
+      <SealValidationSummary value={data.sealValidation} saved/>
       <Action secondary label={t('liveOwner.open')} onPress={() => router.setParams(enrollmentRoute('owner',safeId!).params)} />
       <Action secondary label={t('liveEnrollment.open')} onPress={() => router.setParams(enrollmentRoute('vehicle',safeId!).params)} />
       <Action secondary label={t('liveEvidence.openUploads')} onPress={() => router.setParams(enrollmentRoute('documents',safeId!).params)} />

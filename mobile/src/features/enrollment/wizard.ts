@@ -19,6 +19,10 @@ export function wizardParams(id: unknown, step: unknown) {
 export function developmentAgentAllowed(development: boolean, profile: { roles: { code: string; organizationId: string | null }[] } | null) {
   return development && Boolean(profile?.roles.some(r => r.code === 'ENROLLMENT_AGENT' && z.uuid().safeParse(r.organizationId).success));
 }
+export function connectedAgentRoute(development: boolean, profile: Parameters<typeof developmentAgentAllowed>[1], page: 'home' | 'account' = 'home') {
+  if (!developmentAgentAllowed(development, profile)) return '/live-account' as const;
+  return page === 'account' ? '/agent/account' as const : '/agent' as const;
+}
 export function savedWizardSteps(checks: { code: string; status: string }[]) {
   const complete = (code: string) => checks.some(c => c.code === code && c.status === 'COMPLETE');
   return {

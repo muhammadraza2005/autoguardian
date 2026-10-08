@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { sealValidationSchema } from './sealValidation.ts';
+import { evidenceChecklistSchema } from './evidenceChecklist.ts';
 
 export const sampleCheckCodes = ['VEHICLE_DRAFT', 'OWNER_SELECTION', 'IDENTITY_SAMPLE',
   'REGISTRATION_SAMPLE', 'VEHICLE_PHOTO_SAMPLE', 'SEAL_FITTING', 'OWNER_DETAILS_SAMPLE', 'CONSENT_SAMPLE'] as const;
@@ -12,7 +14,14 @@ export const readinessSchema = z.object({
   vehicle: z.object({ chassisIdentifier: z.string().min(1), plate: z.string().nullable(), category: z.string().min(1) }),
   sampleOnly: z.literal(true), canSubmit: z.literal(false), enrollmentActive: z.literal(false),
   checks: z.array(checkSchema).length(checkCodes.length),
+  evidenceChecklist: evidenceChecklistSchema,
+  sealValidation: sealValidationSchema,
 }).superRefine((value, ctx) => {
+  if(value.sealValidation.required!==(value.package!=='NONE')
+    || value.sealValidation.issues.includes('PACKAGE_REQUIRED')!==(value.package===null)
+    || value.sealValidation.issues.includes('STALE_FITTING')!==(value.checks.find(c=>c.code==='SEAL_FITTING')?.status==='STALE')
+    || value.sealValidation.complete!==(value.checks.find(c=>c.code==='SEAL_FITTING')?.status==='COMPLETE'))
+    ctx.addIssue({code:'custom',message:'Readiness does not match seal validation.'});
   if (new Set(value.checks.map(c => c.code)).size !== checkCodes.length
     || value.checks.some(c => productionCheckCodes.some(code => code === c.code)
       ? c.status !== 'UNAVAILABLE'
@@ -21,6 +30,15 @@ export const readinessSchema = z.object({
     || (value.package === null && (value.fittingRevision !== 0 || value.checks.find(c => c.code === 'SEAL_FITTING')?.status !== 'MISSING'))
     || (value.package !== null && value.fittingRevision === 0)) {
     ctx.addIssue({ code: 'custom', message: 'Invalid readiness checklist.' });
+  }
+  for (const [aggregate, codes] of [
+    ['IDENTITY_SAMPLE', ['OWNER_ID']], ['REGISTRATION_SAMPLE', ['REGISTRATION_PROOF']],
+    ['VEHICLE_PHOTO_SAMPLE', ['VEHICLE_FRONT','VEHICLE_REAR','VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO']],
+  ] as const) {
+    const complete=value.evidenceChecklist.items.filter(item=>(codes as readonly string[]).includes(item.code))
+      .every(item=>item.status==='COMPLETE');
+    if ((value.checks.find(c=>c.code===aggregate)?.status==='COMPLETE')!==complete)
+      ctx.addIssue({ code: 'custom', message: 'Readiness does not match required evidence.' });
   }
 });
 export type EnrollmentReadiness = z.infer<typeof readinessSchema>;

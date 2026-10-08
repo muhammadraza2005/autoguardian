@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {developmentAgentAllowed,enrollmentRoute,enrollmentSteps,savedWizardSteps,wizardParams} from '../src/features/enrollment/wizard.ts';
+import {connectedAgentRoute,developmentAgentAllowed,enrollmentRoute,enrollmentSteps,savedWizardSteps,wizardParams} from '../src/features/enrollment/wizard.ts';
 import {wizardEn,wizardFr} from '../src/i18n/wizardResources.ts';
 const id='00000000-0000-4000-8000-000000000001';
 test('connected agent shell is restricted to development and genuine organization-scoped roles',()=>{
@@ -20,6 +20,19 @@ test('wizard routes preserve the draft identity, explicitly clear it for new dra
   assert.deepEqual(wizardParams('new','vehicle'),{id:undefined,step:'vehicle',invalid:false});
   for(const [value,step] of [['invalid','owner'],[[id],'vehicle'],[id,'payment'],[id,['seals']]])assert.equal(wizardParams(value,step).invalid,true);
   assert.throws(()=>enrollmentRoute('vehicle','invalid'));
+});
+
+test('sign-in and old account links enter the merged agent tabs only with a genuine scoped development role',()=>{
+  const agent={roles:[{code:'ENROLLMENT_AGENT',organizationId:id}]};
+  assert.equal(connectedAgentRoute(true,agent),'/agent');
+  assert.equal(connectedAgentRoute(true,agent,'account'),'/agent/account');
+  for(const profile of [null,{roles:[]},{roles:[{code:'OWNER',organizationId:id}]},
+    {roles:[{code:'ENROLLMENT_AGENT',organizationId:null}]}]){
+    assert.equal(connectedAgentRoute(true,profile),'/live-account');
+    assert.equal(connectedAgentRoute(true,profile,'account'),'/live-account');
+  }
+  assert.equal(connectedAgentRoute(false,agent),'/live-account');
+  assert.equal(connectedAgentRoute(false,agent,'account'),'/live-account');
 });
 test('progress counts saved preparation only; stale fitting and production blockers never become completed review',()=>{
   const codes=['VEHICLE_DRAFT','OWNER_SELECTION','OWNER_DETAILS_SAMPLE','CONSENT_SAMPLE','IDENTITY_SAMPLE','REGISTRATION_SAMPLE','VEHICLE_PHOTO_SAMPLE','SEAL_FITTING'];

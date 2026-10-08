@@ -80,3 +80,22 @@ After migrations 001–004, run [005: enrollment drafts](migrations/202610060005
 ## Development seal stock and fitting
 
 After 007, run [008](migrations/202610060008_development_seal_fitting.sql) once, then [sample stock setup](setup-development-seal-stock.sql) as postgres in the development project. Expect 12 standard and 8 alarm sample seals. Follow the [app verification guide](../docs/DEVELOPMENT-SEAL-FITTING.md). No production stock issuance or enrollment activation is performed.
+
+## Detailed development evidence
+
+After 011, apply [012](migrations/202610090012_seal_fitting_validation.sql) once in
+development. It adds restricted read-only seal diagnostics, distinct fitting-image
+validation and safe Review summaries. Reservations remain visible to the restricted
+executor for currently assigned stock after reassignment, while direct client
+table access and write scopes remain restricted. No private codes, file IDs or
+hashes enter the diagnostic summary. See
+[setup and acceptance](../docs/DEVELOPMENT-SEAL-VALIDATION.md). Hosted SQL was not
+executed by this change. Physical verification and activation remain unavailable.
+
+After migrations through 010, run [011](migrations/202610090011_enrollment_evidence_checklist.sql)
+once in development. It adds six named photo kinds and purchase proof, computes
+eight requirements under forced RLS, and keeps existing encrypted attachments
+unchanged. Generic photos do not satisfy a specific view. The attachment limit is
+30 per current owner generation; pending files do not complete a requirement.
+See [setup and acceptance](../docs/DEVELOPMENT-EVIDENCE-CHECKLIST.md). This change
+was verified locally only; no hosted SQL was executed.

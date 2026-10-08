@@ -105,7 +105,7 @@ AutoGuardian/
 │   └── tests/                # Frontend tests
 ├── scripts/                  # CI/CD and utility scripts
 └── supabase/                 # Database schema and configuration
-    ├── migrations/           # Manual SQL migration files (001 - 009)
+    ├── migrations/           # Manual SQL migration files (001 - 012)
     └── tests/                # PGlite isolated DB tests
 ```
 
@@ -158,9 +158,11 @@ These are manual SQL files, NOT yet managed by Supabase CLI.
 - `007_enrollment_attachments.sql`: ⚠️ IMPLEMENTED BUT NOT FULLY VERIFIED. Attachment staging schema.
 - `008_development_seal_fitting.sql`: ⚠️ IMPLEMENTED BUT NOT FULLY VERIFIED. Synthetic stock and provisional fitting, tested locally; hosted acceptance remains separate.
 - `009_enrollment_readiness.sql`: ✅ IMPLEMENTED AND VERIFIED LOCALLY. Adds a restricted read-only readiness function. Hosted execution and signed-in UI acceptance are pending; see [readiness setup](docs/DEVELOPMENT-ENROLLMENT-READINESS.md).
+- `010_enrollment_owner_consent.sql`: ✅ IMPLEMENTED AND VERIFIED LOCALLY; hosted installation was subsequently confirmed. Adds encrypted sample owner details and versioned sample consent.
+- `011_enrollment_evidence_checklist.sql`: ✅ IMPLEMENTED AND VERIFIED LOCALLY. Adds the eight-item saved evidence checklist, purchase-proof alternative and distinct photo requirements. Hosted application and interactive acceptance remain pending; see [setup](docs/DEVELOPMENT-EVIDENCE-CHECKLIST.md).
 
 **SQL Still Requiring Execution:**
-Any new development deployment requires running `001` through `009` sequentially in the Supabase SQL editor, plus the applicable development setup scripts. Existing deployments apply only missing migrations; do not replay applied migrations. Production setup must exclude synthetic data and development-only authentication/workflows.
+Any new development deployment requires running `001` through `012` sequentially in the Supabase SQL editor, plus the applicable development setup scripts. Existing deployments apply only missing migrations; do not replay applied migrations. Production setup must exclude synthetic data and development-only authentication/workflows.
 
 ---
 
@@ -229,7 +231,8 @@ NestJS API located in `backend/src/`.
 | `/v1/enrollment-drafts`, `/v1/enrollment-drafts/:id` | GET/POST, GET/PUT | List/create/read/update drafts | JWT (development agent) | 🟡 PARTIAL |
 | `/v1/enrollment-drafts/:id/attachments`, `/:attachmentId/read` | GET/POST, POST | Encrypted sample uploads and authorized recovery | JWT (development agent) | 🟡 PARTIAL |
 | `/v1/seal-stock`, `/v1/enrollment-drafts/:id/seals` | GET, GET/POST | Assigned sample stock and provisional fitting | JWT (development agent) | 🟡 PARTIAL |
-| `/v1/enrollment-drafts/:id/readiness` | GET | Saved development checklist and explicit production blockers | JWT (development accredited agent) | ✅ VERIFIED LOCALLY; apply migration 009 before hosted use |
+| `/v1/enrollment-drafts/:id/seals/validate` | POST | Read-only per-position stock/type/photo diagnostics | JWT (development accredited agent) | ✅ VERIFIED LOCALLY; requires migration 012 |
+| `/v1/enrollment-drafts/:id/readiness` | GET | Saved development checklist and explicit production blockers | JWT (development accredited agent) | ✅ VERIFIED LOCALLY; requires migrations through 012 |
 
 ---
 
@@ -331,13 +334,13 @@ The database foundation, NestJS API architecture, and React Native frontend scaf
 3. Verify the frontend can run (`npm run web` in `/mobile`).
 
 **NEXT RECOMMENDED TASK:**
-> Finish browser/Android acceptance of the connected five-step agent wizard using fictional data (see docs/CONNECTED-ENROLLMENT-WIZARD.md). Migration 010 was confirmed installed by a read-only hosted runtime check; the user reported completing owner saves. Phone OTP integration is deferred by the project owner while other enrollment requirements are developed. Next extend the production evidence checklist and physical fitting validation, then payment, authority review rules and atomic finalization. OTP, production consent proof and stronger agent authentication must be completed before activation is enabled. Development samples must not satisfy production prerequisites.
+> Apply missing development migrations 011 and 012, then finish browser/Android acceptance of the evidence checklist and seal checks (see docs/DEVELOPMENT-SEAL-VALIDATION.md). Hosted 010 was previously confirmed; 011–012 are verified locally only. Phone OTP remains deferred by the project owner. Next define category-specific fitting positions and authenticated seal issuance, then implement production evidence review, payment, authority review rules and atomic finalization. OTP, production consent proof and stronger agent authentication must be completed before activation is enabled. Development samples must not satisfy production prerequisites.
 >
 > The backend already supports verified phone identities. Production draft access remains deliberately disabled until stronger agent authentication is implemented. Do not turn client or simulated payment success into production registration.
 
 **Rules for Agents:**
 - Do not recreate already implemented tables.
-- Write new SQL migrations in `supabase/migrations/` sequentially (next: `011_...`).
+- Write new SQL migrations in `supabase/migrations/` sequentially (next: `013_...`).
 - Never expose secrets.
 - Update this README when you implement a new feature.
 
@@ -630,8 +633,9 @@ because it could not reliably determine the current URL. Full interactive save,
 French/text-scaling and Android device acceptance remain pending; follow the
 [connected wizard guide](docs/CONNECTED-ENROLLMENT-WIZARD.md).
 
-Next development work after acceptance is the full evidence checklist and physical
-fitting validation, followed by payment, authority review rules and finalization.
+The detailed saved evidence checklist is now implemented in section 47 below.
+Next after acceptance is physical fitting validation and production evidence
+review, followed by payment, authority review rules and finalization.
 Phone OTP, production consent proof and stronger agent authentication must be
 completed before production activation. Encrypted native offline storage and sync
 are still unfinished.
@@ -648,3 +652,79 @@ owner selection, then vehicle fields) and focus editable text fields. The jump r
 after inline messages render and repeats on another invalid Save; ordinary typing,
 background refreshes and retrying an uncertain save do not move focus. Android
 keyboard and scrolling behavior still needs device acceptance.
+
+## 47. Detailed enrollment evidence checklist — 9 October 2026
+
+The connected Documents and Review steps now show eight saved requirements:
+owner ID; registration certificate **or** purchase proof; front, rear, left and
+right vehicle views; chassis photo; and plate photo. Each row shows missing,
+pending or saved status from the restricted server API. Documents progress only
+completes when every requirement is staged. Generic earlier vehicle photos remain
+available for audited download but do not count as a named view.
+
+Migration [011](supabase/migrations/202610090011_enrollment_evidence_checklist.sql)
+adds explicit evidence kinds, a shared server checklist and image-only constraints.
+Reservations serialize on the draft and reject the same normalized image for
+different required photo kinds. Registration and purchase proof are alternatives.
+The attachment limit increases from 10 to 30 per current owner generation,
+including pending uploads, so required documents and four fitting photos fit.
+Existing keys can still retry at the limit; changed payloads cannot reuse them.
+Owner changes/details edits invalidate the previous generation's evidence as before.
+
+The attachment and readiness reads include a versioned `evidenceChecklist` without
+private identity, file IDs, storage paths or hashes. Fitting's document summary uses
+the same result. English/French labels, counts and upload actions are included.
+Old/missing checklist setup returns unavailable, and stale results are hidden
+during reloads/errors. No new secrets or replacement encryption keys are needed.
+
+Production evidence authenticity, physical fitting inspection, authenticated
+consent, OTP, payment, authority review and finalization remain unfinished.
+Submission and activation remain disabled. Native private capture/offline storage
+are unchanged. See [setup and acceptance](docs/DEVELOPMENT-EVIDENCE-CHECKLIST.md).
+
+Validation: backend build and 26 tests, mobile typecheck/lint and 33 tests, web
+and Android Hermes exports, offline dependency compatibility and 123 isolated
+foundation checks pass. Android export required sandbox escalation for the
+installed Hermes compiler; no native device test was performed.
+Migration 011 also installs under a non-superuser schema owner. Hosted 011 was not
+applied in this change. Browser automation failed to initialize; interactive
+browser and Android-device acceptance remain pending.
+
+Connected landing navigation fix (9 October 2026): an eligible organization-scoped
+development agent now lands at `/agent` after sign-in or opening the app root.
+Old `/live-account` links redirect to `/agent/account`, keeping Account inside the
+merged header and four tabs. Other roles, missing/error profiles and production
+sessions retain their existing account/access behavior. Both routes reuse the
+existing development-agent gate; no permission or backend change is introduced.
+Validation: mobile TypeScript, lint and 34 tests pass, the offline dependency check
+passes with Expo's reliability warning, and port 8081 serves the updated route
+code. Interactive browser verification remains unavailable in this session.
+
+## 48. Development seal checks and code entry — 9 October 2026
+
+Seals now accepts assigned-stock selections, QR scans and manual development
+codes. A read-only server endpoint checks current stock, package types, duplicate
+codes, reservations and fitting photos before accepting a typed/scanned code or
+saving choices. Partial fitting drafts remain supported. Seals and Review display
+four numbered diagnostic results from the server; checking does not reserve stock.
+Camera permission is requested on demand, and manual entry remains available when
+the camera is unavailable. Scanned links and consumer QR tokens are rejected.
+
+Migration [012](supabase/migrations/202610090012_seal_fitting_validation.sql)
+rejects identical normalized image content used for different seals, even under
+different upload IDs. A failed save rolls back all fitting changes. Revision and
+exact-retry handling remain intact; retries reflect later stock revocation without
+another save event. Assigned-stock reservation reads also cover stock reassigned
+from a previous agent, without exposing that agent's draft identifiers.
+
+Apply missing development migrations through 012, then refresh the live agent
+app. No encryption key or environment changes are needed. Hosted 012 was not
+applied here. Follow [setup and acceptance](docs/DEVELOPMENT-SEAL-VALIDATION.md).
+Physical positions/authenticity, production inspection and activation remain
+unfinished; `physicalVerified`, submission and activation remain false.
+
+Validation: backend build and 27 tests, mobile TypeScript/lint and 38 tests, web
+and Android Hermes exports, and offline dependency compatibility pass. The Android
+compiler required sandbox escalation. The updated backend was restarted and its
+health/authenticated-route checks pass. Browser camera and native-device acceptance
+remain pending; browser automation could not initialize in this session.

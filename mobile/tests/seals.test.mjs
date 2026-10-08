@@ -2,8 +2,10 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import {readSealStock,readSealFitting,saveSealFitting,sealFittingBodySchema,sealFittingSchema} from '../src/features/enrollment/seals.ts';
 import {availableSealChoices} from '../src/features/enrollment/sealChoices.ts';
 const draft='00000000-0000-4000-8000-000000000001',key='00000000-0000-4000-8000-000000000002';
+const missingValidation={version:1,required:true,complete:false,physicalVerified:false,issues:['PACKAGE_REQUIRED'],
+  slots:[1,2,3,4].map(position=>({position,issues:['SEAL_REQUIRED','PHOTO_REQUIRED']}))};
 const empty={draftId:draft,draftRevision:1,fittingRevision:0,package:null,current:false,placements:[],sampleOnly:true,
-  sealDraftComplete:false,sampleDocumentsSaved:false,ownerVerified:false,paymentConfirmed:false,enrollmentActive:false};
+  sealDraftComplete:false,sampleDocumentsSaved:false,ownerVerified:false,paymentConfirmed:false,enrollmentActive:false,sealValidation:missingValidation};
 test('guided choices exclude reused, revoked, reserved and excess package types, while allowing this draft’s saved seals',()=>{
   const stock=[1,2,3,4,5].map(n=>({code:'DEV-SEAL-STD-00'+n,type:'STANDARD',status:'IN_STOCK',available:true}));
   stock.push({code:'DEV-SEAL-ALM-001',type:'ALARM',status:'IN_STOCK',available:true},
@@ -27,7 +29,8 @@ test('seal drafts cannot imply activation or completeness from a partial fitting
   assert.throws(()=>sealFittingBodySchema.parse({...body,package:'NONE'}));
 });
 test('fitting saves preserve replay key and revisions; stock is scoped and cannot claim revoked seals are available',async()=>{
-  const calls=[];const result={...empty,package:'NONE',current:true,fittingRevision:1,sealDraftComplete:true};
+  const calls=[];const result={...empty,package:'NONE',current:true,fittingRevision:1,sealDraftComplete:true,
+    sealValidation:{...missingValidation,required:false,complete:true,issues:[],slots:[1,2,3,4].map(position=>({position,issues:[]}))}};
   const body={package:'NONE',placements:[],expectedDraftRevision:1,expectedFittingRevision:0};
   const request=async(path,options)=>{calls.push({path,options});return result;};
   await saveSealFitting(request,draft,key,body);await saveSealFitting(request,draft,key,body);

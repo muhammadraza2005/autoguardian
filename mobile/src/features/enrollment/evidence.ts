@@ -1,5 +1,8 @@
 import { z } from 'zod';
-export const evidenceKindSchema=z.enum(['OWNER_ID','REGISTRATION_DOCUMENT','VEHICLE_PHOTO','SEAL_FITTING_PHOTO']);
+import { evidenceChecklistSchema, evidenceRequirements } from './evidenceChecklist.ts';
+export const evidencePhotoKinds=['VEHICLE_PHOTO','SEAL_FITTING_PHOTO','VEHICLE_FRONT','VEHICLE_REAR',
+  'VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO'] as const;
+export const evidenceKindSchema=z.enum(['OWNER_ID','REGISTRATION_DOCUMENT','PURCHASE_PROOF',...evidencePhotoKinds]);
 export type EvidenceKind=z.infer<typeof evidenceKindSchema>;
 export const evidenceMetadata=z.object({id:z.uuid(),kind:evidenceKindSchema,mimeType:z.enum(['application/pdf','image/jpeg','image/png']),
   byteSize:z.number().int().min(1).max(2097152),status:z.enum(['PENDING','STAGED']),createdAt:z.iso.datetime({offset:true})});
@@ -7,13 +10,20 @@ type Request=(path:string,options?:{method?:'POST';body?:unknown;idempotencyKey?
 export function sampleFilePayload(kind:EvidenceKind,dataUrl:string,size:number) {
   if(!Number.isInteger(size) || size<1 || size>2097152) throw new Error('Invalid sample file size.');
   const match=/^data:(application\/pdf|image\/jpeg|image\/png);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
-  if(!match || match[2].length!==Math.ceil(size/3)*4 || (['VEHICLE_PHOTO','SEAL_FITTING_PHOTO'].includes(kind) && match[1]==='application/pdf')) throw new Error('Invalid sample file.');
+  if(!match || match[2].length!==Math.ceil(size/3)*4 || ((evidencePhotoKinds as readonly string[]).includes(kind) && match[1]==='application/pdf')) throw new Error('Invalid sample file.');
   return {kind:evidenceKindSchema.parse(kind),dataBase64:match[2]};
 }
 export async function listEvidence(request:Request,id:string,signal?:AbortSignal) {
-  const result=z.object({items:z.array(evidenceMetadata).max(10),uploadsEnabled:z.boolean(),sampleOnly:z.literal(true),maxBytes:z.literal(2097152)})
+  const result=z.object({items:z.array(evidenceMetadata).max(30),evidenceChecklist:evidenceChecklistSchema,
+    uploadsEnabled:z.boolean(),sampleOnly:z.literal(true),maxBytes:z.literal(2097152)})
     .parse(await request('/v1/enrollment-drafts/'+z.uuid().parse(id)+'/attachments',{signal}));
   if(new Set(result.items.map(item=>item.id)).size!==result.items.length) throw new Error('Invalid attachment list.');
+  for(const requirement of evidenceRequirements) {
+    const files=result.items.filter(item=>(requirement.kinds as readonly string[]).includes(item.kind));
+    const status=files.some(item=>item.status==='STAGED')?'COMPLETE':files.length?'PENDING':'MISSING';
+    if(result.evidenceChecklist.items.find(item=>item.code===requirement.code)?.status!==status)
+      throw new Error('Evidence checklist does not match saved attachments.');
+  }
   return result;
 }
 export async function uploadEvidence(request:Request,id:string,key:string,body:{kind:EvidenceKind;dataBase64:string},signal?:AbortSignal) {

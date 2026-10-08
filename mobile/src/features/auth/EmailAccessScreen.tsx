@@ -4,15 +4,17 @@ import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { AppHeader, StitchPage, Heading, Copy, Card, Label, Action, Notice, stitchStyles } from '@/components/ui/Stitch';
 import { useSession } from './SessionProvider';
+import { runtime } from '@/config/runtime';
+import { connectedAgentRoute } from '@/features/enrollment/wizard';
 
 export default function EmailAccessScreen() {
   const { t } = useTranslation();
-  const { session, loading, error, signInWithEmail, refreshProfile } = useSession();
+  const { session, profile, loading, error, signInWithEmail, refreshProfile } = useSession();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  if (session?.source === 'server') return <Redirect href="/live-account" />;
+  if (session?.source === 'server') return <Redirect href={connectedAgentRoute(runtime.developmentEmailAuth, profile)} />;
   async function submit() {
     setBusy(true); setFailed(false);
     try { await signInWithEmail(email, password); setPassword(''); }

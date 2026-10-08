@@ -77,3 +77,23 @@ Migration 006 restricts owner selection to designated organization-scoped develo
 ## Development seal stock and fitting
 
 See [development seal fitting](../docs/DEVELOPMENT-SEAL-FITTING.md). Apply migration 008 and the synthetic stock setup after 007. The backend adds scoped stock reads and idempotent provisional fitting saves with package/type, reservation, photo and revision checks. These routes do not activate enrollments or bypass owner OTP/payment.
+
+## Detailed development evidence checklist
+
+Seal fitting/readiness now also require migration 012; see
+[seal validation setup](../docs/DEVELOPMENT-SEAL-VALIDATION.md). The authenticated
+read-only `POST /v1/enrollment-drafts/:id/seals/validate` checks both expected
+revisions and returns safe per-position diagnostics without reserving stock.
+Fitting saves reject identical photo content across entries atomically. Assigned
+stock checks include reservations retained after reassignment. Existing exact
+retry handling returns current checks, including later revocation, without another
+event. Missing versioned validation returns 503 and rolls back the transaction.
+
+After 010, apply [011](../supabase/migrations/202610090011_enrollment_evidence_checklist.sql)
+once in development. Attachment/readiness responses include the same versioned
+eight-item checklist. Purchase proof can satisfy registration evidence; six named
+photos must use distinct images and cannot be PDFs. The limit is 30 files per
+current owner generation, including pending reservations. Existing encryption,
+authorization, audit and retry rules remain in place; production submission stays
+disabled. No new environment setting is needed. Follow the
+[setup and acceptance guide](../docs/DEVELOPMENT-EVIDENCE-CHECKLIST.md).

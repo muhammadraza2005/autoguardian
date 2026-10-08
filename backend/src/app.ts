@@ -58,6 +58,11 @@ class SealStockController {
 @Controller('enrollment-drafts/:id/seals')
 class SealFittingController {
   constructor(@Inject('DRAFT_AUTH') private readonly auth:IdentityVerifier,@Inject('SEALS') private readonly seals:SealStore) {}
+  @Post('validate') @HttpCode(200) async validate(@Headers('authorization') header:string|undefined,@Param('id') id:string,
+    @Body() body:unknown,@Query() query:Record<string,unknown>) {
+    const actor=await this.auth.verify(header);if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.seals.validate(actor,draftId(id),sealFittingInput(body,true));
+  }
   @Get() async read(@Headers('authorization') header:string|undefined,@Param('id') id:string,@Query() query:Record<string,unknown>) {
     const actor=await this.auth.verify(header);if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
     return this.seals.fitting(actor,draftId(id));

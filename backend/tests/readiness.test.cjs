@@ -31,9 +31,10 @@ test('readiness tracks current staged samples, seal revocation and stale revisio
     assert.equal(result.canSubmit,false);assert.equal(result.enrollmentActive,false);assert.equal(result.sampleOnly,true);
     assert.equal(state(result,'OWNER_SELECTION'),'COMPLETE');assert.equal(state(result,'IDENTITY_SAMPLE'),'MISSING');
     assert.equal(state(result,'SEAL_FITTING'),'MISSING');
-    const kinds=['OWNER_ID','REGISTRATION_DOCUMENT','VEHICLE_PHOTO',...Array(4).fill('SEAL_FITTING_PHOTO')];
+    const kinds=['OWNER_ID','REGISTRATION_DOCUMENT','VEHICLE_PHOTO',...Array(4).fill('SEAL_FITTING_PHOTO'),
+      'VEHICLE_FRONT','VEHICLE_REAR','VEHICLE_LEFT','VEHICLE_RIGHT','CHASSIS_PHOTO','PLATE_PHOTO'];
     for(let n=0;n<kinds.length;n++)await db.exec(`insert into private.enrollment_attachments(id,tenant_id,draft_id,agent_user_id,organization_id,owner_profile_id,kind,mime_type,byte_size,sha256,object_path,status)
-      values('${id(100+n)}','${tenant}','${draft.id}','${profile}','${org}','${profile}','${kinds[n]}','image/jpeg',10,'${'a'.repeat(64)}','sample-${n}','${n===0?'PENDING':'STAGED'}');`);
+      values('${id(100+n)}','${tenant}','${draft.id}','${profile}','${org}','${profile}','${kinds[n]}','image/jpeg',10,'${String(n).padStart(64,'a')}','sample-${n}','${n===0?'PENDING':'STAGED'}');`);
     result=await readiness.read(id(1),draft.id);assert.equal(state(result,'IDENTITY_SAMPLE'),'MISSING');
     assert.equal(state(result,'REGISTRATION_SAMPLE'),'COMPLETE');assert.equal(state(result,'VEHICLE_PHOTO_SAMPLE'),'COMPLETE');
     await db.exec(`update private.enrollment_attachments set status='STAGED' where id='${id(100)}'`);

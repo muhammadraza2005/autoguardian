@@ -11,7 +11,10 @@ import {Action,AppHeader,Card,Copy,DetailRow,Heading,Label,Notice,StitchPage} fr
 import {readDraft} from './drafts';
 import {EvidencePanel} from './EvidencePanel';
 import {listEvidence,type evidenceMetadata} from './evidence';
-import {readSealFitting,readSealStock,saveSealFitting,sealFittingBodySchema,type SealFitting,type SealFittingBody,type SealPackage} from './seals';
+import {readSealFitting,readSealStock,saveSealFitting,validateSealFitting,sealFittingBodySchema,sealValidationBodySchema,type SealFitting,type SealFittingBody,type SealPackage} from './seals';
+import {blockingSealIssues,type SealValidation} from './sealValidation';
+import {SealValidationSummary} from './SealValidationSummary';
+import {SealCodeEntry} from './SealCodeEntry';
 import {availableSealChoices} from './sealChoices';
 import {profileScope} from '@/features/auth/authEvents';
 import {workingCopies} from './workingCopies';
@@ -56,6 +59,7 @@ export function DevelopmentSealStock({embedded=false}:{embedded?:boolean}={}){
 export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDirtyChange}:{embedded?:boolean;
   onSaved?:(result:SealFitting)=>void;onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}={}){
   const {t}=useTranslation();const router=useRouter();const {profile,request}=useSession();
+  const [editorBusy,setEditorBusy]=useState(false);
   const {id}=useLocalSearchParams<{id?:string|string[]}>();const parsed=z.uuid().safeParse(id);const safeId=parsed.success?parsed.data:undefined;
   const draft=useQuery({queryKey:['enrollment-draft',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>readDraft(request,safeId!,signal),
     enabled:Boolean(profile && safeId),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
@@ -71,9 +75,9 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
     {safeId && !loading && !error && draft.data && fitting.data && <>
       <Heading>{draft.data.vehicle.plate??draft.data.vehicle.chassisIdentifier}</Heading>
       <Copy>{t('liveSeals.codeExplanation')}</Copy>
-      <Action secondary label={t('liveSeals.stock')} icon="cube-outline" onPress={()=>router.navigate({pathname:'/agent/seal-stock',params:{organizationId:draft.data.organizationId}})}/>
+      <Action secondary label={t('liveSeals.stock')} icon="cube-outline" disabled={editorBusy} onPress={()=>router.navigate({pathname:'/agent/seal-stock',params:{organizationId:draft.data.organizationId}})}/>
       <FittingEditor key={fitting.dataUpdatedAt} fitting={fitting.data} organizationId={draft.data.organizationId}
-        onSaved={onSaved} onBusyChange={onBusyChange} onDirtyChange={onDirtyChange}
+        onSaved={onSaved} onBusyChange={busy=>{setEditorBusy(busy);onBusyChange?.(busy);}} onDirtyChange={onDirtyChange}
         photos={evidence.isError?[]:evidence.data?.items.filter(p=>p.kind==='SEAL_FITTING_PHOTO' && p.status==='STAGED')??[]}/>
       {!embedded && <Card><Heading>{t('liveSeals.progress')}</Heading>
         <DetailRow label={t('liveSeals.metadata')} value={t('liveSeals.complete')}/>
@@ -84,7 +88,7 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
         <Notice>{t('liveSeals.inactive')}</Notice>
       </Card>}
     </>}
-    {safeId && <Action secondary label={t('liveSeals.reload')} disabled={loading} onPress={()=>{
+    {safeId && <Action secondary label={t('liveSeals.reload')} disabled={loading || editorBusy} onPress={()=>{
       workingCopies.remove(profile?profileScope(profile):'','seals',safeId);void draft.refetch();void fitting.refetch();void evidence.refetch();
     }}/>}
   </>;
@@ -108,6 +112,10 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
     enabled:Boolean(profile),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
   const seals=stock.isError?[]:stock.data?.pages.flatMap(page=>page.items)??[];
   const [sealPicker,setSealPicker]=useState<number|null>(null);const [photoPicker,setPhotoPicker]=useState<number|null>(null);
+  const [codeEntry,setCodeEntry]=useState<number|null>(null),[checking,setChecking]=useState(false);
+  const [checkError,setCheckError]=useState<unknown>(null);
+  const [checked,setChecked]=useState<{fingerprint:string;value:SealValidation}|null>(null);
+  const checkInFlight=useRef(false);
   const [problem,setProblem]=useState<{key:string;position?:number}|null>(null);const [uncertain,setUncertain]=useState(Boolean(restored?.pending));
   const [uploading,setUploading]=useState<Record<number,boolean>>({});const [newPhotos,setNewPhotos]=useState<z.infer<typeof evidenceMetadata>[]>([]);
   const allPhotos=[...new Map([...photos,...newPhotos].map(p=>[p.id,p])).values()];
@@ -120,25 +128,38 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
       if(onSaved)onSaved(result);else router.dismissTo('/agent');},
     onError:error=>{const definite=error instanceof ApiError && [400,401,403,404,409,422,503].includes(error.status);
       setUncertain(!definite);if(definite)attempt.current=null;}});
-  const locked=save.isPending || uncertain || Object.values(uploading).some(Boolean);
+  const locked=save.isPending || uncertain || checking || codeEntry!==null || Object.values(uploading).some(Boolean);
   const callbacks=useRef({onBusyChange,onDirtyChange});
   useEffect(()=>{callbacks.current={onBusyChange,onDirtyChange};},[onBusyChange,onDirtyChange]);
   const dirty=chosen!==fitting.package || slots.some(slot=>{
     const saved=fitting.placements.find(p=>p.position===slot.position);
     return slot.sealCode!==(saved?.sealCode??'') || slot.photoId!==(saved?.photoId??null);
   });
+  const body={package:chosen,placements:chosen==='NONE'?[]:slots.filter(s=>s.sealCode.trim()),
+    expectedDraftRevision:fitting.draftRevision,expectedFittingRevision:fitting.fittingRevision};
+  const fingerprint=JSON.stringify(body);
+  const validation=checked?.fingerprint===fingerprint?checked.value:!dirty?fitting.sealValidation:null;
   useEffect(()=>{callbacks.current.onBusyChange?.(locked);callbacks.current.onDirtyChange?.(dirty);},[locked,dirty]);
   useEffect(()=>()=>{callbacks.current.onBusyChange?.(false);callbacks.current.onDirtyChange?.(false);},[]);
   useEffect(()=>{
     if(!finished.current)workingCopies.write(scope,fitting.draftId,{kind:'seals',draftRevision:fitting.draftRevision,
       fittingRevision:fitting.fittingRevision,package:chosen,slots,pending:attempt.current});
   },[scope,fitting.draftId,fitting.draftRevision,fitting.fittingRevision,chosen,slots,uncertain,save.isPending]);
-  function submit(){
+  async function check(){
+    if(checkInFlight.current)return null;
+    const parsed=sealValidationBodySchema.safeParse(body);
+    if(!parsed.success){setProblem({key:'invalid'});return null;}
+    checkInFlight.current=true;setChecking(true);setCheckError(null);setChecked(null);
+    try {const value=await validateSealFitting(request,fitting.draftId,parsed.data);setChecked({fingerprint,value});return value;}
+    catch(error){setCheckError(error);return null;}
+    finally {checkInFlight.current=false;setChecking(false);}
+  }
+  async function submit(){
     setProblem(null);if(attempt.current){save.mutate(attempt.current);return;}
     const missing=slots.find(s=>!s.sealCode.trim() && s.photoId);
     if(missing){setProblem({key:'chooseSealFirst',position:missing.position});return;}
-    const parsed=sealFittingBodySchema.safeParse({package:chosen,placements:chosen==='NONE'?[]:slots.filter(s=>s.sealCode.trim()),
-      expectedDraftRevision:fitting.draftRevision,expectedFittingRevision:fitting.fittingRevision});
+    const value=await check();if(!value || blockingSealIssues(value))return;
+    const parsed=sealFittingBodySchema.safeParse(body);
     if(!parsed.success){setProblem({key:'invalid'});return;}
     attempt.current={key:randomUUID(),body:parsed.data};save.mutate(attempt.current);
   }
@@ -164,6 +185,16 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
           {t(complete?'liveSeals.photoAttached':'enrollmentWizard.needsWork')}</Notice>
         <Label>{t('liveSeals.code')}</Label><Copy>{t('liveSeals.codeHint')}</Copy>
         <Copy selectable>{slot.sealCode||t('liveSeals.noSeal')}</Copy>
+        <Action secondary icon="qr-code-outline" label={t('liveSeals.scanner.open')} disabled={locked} onPress={()=>setCodeEntry(slot.position)}/>
+        {codeEntry===slot.position && <SealCodeEntry onClose={()=>setCodeEntry(null)} onUse={async code=>{
+          const candidate=sealValidationBodySchema.parse({...body,placements:slots.map(s=>s.position===slot.position
+            ?{...s,sealCode:code,photoId:s.sealCode===code?s.photoId:null}:s).filter(s=>s.sealCode.trim())});
+          const value=await validateSealFitting(request,fitting.draftId,candidate);
+          const issues=value.slots.find(s=>s.position===slot.position)!.issues.filter(issue=>!issue.startsWith('PHOTO_') && issue!=='DUPLICATE_PHOTO');
+          if(issues.length)return issues;
+          setSlots(previous=>previous.map(s=>s.position===slot.position?{...s,sealCode:code,photoId:s.sealCode===code?s.photoId:null}:s));
+          setCodeEntry(null);setProblem(null);setCheckError(null);return [];
+        }}/>}
         <Action secondary label={t(slot.sealCode?'liveSeals.changeSeal':'liveSeals.chooseSeal')} disabled={locked || stock.isPending || stock.isError}
           onPress={()=>setSealPicker(sealPicker===slot.position?null:slot.position)}/>
         {sealPicker===slot.position && <>
@@ -177,7 +208,7 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
         <Label>{t('liveSeals.photo')}</Label>
         <Copy>{slot.photoId && allPhotos.some(p=>p.id===slot.photoId)?t('liveSeals.photoAttached'):t('liveSeals.noPhoto')}</Copy>
         {!slot.sealCode && <Copy>{t('liveSeals.sealBeforePhoto')}</Copy>}
-        <EvidencePanel draftId={fitting.draftId} kinds={['SEAL_FITTING_PHOTO']} compact disabled={save.isPending || uncertain || !slot.sealCode}
+        <EvidencePanel draftId={fitting.draftId} kinds={['SEAL_FITTING_PHOTO']} compact disabled={save.isPending || uncertain || checking || codeEntry!==null || !slot.sealCode}
           uploadLabel={t('liveSeals.uploadPhoto')} onUploaded={photo=>{
             setNewPhotos(previous=>[...previous.filter(p=>p.id!==photo.id),photo]);
             setSlots(previous=>previous.map(s=>s.position===slot.position?{...s,photoId:photo.id}:s));setProblem(null);
@@ -193,9 +224,13 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
       </Card>;})}
       <Action secondary label={t('liveSeals.refreshStock')} disabled={locked || stock.isFetching} onPress={()=>void stock.refetch()}/>
     </>}
+    {validation && <SealValidationSummary value={validation} saved={!dirty && checked?.fingerprint!==fingerprint}/>}
+    {!validation && <Copy>{t('liveSeals.validation.changed')}</Copy>}
+    <Action secondary label={t(checking?'liveSeals.validation.checking':'liveSeals.validation.check')} disabled={locked || chosen===null} onPress={()=>void check()}/>
+    {Boolean(checkError) && <SealError error={checkError}/>}
     {problem && <Notice tone="danger">{t('liveSeals.'+problem.key,{number:problem.position})}</Notice>}
     {save.isError && <SealError error={save.error}/>}
     {uncertain && <Notice tone="warning">{t('liveSeals.uncertain')}</Notice>}
-    <Action label={t(save.isPending?'liveSeals.saving':uncertain?'liveSeals.retry':'liveSeals.save')} icon="save-outline" disabled={save.isPending || Object.values(uploading).some(Boolean) || chosen===null} onPress={submit}/>
+    <Action label={t(save.isPending?'liveSeals.saving':uncertain?'liveSeals.retry':'liveSeals.save')} icon="save-outline" disabled={save.isPending || checking || codeEntry!==null || Object.values(uploading).some(Boolean) || chosen===null} onPress={()=>void submit()}/>
   </>;
 }
