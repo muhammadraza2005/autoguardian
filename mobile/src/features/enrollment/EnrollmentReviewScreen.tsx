@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -11,9 +11,13 @@ import { readReadiness, sampleCheckCodes, productionCheckCodes, type EnrollmentR
 import { enrollmentRoute } from './wizard';
 import { EvidenceRequirementList } from './EvidenceRequirementList';
 import { SealValidationSummary } from './SealValidationSummary';
+import { SealLocationPanel } from './SealLocationPanel';
+import { EvidenceReviewPanel } from './EvidenceReviewPanel';
 
-export default function EnrollmentReviewScreen({embedded=false}:{embedded?:boolean}={}) {
+export default function EnrollmentReviewScreen({embedded=false,onBusyChange}:{embedded?:boolean;onBusyChange?:(busy:boolean)=>void}={}) {
   const { t } = useTranslation(); const router = useRouter(); const { profile, request } = useSession();
+  const [reviewBusy, setReviewBusy] = useState(false);
+  const reviewBusyChanged = useCallback((busy:boolean) => {setReviewBusy(busy);onBusyChange?.(busy);},[onBusyChange]);
   const { id } = useLocalSearchParams<{ id?: string | string[] }>();
   const parsed = z.uuid().safeParse(id); const safeId = parsed.success ? parsed.data : undefined;
   const hasProfile = Boolean(profile);
@@ -56,18 +60,20 @@ export default function EnrollmentReviewScreen({embedded=false}:{embedded?:boole
       <Copy>{t('liveReadiness.savedOnly')}</Copy>
       <Card>{checklist(sampleCheckCodes, data)}</Card>
       <EvidenceRequirementList value={data.evidenceChecklist}/>
+      <EvidenceReviewPanel key={[profile?.tenantId,profile?.id,safeId].join(':')} draftId={safeId!} refreshKey={query.dataUpdatedAt} onBusyChange={reviewBusyChanged}/>
       <SealValidationSummary value={data.sealValidation} saved/>
-      <Action secondary label={t('liveOwner.open')} onPress={() => router.setParams(enrollmentRoute('owner',safeId!).params)} />
-      <Action secondary label={t('liveEnrollment.open')} onPress={() => router.setParams(enrollmentRoute('vehicle',safeId!).params)} />
-      <Action secondary label={t('liveEvidence.openUploads')} onPress={() => router.setParams(enrollmentRoute('documents',safeId!).params)} />
-      <Action secondary label={t('liveSeals.open')} onPress={() => router.setParams(enrollmentRoute('seals',safeId!).params)} />
+      <SealLocationPanel draftId={safeId!} refreshKey={query.dataUpdatedAt} readOnly/>
+      <Action secondary label={t('liveOwner.open')} disabled={reviewBusy} onPress={() => router.setParams(enrollmentRoute('owner',safeId!).params)} />
+      <Action secondary label={t('liveEnrollment.open')} disabled={reviewBusy} onPress={() => router.setParams(enrollmentRoute('vehicle',safeId!).params)} />
+      <Action secondary label={t('liveEvidence.openUploads')} disabled={reviewBusy} onPress={() => router.setParams(enrollmentRoute('documents',safeId!).params)} />
+      <Action secondary label={t('liveSeals.open')} disabled={reviewBusy} onPress={() => router.setParams(enrollmentRoute('seals',safeId!).params)} />
       <Heading>{t('liveReadiness.production')}</Heading>
       <Card>{checklist(productionCheckCodes, data)}</Card>
       <Notice tone="warning">{t('liveReadiness.blocked')}</Notice>
       <Action label={t('liveReadiness.submitUnavailable')} disabled onPress={() => {}} />
     </>}
-    {safeId && <Action secondary label={t('liveReadiness.refresh')} disabled={loading} onPress={() => void refetch()} />}
-    {!embedded && <Action secondary label={t('liveEnrollment.back')} onPress={() => router.dismissTo('/agent')} />}
+    {safeId && <Action secondary label={t('liveReadiness.refresh')} disabled={loading || reviewBusy} onPress={() => void refetch()} />}
+    {!embedded && <Action secondary label={t('liveEnrollment.back')} disabled={reviewBusy} onPress={() => router.dismissTo('/agent')} />}
   </>;
   return embedded?content:<View style={{flex:1}}><AppHeader/><StitchPage>{content}</StitchPage></View>;
 }

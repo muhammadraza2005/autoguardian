@@ -4,7 +4,9 @@ import { devAuthEn, devAuthFr } from './devAuthResources';
 import { vehicleEn, vehicleFr } from './vehicleResources';
 import { enrollmentEn, enrollmentFr } from './enrollmentResources';
 import { evidenceEn, evidenceFr } from './evidenceResources';
+import { evidenceReviewEn, evidenceReviewFr } from './evidenceReviewResources';
 import { sealEn, sealFr } from './sealResources';
+import { sealLocationEn, sealLocationFr } from './sealLocationResources';
 import { readinessEn, readinessFr } from './readinessResources';
 import { ownerEn, ownerFr } from './ownerResources';
 import { wizardEn, wizardFr } from './wizardResources';
@@ -16,7 +18,9 @@ export const resources = {
       ownedVehicles: vehicleEn,
       liveEnrollment: enrollmentEn,
       liveEvidence: evidenceEn,
+      evidenceReview: evidenceReviewEn,
       liveSeals: sealEn,
+      sealLocations: sealLocationEn,
       liveReadiness: readinessEn,
       liveOwner: ownerEn,
       enrollmentWizard: wizardEn,
@@ -70,7 +74,9 @@ export const resources = {
       ownedVehicles: vehicleFr,
       liveEnrollment: enrollmentFr,
       liveEvidence: evidenceFr,
+      evidenceReview: evidenceReviewFr,
       liveSeals: sealFr,
+      sealLocations: sealLocationFr,
       liveReadiness: readinessFr,
       liveOwner: ownerFr,
       enrollmentWizard: wizardFr,

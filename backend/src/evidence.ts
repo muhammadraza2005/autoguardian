@@ -11,6 +11,23 @@ export const evidencePhotoKinds=['VEHICLE_PHOTO','SEAL_FITTING_PHOTO','VEHICLE_F
 export const evidenceKinds=['OWNER_ID','REGISTRATION_DOCUMENT','PURCHASE_PROOF',...evidencePhotoKinds] as const;
 type Kind=typeof evidenceKinds[number];
 type Metadata={id:string;kind:Kind;mimeType:string;byteSize:number;status:'PENDING'|'STAGED';createdAt:string};
+type ReviewInput={expectedDraftRevision:number;expectedReviewRevision:number;decision:'ACCEPTED_SAMPLE'|'NEEDS_CORRECTION';
+  reason:null|'BLURRY'|'INCOMPLETE'|'WRONG_DOCUMENT'|'DETAILS_MISMATCH'};
+type Reviews={version:1;draftId:string;draftRevision:number;sampleOnly:true;productionApproved:false;canSubmit:false;
+  items:{attachmentId:string;kind:Kind;uploadStatus:'PENDING'|'STAGED';reviewRevision:number;
+    decision:'NOT_REVIEWED'|'ACCEPTED_SAMPLE'|'NEEDS_CORRECTION';reason:ReviewInput['reason'];reviewedAt:string|null}[]};
+export function evidenceReviewInput(body:unknown):ReviewInput {
+  const invalid=()=>new BadRequestException({code:'INVALID_EVIDENCE_REVIEW'});
+  if(!body || typeof body!=='object' || Array.isArray(body)
+    || Object.keys(body).length!==4 || Object.keys(body).some(k=>!['expectedDraftRevision','expectedReviewRevision','decision','reason'].includes(k))) throw invalid();
+  const value=body as ReviewInput;
+  if(!Number.isSafeInteger(value.expectedDraftRevision) || value.expectedDraftRevision<1 || value.expectedDraftRevision>2147483647
+    || !Number.isSafeInteger(value.expectedReviewRevision) || value.expectedReviewRevision<0 || value.expectedReviewRevision>=2147483647
+    || !['ACCEPTED_SAMPLE','NEEDS_CORRECTION'].includes(value.decision)
+    || (value.decision==='ACCEPTED_SAMPLE' ? value.reason!==null
+      : !['BLURRY','INCOMPLETE','WRONG_DOCUMENT','DETAILS_MISMATCH'].includes(value.reason??''))) throw invalid();
+  return value;
+}
 type RecordRow={id:string;tenant_id:string;draft_id:string;owner_profile_id:string;kind:Kind;mime_type:string;byte_size:number;
   sha256:string;object_path:string;status:'PENDING'|'STAGED';created_at:string};
 const unavailable=()=>new ServiceUnavailableException({code:'EVIDENCE_UNAVAILABLE'});
@@ -106,6 +123,11 @@ export class PostgresEvidenceStore {
   }
   finish(actor:string,id:string,key:string):Promise<Metadata> {return this.call(actor,'enrollment_attachment_finish',[id,key]);}
   read(actor:string,id:string,key:string):Promise<RecordRow> {return this.call(actor,'enrollment_attachment_read',[id,key,'ENROLLMENT_REVIEW']);}
+  reviews(actor:string,id:string):Promise<Reviews> {return this.call(actor,'development_evidence_reviews_read',[id]);}
+  saveReview(actor:string,id:string,attachment:string,key:string,input:ReviewInput):Promise<Reviews> {
+    return this.call(actor,'save_development_evidence_review',[id,attachment,key,input.expectedDraftRevision,
+      input.expectedReviewRevision,input.decision,input.reason]);
+  }
   private async call<T>(actor:string,name:string,params:unknown[]):Promise<T> {
     const client:PoolClient=await this.pool.connect();
     try {
@@ -130,6 +152,15 @@ export class PostgresEvidenceStore {
 export class EvidenceService {
   constructor(private readonly store:PostgresEvidenceStore,private readonly storage?:EvidenceStorage,
     private readonly cipher?:ReturnType<typeof evidenceCipher>) {}
+  async reviews(actor:string,id:string) {return this.validReviews(await this.store.reviews(actor,id));}
+  async saveReview(actor:string,id:string,attachment:string,key:string,body:unknown) {
+    return this.validReviews(await this.store.saveReview(actor,id,attachment,key,evidenceReviewInput(body)));
+  }
+  private validReviews(value:Reviews) {
+    if(value.version!==1 || value.sampleOnly!==true || value.productionApproved!==false || value.canSubmit!==false)
+      throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});
+    return value;
+  }
   async list(actor:string,id:string) {
     const result=await this.store.list(actor,id);
     if(result.evidenceChecklist?.version!==1) throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});

@@ -89,8 +89,8 @@ export default function EnrollmentWizardScreen() {
           disabled={!readiness.data?.checks.some(c=>c.code==='OWNER_DETAILS_SAMPLE' && c.status==='COMPLETE') || readiness.isFetching || readiness.isError}
           onBusyChange={setBusy} onUploaded={()=>void refreshReadiness()}/></>}
       {id && step==='seals' && <EnrollmentSealFitting embedded onBusyChange={setBusy} onDirtyChange={setDirty}
-        onSaved={result=>{setDirty(false);setBusy(false);void refreshReadiness();if(result.sealDraftComplete)router.setParams(enrollmentRoute('review',id).params);}}/>}
-      {id && step==='review' && <EnrollmentReviewScreen embedded/>}
+        onSaved={()=>{setDirty(false);setBusy(false);void refreshReadiness();}}/>}
+      {id && step==='review' && <EnrollmentReviewScreen embedded onBusyChange={setBusy}/>}
       {dirty && <Notice>{t('enrollmentWizard.saveChanges')}</Notice>}
       {id && step!=='vehicle' && step!=='seals' && step!=='review' && <Action label={t('enrollmentWizard.next',{step:t('enrollmentWizard.steps.'+enrollmentSteps[index+1])})}
         disabled={changed || !saved?.[step]} onPress={()=>go(enrollmentSteps[index+1])} icon="arrow-forward-outline"/>}

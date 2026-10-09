@@ -16,7 +16,9 @@ production approval. Phone OTP remains deferred and submission remains disabled.
    fictional draft in **Agent → Documents**, after saving its owner details.
 
 Migration 011 has been tested locally, including installation by a non-superuser
-schema owner. It has **not** been applied to hosted Supabase by this change.
+schema owner. A read-only hosted check on 10 October 2026 confirmed that 011 and
+012 are already installed in the configured development database. Do not replay
+them. See [current verification evidence](ENROLLMENT-VERIFICATION-2026-10-10.md).
 The updated API reports setup unavailable for the old checklist rather than
 allowing a generic photo to complete Documents.
 

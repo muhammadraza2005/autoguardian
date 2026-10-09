@@ -1,0 +1,244 @@
+AutoGuardian — Software Requirements Specification for the Development Team
+Oct 2, 2026 · @Christian Ensa N'SABAKA
+This document describes everything the AutoGuardian application must do, for whom, and under which rules. It is the single reference for the development team. Confidential document: the system is protected and must not be disclosed. This English version is identical in content to the French version.
+1. Purpose, scope and principles
+AutoGuardian is a platform that makes reselling a stolen vehicle almost impossible: a check made by a buyer automatically triggers an authorization request to the registered owner.
+Target. DRC first (pilot in Kinshasa), then other African countries. Vehicles covered: motorcycles (including "wewa" motorcycle taxis), small "ketch" taxis, private cars and light commercial vehicles.
+Languages. The application is fully bilingual French and English, on every channel: app, web portal, SMS, USSD, WhatsApp, e-mails, API and generated documents. Code, variable names, comments and technical documentation are in English. The architecture must allow other languages to be added later (Lingala, Swahili) without changing the code.
+Components to deliver.
+Guiding principles.
+NOT FOR SALE status by default for every enrolled vehicle.
+No registration without an accredited agent: an individual can never enroll a vehicle alone.
+No geolocation: the system checks an identity and an authorization; it does not track vehicles.
+Data minimization: the buyer never sees the owner's name or phone number.
+Silence = refusal: without an answer from the owner, the sale is not confirmed.
+Full traceability: every action is time-stamped and attributed to an actor.
+Configurable by the authority: authority name, prices, free use, rules and time limits are set up without development.
+Accessible to all: every essential function also exists via SMS or USSD.
+2. Glossary
+These terms are used as-is in the interface (FR/EN) and in the code (English column).
+3. Actors and roles
+The system has 14 roles. One account can hold several roles (for example owner and verifier), but institutional roles are always assigned by an administrator.
+External systems (DGI, insurers, police) also connect through technical API accounts, linked to an authority, with rights limited to their mission.
+4. Access rights matrix
+Every action is denied by default and only open to the roles marked. "Own" means limited to the user's own vehicles or data; "Org." to vehicles enrolled by their organization; "Insured" to vehicles the insurer covers, with the owner's consent.
+Abbreviations: VER verifier · PRO professional · OWN owner · BKP backup contact · SEL authorized seller · AGT agent · ORG organization manager · POL police · REG vehicle registry · INS insurer · ADM authority administrator · SUP support · AUD auditor · PA platform administrator.
+Cross-cutting rules:
+A role only acts within its own supervising authority; only designated PA and AUD roles can see several authorities.
+Support sees masked data (name reduced to initials, phone number partly hidden) and cannot change anything on a vehicle.
+Any access to an owner's identity by an institutional role requires a reason to be entered and is logged.
+The platform administrator manages the infrastructure but does not view personal data without a logged emergency access procedure.
+5. Multi-authority setup and configuration
+The platform is multi-authority (multi-tenant): each supervising authority has its own space, isolated data and its own rules, with no custom development.
+An authority can be a province, a city, a ministry, the CNPR, the police or another body, in a given country. A vehicle belongs to only one authority at a time; moving it to another authority is a logged operation.
+Settings configurable by the authority administrator (TENANT_ADMIN) from the back office:
+The administrator also configures the connectors to external registries (DGI API, police database, insurers): activation, address, credentials and synchronization frequency, all disabled by default (see section 12).
+Every settings change is versioned, dated, attributed to its author and applies to new operations only. Displayed texts (SMS, screens, terms of use) can be edited per language from the back office.
+6. Functional flows
+Each flow below must be available in French and English, and each step must create an entry in the audit log.
+F1. Vehicle enrollment (agent)
+The agent logs in to the agent app (password + OTP). The app works offline and synchronizes as soon as the network is back.
+They enter or scan the plate and chassis number (VIN). The system checks that no active vehicle has the same plate or chassis number; if there is a duplicate, enrollment is blocked and an incident is created.
+They photograph the owner's ID document, the registration certificate or purchase invoice, the chassis number, the plate and the vehicle (at least 4 views).
+They enter the owner's identity (individual or company), preferred language (FR/EN) and phone number. The owner receives an OTP and gives it to the agent to prove they own this number.
+The owner chooses a package: no seals, standard seals, one alarm, four alarms.
+If seals are chosen: the agent fits the four seals, scans each QR code and photographs each fitted seal with its location. For the one-alarm version, they record which seal is the alarm seal (information never shown publicly).
+Payment for enrollment, seals and the first installment is collected (mobile money, card, or cash handed to the organization, depending on configuration).
+The agent validates. The record moves to "pending review" if the authority requires a second validation; otherwise it is active immediately, with status NOT FOR SALE.
+The owner receives a welcome SMS, their credentials and a link to install the app; they set a PIN.
+F2. Verification by a buyer
+The buyer opens the app, dials the USSD code or sends an SMS. They enter a plate or chassis number, or scan a seal QR code.
+They pay for the verification if it is paid and their free quota is used up.
+The system immediately shows the status, with no personal data:
+Vehicle not registered: "This vehicle is not protected by AutoGuardian. Be careful."
+NOT FOR SALE: "This vehicle is not listed for sale. Do not pay before verification." An alert is sent to the owner (F3).
+FOR SALE: "The owner has listed this vehicle for sale." An alert is still sent to the owner for confirmation.
+SALE BY AUTHORIZED AGENT: same, stating that an authorized seller is appointed.
+REPORTED MISSING: "This vehicle has been reported missing. Do not pay. Contact the police." The owner and, if configured, the police are notified.
+The record's trust level and, if a seal was scanned, the seal check result are displayed.
+The buyer sees progress in real time ("waiting for the owner's answer") then the final result.
+The screen always reminds the buyer never to confront the seller and shows the configured emergency number.
+F3. Owner alert and response
+For each verification, the owner receives an alert on the active channels: "Someone is checking your [motorcycle] [plate] to buy it. Did you authorize this sale?"
+They answer in the app (PIN required), by SMS ("1" yes, "2" no) or via USSD.
+Yes: result SALE CONFIRMED, valid for this verifier and for the configured duration.
+No: result SALE NOT CONFIRMED; an incident is created; the app offers the owner to report the vehicle missing.
+No answer after the backup delay: the backup contact is alerted. After the final delay, result NO RESPONSE, shown to the buyer as "sale not confirmed".
+Several verifications of the same vehicle within a short time are grouped into a single alert to avoid harassment.
+F4. Missing vehicle report
+The owner (or their backup contact) selects "Report my vehicle missing", with date, approximate time and an optional comment.
+The status changes to REPORTED MISSING immediately.
+The system offers to add the police report number; if provided, the record shows "official police report filed", distinct from a simple report.
+Authorized services see the report in their portal. The report is lifted (vehicle found) by the owner or the police, with a reason.
+F5. Listing for sale and seller mandate
+The owner sets the vehicle to FOR SALE (PIN required) for a chosen duration; when it expires, the status returns to NOT FOR SALE.
+They can appoint an authorized seller by phone number, for up to the configured maximum duration. The authorized seller accepts by OTP. The status becomes SALE BY AUTHORIZED AGENT.
+The owner can revoke the mandate at any time.
+F6. Ownership transfer
+The seller (or their authorized seller) starts the transfer by entering the buyer's phone number.
+The buyer receives an invitation and accepts it by OTP; their identity is checked by an agent or at the registry counter, depending on configuration.
+The seller confirms one last time with their PIN.
+The vehicle moves to the buyer's account, status NOT FOR SALE. The former owner loses all access. The vehicle history is kept, but the former owner's personal history is not visible to the new owner.
+If the transfer lock is active, the registry cannot record the transfer without a valid AutoGuardian token.
+F7. Seal replacement and revocation
+A damaged seal or a request to upgrade to a higher version is handled by an accredited agent.
+The agent checks the owner's identity and the vehicle, revokes the old identifier (reason required), fits the new one and records it with a photo.
+A revoked seal, when scanned, always shows "REVOKED SEAL".
+F8. Check by the police or an authorized service
+The authorized officer scans one or more seals, or enters plate and chassis number, from the portal or the app.
+They see the owner's identity, the status, recent history and the seal check result, after entering a reason.
+They can report an anomaly (missing seal, plate/chassis mismatch), which creates an incident.
+F9. Clearance report request (locks)
+The registry counter, the insurer or the owner requests a report for a specific operation: registration, insurance or ownership transfer.
+The system checks: vehicle active, not reported missing, subscription up to date, seals compliant if the package includes them, and the owner's consent for this operation (alert with confirmation).
+If everything complies, it issues a single-use token, linked to the vehicle, the operation and the organization, valid for the configured duration. Otherwise, it gives the reason for refusal.
+F10. Subscription renewal
+The owner is reminded 30, 7 and 1 day before the due date (configurable).
+They pay in one or several installments, depending on configuration.
+If still unpaid after the grace period, the record moves to "subscription suspended": the vehicle remains visible as registered, but locks return a refusal "subscription not up to date". Resale protection (owner alert) stays active, so as never to favor theft.
+F11. Account management
+Phone number change: only at an agent's, with identity check, to counter SIM swap fraud.
+Appointing, changing or removing the backup contact.
+Choice of language and alert channels.
+Death or incapacity of the owner: procedure handled by an administrator on supporting documents.
+7. Statuses, life cycles and business rules
+The statuses below are closed lists (enums); any transition not listed is forbidden and rejected by the API.
+Vehicle sale status (sale_status)
+Administrative record status (record_status): PENDING_REVIEW, ACTIVE, SUSPENDED_UNPAID (subscription suspended), BLOCKED (suspected fraud, by an administrator), ARCHIVED (vehicle destroyed or removed from service).
+Verification life cycle (verification_status): CREATED → PAID (if paid) → OWNER_NOTIFIED → BACKUP_NOTIFIED (if delay exceeded) → CONFIRMED, DENIED or NO_RESPONSE → EXPIRED (end of validity).
+Seal life cycle (seal_status): IN_STOCK (assigned to an organization) → ACTIVE (fitted on a vehicle) → REVOKED (reason: damaged, replaced, lost, fraud); DESTROYED for destroyed stock. A seal can never return to ACTIVE after revocation.
+Subscription life cycle: ACTIVE → DUE (due date approaching) → GRACE (unpaid) → SUSPENDED → ACTIVE (after payment) or CLOSED.
+Business rules
+8. Seal specifications
+Seals physically link the vehicle to its record; the application manages their stock, fitting, reading and revocation.
+Packages offered to the owner
+Physical requirements (for the manufacturer, repeated here for consistency)
+All seals look exactly the same from the outside, whether or not they have an alarm.
+Tamper-proof material: any removal destroys the label and leaves a visible mark; security film that is hard to imitate.
+Alarm seal: fragile wire built into the adhesive, mini buzzer and flat battery; it sounds when torn off; activates automatically when fitted. No radio, no geolocation.
+Resistant to heat, humidity and washing.
+Software requirements
+QR code content: a short verification URL containing the seal's unique identifier and a cryptographic signature (HMAC) that prevents fake identifiers from being created. No personal data and no vehicle information is written in the QR code.
+Readable identifier: an alphanumeric code printed under the QR code allows manual entry via SMS or USSD.
+Stock management: seals are generated in batches, assigned to an organization, then to an agent. Each seal has a type (STANDARD or ALARM), a batch, a manufacturer and a date.
+Fitting: the agent links each seal to a location (configurable list per vehicle category, plus "other" with a comment) and to a photo.
+Alarm confidentiality: the type of a fitted seal is only visible to the agent, their organization, the police, the registry and administrators. The verifier never sees which seals have an alarm.
+Reading: scanning a single seal identifies the vehicle; the full check requires reading all fitted seals and returns the result defined by BR-13.
+Copy detection: the same identifier scanned on two different vehicles, or in inconsistent places within a short time according to declared data, creates a "possibly copied seal" incident.
+Revocation: a revoked seal remains readable and always shows its status and the reason.
+9. Data model
+All entities carry a UUID, a tenant_id, created_at, updated_at, created_by; deletions are logical (deleted_at), never physical, unless legally required.
+10. Channels, notifications and bilingual support
+Every essential function must be available through at least two channels, one of which works on a basic phone without mobile data.
+Bilingual support: requirements
+No hard-coded text: all labels go through translation files (keys in English, values in FR and EN).
+Each user's language is stored; all their SMS, alerts and e-mails are sent in that language.
+The USSD menu offers the language choice on the first screen, then remembers it.
+SMS messages fit within 160 characters in each language, avoiding accented characters that cause operator issues (provide an unaccented version).
+Localized formats: dates (DD/MM/YYYY in FR), amounts with currency, international phone numbers.
+Generated documents (clearance report, receipts, certificates) exist in FR and EN, with a QR code to verify authenticity.
+Adding a language (Lingala, Swahili) only requires adding a translation file and message templates.
+Standard messages (to be provided in both languages)
+All these texts can be edited by the authority from the back office, language by language.
+11. Payments and billing
+Mobile money is mandatory from the first version; bank cards are offered in addition. All amounts and rules come from the authority's configuration.
+Requirements
+Payment methods: M-Pesa, Orange Money, Airtel Money through a local payment aggregator, and bank cards through a PCI-DSS certified provider. No card number is stored by AutoGuardian.
+Configurable free use: the authority can make verification free for everyone, or for certain roles; the code must handle both cases without changes.
+Payment before result: for a paid verification, the result is only shown after payment is confirmed; if payment fails technically, no charge is kept.
+Refunds: automatic if the verification fails on the platform side; manual by support or the administrator in other cases, with a reason.
+Receipts: a bilingual receipt is sent by SMS or e-mail for each payment.
+Revenue sharing: each payment is automatically split according to the configured keys (agent, organization, authority, platform); a monthly statement is available for each beneficiary.
+Reconciliation: daily automatic reconciliation between recorded payments and operator statements; discrepancies create an alert.
+Cash: if the authority allows it, the enrollment organization collects and pays over; the agent records the collection, and the payment over is tracked in the back office.
+Tax: fields provided for applicable taxes and legal invoice numbering, to be confirmed with a local tax adviser.
+12. Institutional APIs and integrations
+The API is REST, versioned (/v1), documented in OpenAPI in English, and restricted to technical accounts of partner organizations.
+API requirements: OAuth 2.0 authentication (client credentials) and IP allow-list per organization; quotas per organization; mandatory reason for any identity lookup; idempotent create requests; JSON responses with stable error codes and FR/EN messages.
+External integrations to plan
+Connectors to external registries
+AutoGuardian must be able to connect to external APIs holding official data, for example the DGI API listing plates and registration certificates, a police database of stolen vehicles, or an insurer's database.
+Generic connector layer: each external source is an independent connector, plugged in without changing the application core. A new connector only requires writing an adapter (format, authentication, field mapping).
+Configuration per authority: the administrator enables or disables each connector and enters its address, credentials and synchronization frequency, without development.
+Planned uses:
+at enrollment, check in real time that the plate, chassis number and holder match the official registry, and pre-fill the record;
+automatically flag any inconsistency (unknown plate, different holder, vehicle already reported stolen);
+synchronize official changes (new plate, transfer recorded at the counter);
+receive official theft reports from the police and show them as "official police report".
+Trust level: a record confirmed by an official registry gets the "verified by government" level.
+Connection modes: real-time calls (REST or SOAP), scheduled file imports (CSV, XML), or webhooks, depending on what each source offers.
+Resilience: if the external source is unavailable, enrollment continues in degraded mode, the check is replayed later, and the record is marked "awaiting official confirmation".
+Traceability: every exchange with an external source is logged (request, response, date), without keeping more data than necessary.
+Framework: access to a public API such as the DGI's requires an agreement with the administration concerned; the connector is only enabled once that agreement is in place.
+13. Security, personal data and audit
+AutoGuardian handles identities, official documents and information about thefts: security is a top-tier requirement, not an option.
+Authentication and access
+SMS OTP for everyone; 4 to 6-digit PIN for the owner's sensitive actions (answering an alert, sale status, ownership transfer).
+Mandatory two-factor authentication for all professional and institutional roles.
+Role- and authority-based access control (RBAC), enforced server-side on every request, in line with the matrix in section 4.
+Time-limited sessions, remote logout, lockout after several failed attempts.
+Protection against SIM swap fraud: phone number change only at an agent's; if the operator allows it, detection of a recent SIM change before accepting an answer to an alert.
+Data protection
+Encryption in transit (TLS 1.2 minimum) and at rest (database, backups, photos).
+Personal data and documents stored separately from vehicle data, with logged access.
+Masking by default in unauthorized interfaces.
+Explicit, versioned consent to the terms of use and to sharing with insurers.
+Owner's right of access and rectification; deletion governed by legal retention obligations.
+Compliance with the Congolese data protection framework (including the Digital Code), to be validated by a lawyer, and choice of hosting according to the authority's data localization requirements.
+Abuse prevention
+Rate limiting per phone number, per device and per IP address.
+Detection of suspicious behavior: mass verifications, an agent enrolling abnormally, copied seals, inconsistent answers.
+Captcha or equivalent on public web channels.
+Audit log
+Every read of personal data and every write is logged (who, what, when, from where, why).
+The log is tamper-proof: append-only, with cryptographic chaining of entries.
+Available to the authority administrator and the auditor; exportable for a judicial investigation.
+Security testing: secure code review, penetration testing by a third party before the pilot launch and then every year, and an incident response plan.
+14. Non-functional requirements and technical architecture
+The system must remain fast, available and usable on a weak network, because a verification often happens in the street, at the moment of payment.
+Recommended architecture (to be challenged by the team, which makes the final choice)
+Back end: modular REST API (for example Node.js/NestJS, Python/Django or Java/Spring), split into modules: identities and roles, vehicles, seals, verifications, alerts, payments, locks, external connectors, audit, configuration.
+Database: PostgreSQL, with data isolation per authority; Redis cache for verifications and rate limiting.
+Message queue: asynchronous processing of alerts, SMS, payments and external synchronizations, with automatic retry on failure.
+Connector layer: independent modules for the DGI, police, insurers, SMS, USSD and payment aggregators.
+Mobile apps: Flutter or React Native to cover Android and iOS with a single codebase; agent app with an encrypted local database.
+Web portal and back office: responsive web application (for example React).
+Hosting: cloud or data center meeting the authority's localization requirements; separate development, staging and production environments.
+Continuous integration and deployment, mandatory code review, automated tests on every change.
+Documentation: README, OpenAPI documentation, operations guide and guide to adding a connector, in English.
+15. Back office, dashboards and reports
+The back office gives each authority a complete, real-time view of its territory, and each organization a view limited to its scope.
+Back office modules
+Management of authorities, organizations, agents, institutional accounts and API accounts.
+Accreditation, suspension and review of agents; review of pending enrollments.
+Seal stock management by batch, organization and agent.
+Full configuration (section 5), message templates per language, external connectors.
+Incident management: processing queue, priorities, assignment, resolution.
+Management of payments, refunds and revenue sharing statements.
+Audit log consultation and exports.
+Dashboard indicators
+All dashboards can be filtered by period and area, exported to CSV and PDF, and are available in French and English. Statistics shared with third parties are always aggregated and anonymized.
+16. Phasing, deliverables and acceptance
+Development happens in three versions, to launch a pilot in Kinshasa quickly and then extend the features.
+Deliverables expected for each version: complete source code in a repository owned by the project holder, apps published on the stores, technical and API documentation, installation scripts, automated test suites, bilingual user guide for each role, operations guide.
+Acceptance: each flow in section 6 has test scenarios in French and English, on an entry-level Android phone and on a basic phone for USSD and SMS. A version is accepted only if all critical scenarios pass, security tests reveal no serious vulnerability and performance targets are met.
+Terms of collaboration
+Non-disclosure agreement signed by every team member before any access to this document.
+Full assignment to the project holder of the rights to the code, mock-ups and documentation.
+Weekly progress meetings, demo at the end of each iteration.
+No reuse of the concept or the code for another client.
+17. Open questions
+These points must be decided by the project holder; the team can develop with the default values in the meantime.
+☐ Fitting price for each seal version and replacement price.
+☐ Split of the USD 18 motorcycle fee between agent, organization, authority and platform.
+☐ Exact share of the authority for each type of payment.
+☐ Price and content of professional packages.
+☐ Final owner response times and confirmation validity periods.
+☐ Second validation of enrollments by the authority: mandatory or not during the pilot.
+☐ Acceptance of cash payments at organizations.
+☐ Hosting location and data localization requirements.
+☐ Choice of SMS, USSD and mobile money aggregators, and of the USSD code.
+☐ Access conditions to the DGI API and the police database.
+☐ Legal data retention periods, to be validated by a lawyer.
+☐ iOS in V1 or in V3.
+☐ Municipality or district chosen for the pilot.

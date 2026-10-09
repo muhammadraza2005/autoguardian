@@ -8,7 +8,7 @@ import { AccountStore } from './account';
 import { IdentityVerifier } from './auth';
 import { VehicleStore, vehicleId, vehiclePage } from './vehicles';
 import { EnrollmentStore, draftId, draftInput } from './enrollments';
-import { SealStore, sealFittingInput } from './seals';
+import { SealStore, sealFittingInput, sealLocationInput } from './seals';
 import { ReadinessStore } from './readiness';
 import { OwnerService } from './owner';
 
@@ -58,6 +58,15 @@ class SealStockController {
 @Controller('enrollment-drafts/:id/seals')
 class SealFittingController {
   constructor(@Inject('DRAFT_AUTH') private readonly auth:IdentityVerifier,@Inject('SEALS') private readonly seals:SealStore) {}
+  @Get('locations') async locations(@Headers('authorization') header:string|undefined,@Param('id') id:string,@Query() query:Record<string,unknown>) {
+    const actor=await this.auth.verify(header);if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.seals.locations(actor,draftId(id));
+  }
+  @Post('locations') @HttpCode(200) async saveLocations(@Headers('authorization') header:string|undefined,@Param('id') id:string,
+    @Headers('idempotency-key') key:string|undefined,@Body() body:unknown,@Query() query:Record<string,unknown>) {
+    const actor=await this.auth.verify(header);if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.seals.saveLocations(actor,draftId(id),draftId(key),sealLocationInput(body));
+  }
   @Post('validate') @HttpCode(200) async validate(@Headers('authorization') header:string|undefined,@Param('id') id:string,
     @Body() body:unknown,@Query() query:Record<string,unknown>) {
     const actor=await this.auth.verify(header);if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
@@ -77,6 +86,15 @@ class SealFittingController {
 @Controller('enrollment-drafts/:id/attachments')
 class EvidenceController {
   constructor(@Inject('DRAFT_AUTH') private readonly auth:IdentityVerifier,@Inject('EVIDENCE') private readonly evidence:EvidenceService) {}
+  @Get('reviews') async reviews(@Headers('authorization') header:string|undefined,@Param('id') id:string,@Query() query:Record<string,unknown>) {
+    const actor=await this.auth.verify(header);if(Object.keys(query).length) throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.evidence.reviews(actor,draftId(id));
+  }
+  @Post(':attachmentId/review') @HttpCode(200) async review(@Headers('authorization') header:string|undefined,@Param('id') id:string,
+    @Param('attachmentId') attachmentId:string,@Headers('idempotency-key') key:string|undefined,@Body() body:unknown,@Query() query:Record<string,unknown>) {
+    const actor=await this.auth.verify(header);if(Object.keys(query).length) throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.evidence.saveReview(actor,draftId(id),draftId(attachmentId),draftId(key),body);
+  }
   @Get() async list(@Headers('authorization') header:string|undefined,@Param('id') id:string,@Query() query:Record<string,unknown>) {
     const actor=await this.auth.verify(header);if(Object.keys(query).length) throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
     return this.evidence.list(actor,draftId(id));

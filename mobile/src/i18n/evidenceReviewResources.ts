@@ -1,0 +1,26 @@
+export const evidenceReviewEn = {
+  title: 'Sample evidence review', notice: 'Development agent self-review only. These decisions do not approve production enrollment.',
+  inspectFirst: 'Download and inspect each saved file before recording a decision. Use fictional samples only. Upload corrections in Documents; each new file needs its own review.',
+  nativePending: 'Sample file viewing and review decisions are available in the development browser. Secure mobile file viewing is still pending.',
+  loading: 'Loading evidence reviews…', empty: 'No current evidence to review.', pending: 'Upload is unfinished. Complete it before reviewing.',
+  accept: 'Mark sample acceptable', correct: 'Needs correction: {{reason}}',
+  decisions: { NOT_REVIEWED: 'Not reviewed for this draft revision', ACCEPTED_SAMPLE: 'Sample marked acceptable', NEEDS_CORRECTION: 'Needs correction' },
+  reasons: { BLURRY: 'Unreadable or blurry', INCOMPLETE: 'Incomplete evidence', WRONG_DOCUMENT: 'Wrong document or view', DETAILS_MISMATCH: 'Details do not match' },
+  setup: 'Evidence review setup is unavailable. Migration 014 must be installed.', conflict: 'The draft or review changed. Refresh before deciding again.',
+  denied: 'You no longer have permission to review this draft.', failed: 'Could not complete the review request.',
+  uncertain: 'The save result is unknown. Retry the same decision or discard the pending attempt and refresh to see the saved state.',
+  retry: 'Retry the same decision', discard: 'Discard pending attempt and refresh',
+};
+export const evidenceReviewFr = {
+  title: 'Examen des pièces de test', notice: 'Auto-évaluation de l’agent en développement uniquement. Ces décisions ne valident pas une inscription réelle.',
+  inspectFirst: 'Téléchargez et examinez chaque fichier avant de décider. Utilisez uniquement des exemples fictifs. Ajoutez les corrections dans Documents ; chaque nouveau fichier doit être examiné.',
+  nativePending: 'La consultation et les décisions de test sont disponibles dans le navigateur de développement. La consultation sécurisée sur mobile reste à réaliser.',
+  loading: 'Chargement des examens…', empty: 'Aucune pièce actuelle à examiner.', pending: 'Envoi inachevé. Terminez-le avant l’examen.',
+  accept: 'Marquer l’exemple acceptable', correct: 'À corriger : {{reason}}',
+  decisions: { NOT_REVIEWED: 'Non examiné pour cette version du brouillon', ACCEPTED_SAMPLE: 'Exemple marqué acceptable', NEEDS_CORRECTION: 'À corriger' },
+  reasons: { BLURRY: 'Illisible ou flou', INCOMPLETE: 'Pièce incomplète', WRONG_DOCUMENT: 'Mauvais document ou angle', DETAILS_MISMATCH: 'Informations différentes' },
+  setup: 'Configuration des examens indisponible. La migration 014 doit être installée.', conflict: 'Le brouillon ou l’examen a changé. Actualisez avant de décider à nouveau.',
+  denied: 'Vous n’avez plus le droit d’examiner ce brouillon.', failed: 'Impossible de terminer la demande d’examen.',
+  uncertain: 'Résultat inconnu. Réessayez la même décision ou abandonnez la tentative en attente et actualisez pour voir l’état enregistré.',
+  retry: 'Réessayer la même décision', discard: 'Abandonner la tentative et actualiser',
+};

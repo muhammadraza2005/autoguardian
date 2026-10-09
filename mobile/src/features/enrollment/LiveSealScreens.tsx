@@ -19,6 +19,8 @@ import {availableSealChoices} from './sealChoices';
 import {profileScope} from '@/features/auth/authEvents';
 import {workingCopies} from './workingCopies';
 import { colors } from '@/theme/tokens';
+import { SealLocationPanel } from './SealLocationPanel';
+import { enrollmentRoute } from './wizard';
 
 function SealPage({children}:{children:React.ReactNode}){
   const {t}=useTranslation();const router=useRouter();
@@ -60,6 +62,9 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
   onSaved?:(result:SealFitting)=>void;onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}={}){
   const {t}=useTranslation();const router=useRouter();const {profile,request}=useSession();
   const [editorBusy,setEditorBusy]=useState(false);
+  const [locationBusy,setLocationBusy]=useState(false),[editorDirty,setEditorDirty]=useState(false),[locationDirty,setLocationDirty]=useState(false);
+  const combinedBusy=editorBusy || locationBusy;
+  useEffect(()=>{onBusyChange?.(combinedBusy);onDirtyChange?.(editorDirty || locationDirty);},[combinedBusy,editorDirty,locationDirty,onBusyChange,onDirtyChange]);
   const {id}=useLocalSearchParams<{id?:string|string[]}>();const parsed=z.uuid().safeParse(id);const safeId=parsed.success?parsed.data:undefined;
   const draft=useQuery({queryKey:['enrollment-draft',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>readDraft(request,safeId!,signal),
     enabled:Boolean(profile && safeId),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
@@ -77,8 +82,12 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
       <Copy>{t('liveSeals.codeExplanation')}</Copy>
       <Action secondary label={t('liveSeals.stock')} icon="cube-outline" disabled={editorBusy} onPress={()=>router.navigate({pathname:'/agent/seal-stock',params:{organizationId:draft.data.organizationId}})}/>
       <FittingEditor key={fitting.dataUpdatedAt} fitting={fitting.data} organizationId={draft.data.organizationId}
-        onSaved={onSaved} onBusyChange={busy=>{setEditorBusy(busy);onBusyChange?.(busy);}} onDirtyChange={onDirtyChange}
+        onSaved={result=>onSaved?.(result)} onBusyChange={setEditorBusy} onDirtyChange={setEditorDirty} disabled={locationBusy || locationDirty}
         photos={evidence.isError?[]:evidence.data?.items.filter(p=>p.kind==='SEAL_FITTING_PHOTO' && p.status==='STAGED')??[]}/>
+      <SealLocationPanel draftId={safeId} refreshKey={fitting.dataUpdatedAt} disabled={editorBusy || editorDirty}
+        onBusyChange={setLocationBusy} onDirtyChange={setLocationDirty}/>
+      {embedded && fitting.data.sealDraftComplete && <Action secondary label={t('sealLocations.review')}
+        disabled={combinedBusy || editorDirty || locationDirty} onPress={()=>router.setParams(enrollmentRoute('review',safeId).params)}/>}
       {!embedded && <Card><Heading>{t('liveSeals.progress')}</Heading>
         <DetailRow label={t('liveSeals.metadata')} value={t('liveSeals.complete')}/>
         <DetailRow label={t('liveSeals.documents')} value={t(fitting.data.sampleDocumentsSaved?'liveSeals.complete':'liveSeals.pending')}/>
@@ -88,15 +97,15 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
         <Notice>{t('liveSeals.inactive')}</Notice>
       </Card>}
     </>}
-    {safeId && <Action secondary label={t('liveSeals.reload')} disabled={loading || editorBusy} onPress={()=>{
+    {safeId && <Action secondary label={t('liveSeals.reload')} disabled={loading || combinedBusy || locationDirty} onPress={()=>{
       workingCopies.remove(profile?profileScope(profile):'','seals',safeId);void draft.refetch();void fitting.refetch();void evidence.refetch();
     }}/>}
   </>;
   return embedded?content:<SealPage>{content}</SealPage>;
 }
-function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDirtyChange}:{fitting:SealFitting;
+function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDirtyChange,disabled=false}:{fitting:SealFitting;
   photos:z.infer<typeof evidenceMetadata>[];organizationId:string;onSaved?:(result:SealFitting)=>void;
-  onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}){
+  onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void;disabled?:boolean}){
   const {t}=useTranslation();const router=useRouter();const cache=useQueryClient();const {profile,request}=useSession();
   const scope=profile?profileScope(profile):'';
   const [restored]=useState(()=>{
@@ -128,7 +137,8 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
       if(onSaved)onSaved(result);else router.dismissTo('/agent');},
     onError:error=>{const definite=error instanceof ApiError && [400,401,403,404,409,422,503].includes(error.status);
       setUncertain(!definite);if(definite)attempt.current=null;}});
-  const locked=save.isPending || uncertain || checking || codeEntry!==null || Object.values(uploading).some(Boolean);
+  const ownBusy=save.isPending || uncertain || checking || codeEntry!==null || Object.values(uploading).some(Boolean);
+  const locked=disabled || ownBusy;
   const callbacks=useRef({onBusyChange,onDirtyChange});
   useEffect(()=>{callbacks.current={onBusyChange,onDirtyChange};},[onBusyChange,onDirtyChange]);
   const dirty=chosen!==fitting.package || slots.some(slot=>{
@@ -139,7 +149,7 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
     expectedDraftRevision:fitting.draftRevision,expectedFittingRevision:fitting.fittingRevision};
   const fingerprint=JSON.stringify(body);
   const validation=checked?.fingerprint===fingerprint?checked.value:!dirty?fitting.sealValidation:null;
-  useEffect(()=>{callbacks.current.onBusyChange?.(locked);callbacks.current.onDirtyChange?.(dirty);},[locked,dirty]);
+  useEffect(()=>{callbacks.current.onBusyChange?.(ownBusy);callbacks.current.onDirtyChange?.(dirty);},[ownBusy,dirty]);
   useEffect(()=>()=>{callbacks.current.onBusyChange?.(false);callbacks.current.onDirtyChange?.(false);},[]);
   useEffect(()=>{
     if(!finished.current)workingCopies.write(scope,fitting.draftId,{kind:'seals',draftRevision:fitting.draftRevision,
@@ -231,6 +241,6 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
     {problem && <Notice tone="danger">{t('liveSeals.'+problem.key,{number:problem.position})}</Notice>}
     {save.isError && <SealError error={save.error}/>}
     {uncertain && <Notice tone="warning">{t('liveSeals.uncertain')}</Notice>}
-    <Action label={t(save.isPending?'liveSeals.saving':uncertain?'liveSeals.retry':'liveSeals.save')} icon="save-outline" disabled={save.isPending || checking || codeEntry!==null || Object.values(uploading).some(Boolean) || chosen===null} onPress={()=>void submit()}/>
+    <Action label={t(save.isPending?'liveSeals.saving':uncertain?'liveSeals.retry':'liveSeals.save')} icon="save-outline" disabled={disabled || save.isPending || checking || codeEntry!==null || Object.values(uploading).some(Boolean) || chosen===null} onPress={()=>void submit()}/>
   </>;
 }

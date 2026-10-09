@@ -1,0 +1,28 @@
+export const sealLocationEn = {
+  title: 'Seal placement descriptions', notice: 'Sample notes only. These descriptions do not confirm approved positions or physical inspection.',
+  label: 'Seal {{number}} — fitted location', hint: 'Describe the location using 3–200 characters. Use fictional sample details in development.',
+  missing: 'Placement descriptions are missing or stale. Save the current four-seal fitting, then record its locations.',
+  complete: 'Four placement descriptions saved — not inspected.', none: 'This package has no seals; placement descriptions are not required.',
+  save: 'Save placement descriptions', saving: 'Saving placement descriptions…', retry: 'Retry the same save',
+  reload: 'Reload saved descriptions and discard edits', loading: 'Loading placement descriptions…',
+  setup: 'Placement descriptions are unavailable until the database setup is updated.',
+  failed: 'Could not load or save placement descriptions. Try again.', conflict: 'The draft or fitting changed. Reload the saved descriptions before saving again.',
+  denied: 'Sign in with an accredited agent account to access this draft.', invalid: 'Enter a location description of 3–200 characters for each of the four seals.',
+  uncertain: 'The save result is unknown. Retry the same save before changing these descriptions.',
+  saveFirst: 'Save the fitting before recording locations. All four seal choices must be saved.',
+  review: 'Review enrollment', unsaved: 'Save or discard your placement edits before leaving this step.',
+};
+export const sealLocationFr = {
+  title: 'Descriptions des emplacements des scellés', notice: 'Notes de démonstration uniquement. Ces descriptions ne confirment ni les emplacements approuvés ni une inspection physique.',
+  label: 'Scellé {{number}} — emplacement de pose', hint: 'Décrivez l’emplacement en 3 à 200 caractères. Utilisez des données fictives en développement.',
+  missing: 'Les descriptions sont manquantes ou périmées. Enregistrez la pose actuelle des quatre scellés, puis leurs emplacements.',
+  complete: 'Quatre descriptions enregistrées — sans inspection.', none: 'Cette formule ne comporte aucun scellé ; aucune description n’est requise.',
+  save: 'Enregistrer les descriptions', saving: 'Enregistrement des descriptions…', retry: 'Réessayer le même enregistrement',
+  reload: 'Recharger les descriptions enregistrées et abandonner les modifications', loading: 'Chargement des descriptions…',
+  setup: 'Les descriptions sont indisponibles jusqu’à la mise à jour de la base de données.',
+  failed: 'Impossible de charger ou d’enregistrer les descriptions. Réessayez.', conflict: 'Le brouillon ou la pose a changé. Rechargez les descriptions avant de réessayer.',
+  denied: 'Connectez-vous avec un compte d’agent accrédité pour accéder à ce brouillon.', invalid: 'Saisissez une description de 3 à 200 caractères pour chacun des quatre scellés.',
+  uncertain: 'Le résultat est inconnu. Réessayez le même enregistrement avant de modifier ces descriptions.',
+  saveFirst: 'Enregistrez la pose avant les emplacements. Les quatre choix de scellés doivent être enregistrés.',
+  review: 'Vérifier l’inscription', unsaved: 'Enregistrez ou abandonnez vos modifications avant de quitter cette étape.',
+};

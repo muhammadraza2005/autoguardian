@@ -1,5 +1,19 @@
 # AutoGuardian database foundation
 
+## Development evidence reviews — 10 October 2026
+
+New [migration 014](migrations/202610100014_development_evidence_reviews.sql)
+adds forced-RLS, append-only sample self-review decisions and restricted functions.
+Apply it once as postgres after 013, without replaying installed migrations.
+Hosted installation remains pending. See [setup and limits](../docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
+
+## Development placement notes — 10 October 2026
+
+New [migration 013](migrations/202610100013_seal_location_notes.sql) adds restricted,
+revision-bound sample location notes and save events. Hosted 011–013 are now
+confirmed by read-only inspection; do not replay them. New 014 remains pending. See
+[setup and limits](../docs/DEVELOPMENT-SEAL-LOCATIONS.md).
+
 ## Owner details and sample consent (migration 010)
 
 After 009, apply [010](migrations/202610080010_enrollment_owner_consent.sql) once

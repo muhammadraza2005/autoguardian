@@ -1,5 +1,10 @@
 # Connected agent enrollment wizard
 
+The Review step now includes development evidence self-review with sample
+downloads, correction reasons, exact retries and refresh controls in English/French.
+Migration 014 is required; see [setup and acceptance](DEVELOPMENT-EVIDENCE-REVIEWS.md).
+Native viewing/decision controls and production approval remain pending.
+
 Implemented 9 October 2026. The genuine development agent flow now uses the
 original Clean Trust agent header, navy/yellow styling, cards and bottom tabs.
 The connected forms replace the disconnected wizard in live development mode.
@@ -22,12 +27,15 @@ The synthetic design preview remains available only in development demo mode.
    front/rear/left/right/chassis/plate photos. See the
    [detailed evidence checklist](DEVELOPMENT-EVIDENCE-CHECKLIST.md). Pending uploads
    do not complete a step. Save package/fitting selections; a complete sample
-   fitting advances to Review, while a partial fitting stays editable.
+   fitting stays on Seals so placement descriptions can be recorded. Save four
+   descriptions, then use **Review enrollment**. A partial fitting stays editable.
 6. Review uses saved server data. **Refresh readiness** obtains a new snapshot
    and hides old results while loading or after an error. A changed draft revision
    makes previous fitting stale until resaved.
 
 Apply missing migrations through 012 for the current Seals/Review contracts. Seals
+placement descriptions additionally require migration 013; see
+[placement setup and acceptance](DEVELOPMENT-SEAL-LOCATIONS.md). Seals
 now supports QR/manual development codes, assigned-stock checks and four distinct
 fitting photos. The server returns numbered diagnostics in both steps; invalid
 stock/types/photos block saving, while missing entries allow a partial draft.

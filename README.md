@@ -334,13 +334,13 @@ The database foundation, NestJS API architecture, and React Native frontend scaf
 3. Verify the frontend can run (`npm run web` in `/mobile`).
 
 **NEXT RECOMMENDED TASK:**
-> Apply missing development migrations 011 and 012, then finish browser/Android acceptance of the evidence checklist and seal checks (see docs/DEVELOPMENT-SEAL-VALIDATION.md). Hosted 010 was previously confirmed; 011–012 are verified locally only. Phone OTP remains deferred by the project owner. Next define category-specific fitting positions and authenticated seal issuance, then implement production evidence review, payment, authority review rules and atomic finalization. OTP, production consent proof and stronger agent authentication must be completed before activation is enabled. Development samples must not satisfy production prerequisites.
+> Hosted development migrations 011–013 are confirmed; do not replay them. Apply new development migration 014 once for sample evidence self-review, then finish browser/Android acceptance (see docs/DEVELOPMENT-EVIDENCE-REVIEWS.md). Phone OTP remains deferred. Next approve category-specific fitting positions and authenticated seal issuance, then implement production reviewer permissions, payment, authority review rules and finalization. OTP, production consent and stronger agent authentication remain required before activation. Development samples must not satisfy production prerequisites.
 >
 > The backend already supports verified phone identities. Production draft access remains deliberately disabled until stronger agent authentication is implemented. Do not turn client or simulated payment success into production registration.
 
 **Rules for Agents:**
 - Do not recreate already implemented tables.
-- Write new SQL migrations in `supabase/migrations/` sequentially (next: `013_...`).
+- Write new SQL migrations in `supabase/migrations/` sequentially (next: `014_...`).
 - Never expose secrets.
 - Update this README when you implement a new feature.
 
@@ -728,3 +728,68 @@ and Android Hermes exports, and offline dependency compatibility pass. The Andro
 compiler required sandbox escalation. The updated backend was restarted and its
 health/authenticated-route checks pass. Browser camera and native-device acceptance
 remain pending; browser automation could not initialize in this session.
+
+## 49. Enrollment verification — 10 October 2026
+
+Read-only hosted checks confirmed development migrations 011/012, expected API
+function privileges, verified TLS and the restricted database login. The existing
+private Storage probe passed encrypted round-trip and anonymous/public denial;
+its synthetic object was removed. No hosted migration or domain-data write was
+needed. Reproduce with `backend/scripts/verify-enrollment-setup.cjs` and the existing
+evidence verifier; see [verification evidence](docs/ENROLLMENT-VERIFICATION-2026-10-10.md).
+
+A new isolated HTTP acceptance test exercises the complete five-step preparation
+journey, interrupted upload recovery, evidence alternatives/distinct views, fitting
+validation/retries, owner-edit invalidation and revoked-agent denial. Completing
+sample checks does not create vehicles/ownership or permit submission/activation.
+The full backend suite passed 28 tests. Mobile TypeScript/lint, 38 tests,
+123 database foundation checks and web/Android
+Hermes exports passed. Browser interaction and Android-device acceptance remain
+separate checks; production enrollment prerequisites are still unfinished.
+
+## 50. Saved seal placement descriptions — 10 October 2026
+
+Milestone one now includes an agent form and Review display for four fictional
+fitted-location descriptions. Restricted `GET/POST .../seals/locations` APIs bind
+notes to draft, fitting and note revisions, normalize text, enforce retry keys and
+append one save event atomically. Changed fittings/owners hide old descriptions;
+no-seals packages return no previous notes. Unsaved text stays in component memory.
+Consumer/buyer APIs and generic readiness do not expose location descriptions.
+
+New migration [013](supabase/migrations/202610100013_seal_location_notes.sql) adds
+forced-RLS notes/events and limited functions. It is tested locally but missing on
+the hosted development database; apply it once as postgres after 012. The app
+shows setup-required until then. No new secrets/provider settings are needed.
+See [setup, agent flow and limits](docs/DEVELOPMENT-SEAL-LOCATIONS.md).
+
+Fitting saves now stay on Seals for note entry; **Review enrollment** opens Review.
+Sample fitting progress remains separate from description status. Descriptions do
+not establish approved category positions, photo/physical inspection or signed
+seal authenticity. Submission and activation remain disabled.
+
+Validation: backend build/28 tests, mobile TypeScript/lint/41 tests, 123 database
+foundation checks and offline dependency compatibility passed. Web/Android exports
+passed. Hosted 013 was subsequently confirmed by read-only inspection; browser/native interactive acceptance remains pending.
+
+## 51. Development evidence-review foundation (10 October 2026)
+
+The next-session handoff, completion estimate and remaining registration work are
+recorded in [milestone-1.md](milestone-1.md).
+
+The enrollment Review step now lists current sample documents/photos, provides
+audited browser downloads and records acceptable/correction decisions with four
+fixed reasons. Decisions persist in append-only, forced-RLS history with exact
+retries and per-attachment revision conflicts. Vehicle edits require fresh review;
+owner edits hide prior evidence and decisions. Every response explicitly keeps
+production approval and submission disabled. Native decisions await secure viewing.
+
+New [migration 014](supabase/migrations/202610100014_development_evidence_reviews.sql)
+must be applied once in development. Hosted 011–013 and restricted privileges are
+confirmed; 014 is absent. No environment or credentials changes are needed.
+See [setup, API and acceptance](docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
+
+Validation passed: backend build/28 tests, mobile TypeScript/lint/44 tests,
+123 isolated database checks, web/Android exports and offline dependency
+compatibility (with its reliability warning). Hosted 014 installation and
+interactive browser/device acceptance remain pending. Production reviewer roles,
+evidence standards, physical inspection and final registration still need work.

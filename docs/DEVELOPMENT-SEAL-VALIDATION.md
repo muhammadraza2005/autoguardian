@@ -12,7 +12,10 @@ In the development Supabase project, apply any missing migrations in order throu
 the entire [012](../supabase/migrations/202610090012_seal_fitting_validation.sql)
 once as postgres in SQL Editor. Do not rerun applied migrations. Existing sample
 stock and encrypted evidence setup are still required. No credentials, providers
-or encryption keys need changing. Hosted 012 was not applied by this change.
+or encryption keys need changing. A read-only hosted check on 10 October 2026
+confirmed 011/012 and their expected function privileges in the configured
+development database. Do not replay installed migrations. See
+[current verification evidence](ENROLLMENT-VERIFICATION-2026-10-10.md).
 
 Build/start the backend with `Start Backend.cmd`. Refresh the live app at
 `http://localhost:8081/agent`, open a saved draft and select Seals. Older database

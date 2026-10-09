@@ -1,5 +1,29 @@
 # AutoGuardian backend
 
+## Development evidence self-review (10 October 2026)
+
+Migration 014 adds current-draft evidence reviews and append-only decisions with
+fixed correction reasons, exact retries and revision conflicts. Development agent
+access stays scoped to their own draft; sample acceptance never grants production
+approval. See [API, setup and acceptance](../docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
+Apply missing migrations in order; hosted 014 has not been installed by this work.
+
+## Seal placement descriptions (10 October 2026)
+
+Development `GET/POST /v1/enrollment-drafts/:id/seals/locations` records four sample
+descriptions against draft, fitting and location revisions. Idempotency, atomic
+save events, forced RLS and stale-data hiding apply. Policy/physical verification
+remain false and activation stays disabled. Hosted migration 013 is now confirmed;
+see [setup and acceptance](../docs/DEVELOPMENT-SEAL-LOCATIONS.md).
+
+## Enrollment verification (10 October 2026)
+
+Hosted development migrations 011/012, expected function privileges and encrypted
+Storage round-trip/access denial were confirmed. The new complete five-step HTTP
+acceptance test passes in isolated PGlite; submission and activation remain disabled.
+Run `node --env-file=.env scripts/verify-enrollment-setup.cjs` for read-only hosted
+prerequisite checks. See [verification and remaining device acceptance](../docs/ENROLLMENT-VERIFICATION-2026-10-10.md).
+
 ## Owner details and sample consent (8 October 2026)
 
 After migration 010, accredited development agents can use `GET/POST

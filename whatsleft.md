@@ -1,14 +1,19 @@
 # AutoGuardian — What's built and what's left
 
-Status reviewed: **5 October 2026**.
+Status reviewed: **10 October 2026**.
+
+For milestone 1's completion estimate, detailed checklist and next-session
+context, read [milestone-1.md](milestone-1.md).
 
 Based on the original Software Requirements Specification, the agreed single-app plan, and the current local code. This checklist records implementation status; a preview screen does not mean its real operation is complete.
 
 ## Current position
 
-The Stitch-based frontend is in place across the main sections. Most backend functionality and external integrations still need development.
+The mobile interface, backend/database foundation, development authentication, owner vehicle reads and connected five-step enrollment preparation flow are in place. Production registration, buyer verification, messaging, payments and pilot operations still need development. Development samples cannot submit or activate a vehicle.
 
-**Rough overall completion estimate: 15–25% built, 75–85% remaining.** This is a planning estimate, not a measured percentage of requirements or code. Visual UI progress is much further along than production functionality.
+**V1 pilot planning estimate: approximately 30% implemented and 70% remaining (25–35% complete range).** This is a judgment based on working functionality, integrations and acceptance requirements, not a measured percentage or a delivery commitment. Visual UI progress is further along than production functionality.
+
+The four milestones below are the working plan for the upcoming development. Build each workflow through the database, backend and mobile app together. Include tests, security, audit records, French/English copy and documentation in each milestone.
 
 ## Already built
 
@@ -23,47 +28,68 @@ The Stitch-based frontend is in place across the main sections. Most backend fun
 - [x] English/French resources for the new screens and shared navigation.
 - [x] Development preview identities and section-navigation guards.
 - [x] API request helper, optional Supabase client setup, and native session-storage adapter.
-- [x] Typecheck, lint, existing four foundation tests, Expo dependency checks, and all 21 Expo Doctor checks passed after the UI work.
-- [x] Web bundle exported successfully after the UI work.
+- [x] NestJS identity/profile, owner vehicle reads and development enrollment APIs.
+- [x] Fourteen database migrations in source, tenant isolation, restricted database roles, row-level security and scoped audit records. Hosted 011–013 are confirmed; migration 014 is pending installation.
+- [x] Connected development enrollment drafts, encrypted sample owner details/consent, browser sample evidence and provisional seal fitting with QR/manual checks.
+- [x] Hosted development migrations 011–012 and encrypted private Storage round-trip/access denial verified.
+- [x] Saved four-slot development seal location descriptions with revision conflicts, retries, stale-data hiding and English/French form/review controls. See [setup and acceptance](docs/DEVELOPMENT-SEAL-LOCATIONS.md).
+- [x] Development evidence self-review in the browser: sample downloads, acceptable/correction decisions, fixed reasons, append-only history, exact retries and revision invalidation. Production approval remains pending. See [setup and acceptance](docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
+- [x] Latest evidence-review checks: backend build and 28 tests; mobile TypeScript/lint and 44 tests; 123 database foundation checks; offline dependency compatibility with its reliability warning.
+- [x] Web and Android Hermes bundles exported successfully.
 
-**Still to verify:** final visual checks across screens, French wrapping, keyboard/accessibility behavior, and actual Android device acceptance. The latest Android export result was not confirmed before browser checking stopped. No production release is established by these checks.
+**Still to verify:** signed-in browser/camera interaction, French wrapping, keyboard/accessibility behavior and Android device acceptance. Phone testing was deferred by the project owner. Bundle exports do not establish native encryption or release acceptance. See [the verification report](docs/ENROLLMENT-VERIFICATION-2026-10-10.md).
 
 ## Remaining development
 
 | Area | Current status | What's left |
 | --- | --- | --- |
 | Frontend | Main layouts and interactive previews built | Missing business workflows; complete validation; loading, empty, error, offline, expired, and permission states; accessibility and device checks. |
-| Backend | API helper only | Server endpoints and business rules for enrollment, checks, authorization, deadlines, missing reports, billing, transfers, seals, and clearances; background jobs and retry handling. |
-| Database | Supabase connection foundation only | Tables, relationships, migrations, constraints, tenant isolation, row-level security, private storage, audit records, and backup/restore. |
-| Authentication | Preview flows and local navigation guards | Real phone OTP, resend/expiry/attempt limits, session refresh, logout cleanup, server PIN verification, staff two-factor authentication, and permissions for all 14 roles. |
+| Backend | Identity, owner reads and development enrollment APIs implemented | Production enrollment finalization, checks, owner authorization, deadlines, missing reports, billing, transfers, production seals and clearances; background jobs and retry handling. |
+| Database | Foundation and development enrollment migrations/RLS implemented | Remaining domain tables, workflow transitions and policies; complete audit coverage, production configuration and backup/restore. |
+| Authentication | Development email login, server identity checks, role loading, refresh and logout cleanup implemented | Real phone OTP, resend/expiry/attempt limits, server PIN verification, staff two-factor authentication and complete role permissions. |
 | Payments and billing | Simulated payment UI | Mobile money/card providers, verified callbacks, quota/exemption rules, subscriptions/installments, receipts, refunds, reconciliation, professional packages, and revenue sharing. |
 | Notifications | Example messages only | Push/SMS delivery, templates, delivery tracking, owner and backup escalation, and configured WhatsApp/email/voice integrations. |
 | Owner operations | Main preview screens | Missing report/lift, listing removal/expiry, per-request response state, history, subscriptions, and already-answered/incorrect-PIN handling. |
 | Delegation | Account entry points only | Backup invitations/acceptance/removal, seller mandates/acceptance/revocation, expiry, and scoped permissions. |
 | Ownership transfer | Not implemented | Buyer invitation/OTP, identity review, seller confirmation, registry handling where configured, completion/refusal, and removal of former-owner access. |
-| Agent enrollment | Wizard and sample seal UI | Full vehicle/individual/company details, documents/photos, four package choices, actual QR scans and fitting evidence, owner OTP, payment, review, duplicates/conflicts, and assisted phone changes. |
-| Offline operation | In-memory examples only | Encrypted database **and attachment files**, offline access policy, persistent drafts, sync/retry, stock reconciliation, and safe conflict resolution. |
-| Seals | Sample installation and stock panels | Real allocations, authenticated seal identifiers, inspection results, replacement/revocation, and lost/damaged handling. |
+| Agent enrollment | Connected five-step development wizard, saved drafts, encrypted sample identity/evidence, sample consent, packages, fitting and readiness | Production agent login, owner OTP/consent, native evidence capture, evidence/physical review, confirmed payment, submission, authority approval, activation and assisted phone changes. |
+| Offline operation | Browser development working-copy recovery only | Encrypted native database **and attachment files**, offline access policy, persistent drafts, sync/retry, stock reconciliation and safe conflict resolution. |
+| Seals | Development assigned stock, QR/manual codes, reservations and fitting diagnostics | Production issuance/allocations, signed identifiers, placement rules, physical inspection, replacement/revocation and lost/damaged handling. |
 | Institutional operations | Registry/clearance previews | Separate police, registry, and insurer scopes; logged identity access; owner consent; real clearance issuance/refusal/expiry/consumption; missing reports; inspection and incident workflows. |
 | Administration | Sample dashboard and user search | Organizations/accounts, accreditation/suspension, enrollment reviews, stock allocation, configuration/templates, incident queues, financial operations, audits, support procedures, and filtered CSV/PDF reports. |
 | SMS/USSD | Not connected | Basic-phone menus, secure owner responses, request correlation, bilingual messages, and provider integration. |
 | Institutional API/connectors | Planned only | Partner authentication/scopes, API contracts, webhooks, DGI/police/insurer adapters, and locks activated only when agreements permit. |
 | Production release | Development checks only | Meaningful business/security tests, entry-level Android testing, performance, monitoring, recovery, signed builds, store publication, technical documentation, and bilingual role guides. |
 
-## Suggested order and timeline
+## Four milestones for the V1 Kinshasa pilot
 
-These are work groups for one complete product, not separate app versions. Estimates assume a small dedicated team, some overlapping work, timely decisions, and available provider access.
+### Milestone 1 — Finish vehicle registration: start here now
 
-| Order | Work | Estimated duration |
-| --- | --- | --- |
-| 1 | Finish missing frontend flows and confirm business rules/provider choices | 2–3 weeks |
-| 2 | Database, backend foundation, real authentication, and permissions | 4–6 weeks |
-| 3 | Connect enrollment → payment/check → owner alert → response, including missing reports | 4–6 weeks |
-| 4 | Offline enrollment, seals, subscriptions, delegation, and transfers | 4–6 weeks |
-| 5 | Institutional/admin operations, SMS/USSD, and partner integrations | 4–7 weeks |
-| 6 | Device testing, security, reliability, and release preparation | 3–4 weeks |
+Build on the existing backend, database and enrollment wizard. Complete real login, agent permissions, owner phone OTP and consent, document/photo capture, QR seal issuance and fitting, enrollment review and vehicle activation. Connect everything to the agent app and owner vehicle list. This milestone is achieved when an authorized agent can register a vehicle and its owner can see it in their account. Begin arranging SMS/USSD and mobile-money provider access now. Registration stays gated until every required identity, consent, evidence, seal, payment and review check is satisfied.
 
-**Full-scope planning range: approximately 5–8 months.** A connected core journey could be available earlier, roughly **10–15 weeks**, assuming its required providers are accessible. These are estimates, not delivery commitments; staffing, discovered issues, and external waiting periods can change them.
+### Milestone 2 — Make vehicle checks and owner responses work
+
+Connect the consumer app so a buyer can check a vehicle by plate, chassis number or QR code. Show its permitted status information, send the owner an alert, accept a secure approval or refusal and return the result to the buyer. Add response deadlines, backup alerts, incident reporting, missing-vehicle reports and sale-status changes. Connect SMS and USSD so basic-phone users can perform the supported checks and responses. This milestone is achieved when the complete buyer-check-to-owner-response journey works, including refusal, timeout and expired results.
+
+### Milestone 3 — Add payments, subscriptions and pilot administration
+
+Integrate mobile money for registration, paid checks and subscription renewals, including confirmed callbacks, receipts, retries and reconciliation. Implement free-check allowances, subscription reminders, grace periods and suspension rules. Build basic administration for agents, organizations, enrollment approvals, seal stock, incidents and configuration. Complete encrypted offline agent drafts and safe synchronization. This milestone is achieved when payments control the correct operations and administrators can manage daily pilot activity. Build payment integration early enough to support paid registration in milestone 1 and paid checks in milestone 2; milestone 3 completes the remaining billing and administration work.
+
+### Milestone 4 — Make the app ready for the Kinshasa pilot
+
+Finish French and English coverage, verify security controls and audit logging across all workflows and test the complete journeys on Android and through SMS/USSD. Test provider failures, performance and recovery; set up monitoring, alerts, automated backups and a proven restore procedure. Prepare production deployment, signed app builds, technical documentation and user/operations guides. This milestone is achieved when the agreed pilot scenarios pass and the team can launch, monitor and support the service.
+
+## What to do in the upcoming days
+
+- [x] Confirm hosted development migrations 011–013 and restricted function privileges by read-only inspection.
+- [ ] Apply development migration 014 once; check sample evidence reviews, draft/owner invalidation and bilingual layouts. Do not replay 011–013.
+- [ ] Resume Android and signed-in browser acceptance of the existing wizard; fix reproduced issues.
+- [ ] Confirm category-specific seal positions, production seal issuance and evidence-review requirements.
+- [ ] Confirm authority review/approval rules and production agent authentication requirements.
+- [ ] Select SMS/USSD and mobile-money providers and obtain sandbox access; arrange the USSD code.
+- [ ] Implement milestone 1 through the database, API and mobile app, with tests for duplicates, permissions, retries and prerequisite failures.
+
+Phone OTP was previously deferred. Revisit that decision before completing production registration; do not treat sample consent, simulated OTP or unconfirmed payment as production approval. Dates should be assigned after provider access, pilot rules and team capacity are confirmed.
 
 ## What we can build and what needs external input
 
@@ -81,6 +107,10 @@ The following still need project-owner decisions or external access:
 
 ## Scope used for this estimate
 
-One **Android-first mobile app**, with consumer, agent, institutional, and administration functions inside role-based sections. Separate desktop portals and a later iOS release would add work and are not included in this estimate.
+The four milestones cover the stated **V1 Kinshasa pilot scope**: backend/database, authentication/permissions, enrollment and verification, agent/consumer mobile functions, vehicle statuses, buyer checks, owner alerts, incidents, QR seals, SMS/USSD, mobile money, subscriptions, basic administration, French/English, security, audit, testing, monitoring, backups and technical documentation.
+
+The broader remaining-development table also retains full-product requirements such as ownership transfers, advanced institutional clearances/connectors and expanded billing. These are not automatically added to the pilot milestones; confirm any pilot need separately.
+
+One **Android-first mobile app**, with consumer, agent, institutional and administration functions inside role-based sections. Separate desktop portals and a later iOS release are not included in this V1 estimate.
 
 The supplied Stitch exports remain visual references. Existing planning documents remain the detailed requirements sources.
