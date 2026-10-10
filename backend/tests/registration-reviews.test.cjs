@@ -10,7 +10,7 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant='ce31527e-d1b5-4379-9ddd-1458cfb73431',agent='369cbe75-32c8-40b4-a9ee-f2d9bde379db',org='014db61a-4c68-48cb-86b6-46837f4da873';
 async function foundation(){
  const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
- create role autoguardian_identity_login nologin;create schema auth;create table auth.users(id uuid primary key);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz); create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text); create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);`);
+ create role autoguardian_identity_login nologin;create schema auth;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz); create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text); create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);`);
  for(const file of (await fs.readdir(path.resolve(__dirname,'../../supabase/migrations'))).filter(f=>f.endsWith('.sql')).sort())
   await db.exec(await fs.readFile(path.resolve(__dirname,'../../supabase/migrations',file),'utf8'));
  await db.exec(`insert into auth.users values('${id(1)}'),('${id(2)}'),('${id(3)}');

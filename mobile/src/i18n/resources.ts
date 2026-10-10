@@ -1,4 +1,5 @@
 import { stitchEn, stitchFr } from './stitchResources';
+import {checkEn,checkFr} from './checkResources';
 import { flowEn, flowFr } from './flowResources';
 import { devAuthEn, devAuthFr } from './devAuthResources';
 import { vehicleEn, vehicleFr } from './vehicleResources';
@@ -19,6 +20,7 @@ export const resources = {
   en: {
     translation: {
       stitch: stitchEn,
+      m2:checkEn,
       accessSecurity:accessSecurityEn,ownerConsent:ownerConsentEn,
       registrationIntegration:registrationIntegrationEn,
       pdfEvidence: pdfEvidenceEn,
@@ -80,6 +82,7 @@ export const resources = {
   fr: {
     translation: {
       stitch: stitchFr,
+      m2:checkFr,
       accessSecurity:accessSecurityFr,ownerConsent:ownerConsentFr,
       registrationIntegration:registrationIntegrationFr,
       pdfEvidence: pdfEvidenceFr,

@@ -14,7 +14,7 @@ async function foundation() {
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create role autoguardian_identity_login nologin;
-    create schema auth;create table auth.users(id uuid primary key);
+    create schema auth;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);
     create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz);
     create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text);
     create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);`);
@@ -42,7 +42,7 @@ test('draft migration can be installed by a non-superuser schema owner, as on ho
   try {
     await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
       create role autoguardian_identity_login nologin;
-      create role migration_author createrole;create schema auth;create table auth.users(id uuid primary key);
+      create role migration_author createrole;create schema auth;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);
       grant usage on schema auth to migration_author;grant references on auth.users to migration_author;
       grant create on database postgres to migration_author;set role migration_author;`);
     for(const f of ['202610050001_core_foundation.sql','202610050002_default_permissions.sql','202610050003_identity_api.sql',

@@ -27,6 +27,9 @@ export default function LiveAccount({embedded=false}:{embedded?:boolean}={}) {
         <Label>{t('devAuth.roles')}</Label>
         <Copy>{profile.roles.length ? profile.roles.map(role => role.code).join(', ') : t('devAuth.noRoles')}</Copy>
       </Card><Action label={t('navigation.vehicles')} icon="car-outline" onPress={() => router.push('/live-vehicles')} />
+      <Action label={t('navigation.check')} icon="search-outline" onPress={()=>router.push('/live-checks')}/>
+      <Action secondary label={t('m2.reports')} onPress={()=>router.push('/live-checks/reports')}/>
+      {profile.roles.some(role=>role.code==='OWNER'&&role.organizationId===null)&&<Action secondary label={t('m2.inbox')} onPress={()=>router.push('/live-checks/inbox')}/>}
       {runtime.developmentEmailAuth && profile.roles.some(role=>role.code==='ENROLLMENT_AGENT' && role.organizationId) &&
         <Action secondary label={t('enrollmentWizard.list')} icon="document-text-outline" onPress={()=>router.navigate('/agent')} />}
       {profile.roles.some(role=>role.code==='TENANT_ADMIN'&&role.organizationId===null)&&

@@ -28,7 +28,7 @@ test('complete development enrollment through HTTP remains a draft and owner edi
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create role autoguardian_identity_login nologin;
-      create schema auth; create table auth.users(id uuid primary key);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz); create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text); create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);`);
+      create schema auth; create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz); create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text); create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);`);
     const migrations = path.resolve(__dirname, '../../supabase/migrations');
     for (const file of (await fs.readdir(migrations)).filter(f => f.endsWith('.sql')).sort()) {
       await db.exec(await fs.readFile(path.join(migrations, file), 'utf8'));

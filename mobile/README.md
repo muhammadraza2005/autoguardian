@@ -1,5 +1,10 @@
 # AutoGuardian mobile foundation
 
+Milestone 2 adds live consumer phone OTP, `/live-checks` lookup/results/history,
+owner inbox, report/evidence and sale-status screens using the shared backend.
+Provider setup and production authorization remain pending. English/French copy
+and development labels are included. See [SQL and handover](../docs/MILESTONE2-HANDOVER.md).
+
 The development enrollment flow now uses the original agent header, bottom tabs,
 cards and five-step wizard at `/agent`: Vehicle, Owner, Documents, Seals and Review.
 Its forms use the existing backend APIs and saved readiness; old

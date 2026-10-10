@@ -1,2 +1,4 @@
 import PhoneAccessScreen from '@/features/auth/PhoneAccessScreen';
-export default function VerifyOtpScreen() { return <PhoneAccessScreen initialStep={2} />; }
+import LivePhoneScreen from '@/features/auth/LivePhoneScreen';
+import {runtime} from '@/config/runtime';
+export default function VerifyOtpScreen() { return runtime.isDemo?<PhoneAccessScreen initialStep={2}/>:<LivePhoneScreen/>; }

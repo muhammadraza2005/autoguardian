@@ -1,5 +1,29 @@
 # AutoGuardian database foundation
 
+Migration [023](migrations/202610110023_milestone2_workflows.sql) adds the remaining
+provider-independent Milestone 2 development workflows after all migrations
+001–022. Run its [read-only verifier](verify-milestone2-workflows.sql) afterward.
+It requires explicit development timing/limits and enables no production payment,
+PIN or provider bypass. See [handover](../docs/MILESTONE2-HANDOVER.md).
+
+## Twilio delivery records — 10 October 2026
+
+[Migration 022](migrations/202610100022_twilio_sms_delivery.sql) extends the check
+outbox and adds restricted attempt/receipt operations and append-only delivery
+events. Apply once after installed 021, then run
+[the read-only verifier](verify-twilio-sms-delivery.sql). Hosted 022 is pending;
+no Twilio account or secrets are configured by SQL.
+See [account and worker setup](../docs/TWILIO-SMS-SETUP.md).
+
+## Milestone 2 database rules — 10 October 2026
+
+[Migration 021](migrations/202610100021_vehicle_check_rules.sql) adds five forced-RLS
+tables and restricted operations for synthetic buyer checks and owner decisions.
+Apply once after 020, then run [the read-only verifier](verify-vehicle-check-rules.sql).
+The project owner reports hosted 021 installation and all eight checks true;
+no configuration is seeded. See
+[the contract and production limits](../docs/VEHICLE-CHECK-RULES.md).
+
 ## Independent review — 10 October 2026
 
 [Migration 017](migrations/202610100017_independent_registration_reviews.sql)

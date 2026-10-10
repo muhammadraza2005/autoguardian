@@ -90,6 +90,8 @@ export function OwnedVehicleDetailScreen() {
     {id && !checking && query.isError && <ReadError error={query.error} retry={() => void refetch()} />}
     {vehicle && <>
       <Card><VehicleSummary vehicle={vehicle} /></Card>
+      <Action label={t('m2.sale')} onPress={()=>router.push({pathname:'/live-checks/sale',params:{id:vehicle.id}})}/>
+      <Action secondary label={t('m2.missing')} onPress={()=>router.push({pathname:'/live-checks/reports',params:{vehicleId:vehicle.id}})}/>
       {vehicle.recordStatus === 'PENDING_REVIEW' && <Notice tone="warning">{t('ownedVehicles.pendingReview')}</Notice>}
       <Card>{fields.map(([key, value]) => <View key={key} style={s.field}>
         <Label style={s.body}>{t('ownedVehicles.' + key)}</Label>

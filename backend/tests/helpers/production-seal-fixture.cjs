@@ -5,7 +5,7 @@ const {identityRequest,rememberVerifiedSession}=require('../../dist/requestIdent
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 async function fixture(){
  const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create role autoguardian_identity_login nologin;
- create schema auth;create table auth.users(id uuid primary key);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz);
+ create schema auth;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz);
  create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text);create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);
  alter table auth.sessions enable row level security;alter table auth.mfa_factors enable row level security;alter table auth.mfa_amr_claims enable row level security;`);
  for(const file of (await fs.readdir(path.resolve(__dirname,'../../../supabase/migrations'))).filter(f=>f.endsWith('.sql')).sort()){

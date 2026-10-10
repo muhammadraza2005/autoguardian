@@ -13,6 +13,8 @@ import { PostgresRegistrationReviewStore, RegistrationReviewService } from './re
 import {SupabaseStaffAuthentication,SupabaseAccountAuthentication,SessionCheckedAuthentication} from './staffAuthentication';
 import {PostgresConsentStore} from './consent';
 import {configuredProductionSeals,PostgresProductionSealStore} from './productionSeals';
+import {smsConfiguration,PostgresSmsStore,TwilioSmsWebhooks} from './sms';
+import {PostgresWorkflowStore,configuredChecks,ReportEvidenceService} from './checks';
 
 async function main() {
   const allowDevelopmentEmail = developmentEmailAllowed(process.env);
@@ -37,6 +39,10 @@ async function main() {
     const staffAuth=new SessionCheckedAuthentication(new SupabaseStaffAuthentication(process.env.SUPABASE_URL!,process.env.SUPABASE_PUBLISHABLE_KEY!,
       {factor:'totp',maxAuthenticationAgeSeconds:3600}),pool,tenant,true);
     const evidence=configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail);
+    const sms=smsConfiguration(process.env);
+    const workflows=new PostgresWorkflowStore(pool,tenant);
+    const reportKey=process.env.AUTOGUARDIAN_REPORT_EVIDENCE_KEY;
+    if(reportKey&&!/^[a-f0-9]{64}$/i.test(reportKey))throw new Error('Invalid AUTOGUARDIAN_REPORT_EVIDENCE_KEY');
     const app = await createApp(identity, accounts, process.env.CORS_ORIGIN,
       new PostgresVehicleStore(pool, tenant), { auth: allowDevelopmentEmail?new DevelopmentDraftVerifier(identity,true):staffAuth,
         store: new PostgresEnrollmentStore(pool,tenant,!allowDevelopmentEmail), seals:new PostgresSealStore(pool,tenant,!allowDevelopmentEmail),
@@ -46,7 +52,9 @@ async function main() {
         owner: configuredOwner(process.env,new PostgresOwnerStore(pool,tenant),allowDevelopmentEmail),
         evidence, registrationReviews:new RegistrationReviewService(new PostgresRegistrationReviewStore(pool,tenant),evidence) },
       {accountAuth:allowDevelopmentEmail?identity:accountAuth,staffAuth:allowDevelopmentEmail?identity:staffAuth,
-        staffProofAuth:staffAuth,consentAuth:accountAuth,consents:new PostgresConsentStore(pool,tenant)});
+        staffProofAuth:staffAuth,consentAuth:accountAuth,consents:new PostgresConsentStore(pool,tenant)},
+      sms?new TwilioSmsWebhooks(new PostgresSmsStore(pool,tenant),sms):undefined,
+      {auth:accountAuth,staffAuth,checks:configuredChecks(process.env,workflows),evidence:new ReportEvidenceService(workflows,reportKey?Buffer.from(reportKey,'hex'):undefined)});
     const shutdown = app.close.bind(app);
     app.close = async () => { await shutdown(); await pool.end(); };
     await app.listen(port, process.env.HOST ?? '127.0.0.1');

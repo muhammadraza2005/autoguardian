@@ -6,6 +6,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start": "node --env-file=.env dist/main.js",
+    "sms:worker": "node --env-file=.env dist/smsWorker.js",
+    "checks:worker": "node --env-file=.env dist/checkWorker.js",
     "test": "npm run build && node --test tests/*.test.cjs"
   },
   "dependencies": {
@@ -16,7 +18,8 @@
     "pg": "^8.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.0.0",
-    "sharp": "^0.35.5"
+    "sharp": "^0.35.5",
+    "twilio": "^6.1.2"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.5.8",

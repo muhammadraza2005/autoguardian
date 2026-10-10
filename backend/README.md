@@ -1,5 +1,32 @@
 # AutoGuardian backend
 
+## Connected Milestone 2 development workflows — 11 October 2026
+
+Migration 023, shared HTTP operations and native app screens implement lookup,
+limits, buyer results, owner inbox/decisions, timeout/reminder scheduling,
+reports/encrypted evidence, review and sale-status history. SMS/USSD adapters
+are simulated. Start `npm.cmd run checks:worker` separately from the API.
+Production payment/step-up and live providers remain gated.
+See [SQL order, routes, settings and handover](../docs/MILESTONE2-HANDOVER.md).
+
+## Twilio operational SMS — 10 October 2026
+
+Migration 022, a separate sending worker and signed delivery callbacks are
+implemented. Attempts/audit are durable, 429 retries are bounded and uncertain
+sends cannot automatically resend. Server-only configuration remains disabled;
+the developer's Twilio account/sender, hosted 022 and live delivery acceptance
+are pending. The original 70-test baseline passed before the remaining modules.
+See [setup](../docs/TWILIO-SMS-SETUP.md) and the newer handover above.
+
+## Milestone 2 database rules — 10 October 2026
+
+Migration 021 implements synthetic vehicle-check requests, atomic owner decisions,
+separate deadlines/expiry, a notification outbox and append-only decision/audit
+records. The buyer projection excludes private owner data. Configuration is
+explicit and disabled by default; production payment/allowance and step-up gates
+remain pending. The project owner reports hosted 021 installation and all eight
+verification checks true. See [rules and setup](../docs/VEHICLE-CHECK-RULES.md).
+
 ## Independent review — 10 October 2026
 
 The approved independent TENANT_ADMIN workflow is implemented: reviewer queue,
@@ -76,7 +103,10 @@ development checklist and explicit production blockers. Apply migrations 009–0
 gate and restricted database executor. Submission/activation remain unavailable;
 there is no submit endpoint. See [setup and acceptance](../docs/DEVELOPMENT-ENROLLMENT-READINESS.md).
 
-The NestJS backend supports identity and reading currently owned vehicles. The mobile development email flow calls its identity endpoints; connecting vehicle screens, phone login, SMS and deployment remain pending. See [development email login](../docs/DEVELOPMENT-EMAIL-LOGIN.md).
+The NestJS backend now supports connected enrollment and Milestone 2 development
+workflows. Phone OTP screens and outbound SMS components are implemented;
+provider provisioning, delivery and deployment acceptance remain pending.
+See [development email login](../docs/DEVELOPMENT-EMAIL-LOGIN.md) and the Milestone 2 handover above.
 
 | Endpoint | Behavior |
 | --- | --- |

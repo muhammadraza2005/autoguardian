@@ -29,7 +29,7 @@ The four milestones below are the working plan for the upcoming development. Bui
 - [x] Development preview identities and section-navigation guards.
 - [x] API request helper, optional Supabase client setup, and native session-storage adapter.
 - [x] NestJS identity/profile, owner vehicle reads and development enrollment APIs.
-- [x] Twenty database migrations in source, tenant isolation, restricted database roles, row-level security and scoped audit records. Hosted 019 is confirmed with all verification results true; it requires 017/018. New integration migration 020 awaits installation.
+- [x] Twenty-three database migrations in source, tenant isolation, restricted roles, RLS and scoped audit. Hosted 019 and 021 are reported verified; 020's earlier installation status is not independently established here. New SMS/workflow migrations 022?023 await hosted installation. See [Milestone 2 handover](docs/MILESTONE2-HANDOVER.md).
 - [x] Connected development enrollment drafts, encrypted sample owner details/consent, browser sample evidence and provisional seal fitting with QR/manual checks.
 - [x] Hosted development migrations 011–012 and encrypted private Storage round-trip/access denial verified.
 - [x] Saved four-slot development seal location descriptions with revision conflicts, retries, stale-data hiding and English/French form/review controls. See [setup and acceptance](docs/DEVELOPMENT-SEAL-LOCATIONS.md).
@@ -48,12 +48,12 @@ The four milestones below are the working plan for the upcoming development. Bui
 | Area | Current status | What's left |
 | --- | --- | --- |
 | Frontend | Main layouts and interactive previews built | Missing business workflows; complete validation; loading, empty, error, offline, expired, and permission states; accessibility and device checks. |
-| Backend | Identity, owner reads and development enrollment APIs implemented | Production enrollment finalization, checks, owner authorization, deadlines, missing reports, billing, transfers, production seals and clearances; background jobs and retry handling. |
+| Backend | Connected enrollment, signed seals, independent review and development Milestone 2 checks, decisions, schedules/retries and reports implemented | Production payment/step-up and provider gates; billing, transfers, delegated workflows and institutional clearances. |
 | Database | Foundation and development enrollment migrations/RLS implemented | Remaining domain tables, workflow transitions and policies; complete audit coverage, production configuration and backup/restore. |
-| Authentication | Development email login, server identity checks, role loading, refresh and logout cleanup implemented | Real phone OTP, resend/expiry/attempt limits, server PIN verification, staff two-factor authentication and complete role permissions. |
+| Authentication | Live-session checks, staff MFA, role loading and provider-backed phone OTP screens implemented | Live phone provider/OTP acceptance, assisted phone recovery and production owner PIN/step-up. |
 | Payments and billing | Simulated payment UI | Mobile money/card providers, verified callbacks, quota/exemption rules, subscriptions/installments, receipts, refunds, reconciliation, professional packages, and revenue sharing. |
-| Notifications | Example messages only | Push/SMS delivery, templates, delivery tracking, owner and backup escalation, and configured WhatsApp/email/voice integrations. |
-| Owner operations | Main preview screens | Missing report/lift, listing removal/expiry, per-request response state, history, subscriptions, and already-answered/incorrect-PIN handling. |
+| Notifications | Durable outbox, reminders, bounded retries/receipts and held backup schedules | Live SMS acceptance, accepted backup contacts/delegation, push and other configured channels. |
+| Owner operations | Connected development inbox, decisions, missing/recovery, sale listing/removal and history | Production PIN/step-up, listing duration/expiry, subscriptions and device acceptance. |
 | Delegation | Account entry points only | Backup invitations/acceptance/removal, seller mandates/acceptance/revocation, expiry, and scoped permissions. |
 | Ownership transfer | Not implemented | Buyer invitation/OTP, identity review, seller confirmation, registry handling where configured, completion/refusal, and removal of former-owner access. |
 | Agent enrollment | Connected five-step development wizard, saved drafts, encrypted sample identity/evidence, sample consent, packages, fitting and readiness | Production agent login, owner OTP/consent, native evidence capture, evidence/physical review, confirmed payment, submission, authority approval, activation and assisted phone changes. |
@@ -61,7 +61,7 @@ The four milestones below are the working plan for the upcoming development. Bui
 | Seals | Development assigned stock, QR/manual codes, reservations and fitting diagnostics | Production issuance/allocations, signed identifiers, placement rules, physical inspection, replacement/revocation and lost/damaged handling. |
 | Institutional operations | Registry/clearance previews | Separate police, registry, and insurer scopes; logged identity access; owner consent; real clearance issuance/refusal/expiry/consumption; missing reports; inspection and incident workflows. |
 | Administration | Sample dashboard and user search | Organizations/accounts, accreditation/suspension, enrollment reviews, stock allocation, configuration/templates, incident queues, financial operations, audits, support procedures, and filtered CSV/PDF reports. |
-| SMS/USSD | Not connected | Basic-phone menus, secure owner responses, request correlation, bilingual messages, and provider integration. |
+| SMS/USSD | Shared parser and simulated menus/adapters; outbound SDK/receipts implemented | Live inbound provider/session authentication, client configuration, USSD provisioning and handset acceptance. |
 | Institutional API/connectors | Planned only | Partner authentication/scopes, API contracts, webhooks, DGI/police/insurer adapters, and locks activated only when agreements permit. |
 | Production release | Development checks only | Meaningful business/security tests, entry-level Android testing, performance, monitoring, recovery, signed builds, store publication, technical documentation, and bilingual role guides. |
 

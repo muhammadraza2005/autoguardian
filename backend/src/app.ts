@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { BadRequestException, Body, Catch, Controller, ExceptionFilter, Get, Headers, HttpException,
-  HttpCode, Inject, Module, Post, Put, ArgumentsHost, Param, Query } from '@nestjs/common';
+  HttpCode, Inject, Module, Post, Put, ArgumentsHost, Param, Query, Req } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { EvidenceService } from './evidence';
@@ -16,6 +16,20 @@ import { SubmissionStore, submissionInput } from './submission';
 import { RegistrationReviewService } from './registrationReviews';
 import {identityRequest} from './requestIdentity';
 import {ConsentStore,consentInput} from './consent';
+import {TwilioSmsWebhooks} from './sms';
+import {CheckService,ReportEvidenceService} from './checks';
+import {CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController} from './workflowControllers';
+
+@Controller('webhooks/twilio/sms')
+class TwilioSmsController {
+  constructor(@Inject('SMS_WEBHOOKS') private readonly webhooks:TwilioSmsWebhooks){}
+  @Post(':notificationId/:attemptId') @HttpCode(204)
+  async delivery(@Param('notificationId') notificationId:string,@Param('attemptId') attemptId:string,
+    @Req() request:{originalUrl:string},@Headers('x-twilio-signature') signature:string|undefined,
+    @Headers('content-type') contentType:string|undefined,@Body() body:unknown){
+    await this.webhooks.receive(notificationId,attemptId,request.originalUrl,signature,contentType,body);
+  }
+}
 
 @Controller('me/registration-consents')
 class ConsentController {
@@ -301,16 +315,22 @@ class ProductionSealController {
 
 export async function createApp(auth: IdentityVerifier, accounts: AccountStore, corsOrigin?: string, vehicles?: VehicleStore,
   enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore; productionSeals?:ProductionSealService; readiness?:ReadinessStore; owner?:OwnerService; submission?:SubmissionStore; registrationReviews?:RegistrationReviewService },
-  access?:{accountAuth:IdentityVerifier;staffAuth:IdentityVerifier;staffProofAuth?:IdentityVerifier;consentAuth?:IdentityVerifier;consents?:ConsentStore}) {
+  access?:{accountAuth:IdentityVerifier;staffAuth:IdentityVerifier;staffProofAuth?:IdentityVerifier;consentAuth?:IdentityVerifier;consents?:ConsentStore},
+  smsWebhooks?:TwilioSmsWebhooks,
+  workflows?:{auth:IdentityVerifier;staffAuth:IdentityVerifier;checks:CheckService;evidence:ReportEvidenceService}) {
   @Module({ controllers: [AccountController, ...(vehicles ? [VehicleController] : []), ...(enrollments ? [EnrollmentController] : []),
     ...(enrollments?.evidence?[EvidenceController]:[]),...(enrollments?.seals?[SealStockController,SealFittingController]:[]),
     ...(enrollments?.productionSeals?[ProductionSealController]:[]),
     ...(enrollments?.readiness?[ReadinessController]:[]), ...(enrollments?.owner?[OwnerController]:[]), ...(enrollments?.submission?[SubmissionController]:[]),
-    ...(enrollments?.registrationReviews?[RegistrationReviewController]:[]),...(access?.consents?[ConsentController,StaffAccessController]:[])], providers: [
+    ...(enrollments?.registrationReviews?[RegistrationReviewController]:[]),...(access?.consents?[ConsentController,StaffAccessController]:[]),
+    ...(smsWebhooks?[TwilioSmsController]:[]),...(workflows?[CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController]:[])], providers: [
     { provide: 'AUTH', useValue: auth }, { provide: 'ACCOUNTS', useValue: accounts },
+    ...(workflows?[{provide:'WORKFLOW_AUTH',useValue:workflows.auth},{provide:'WORKFLOW_STAFF_AUTH',useValue:workflows.staffAuth},
+      {provide:'CHECKS',useValue:workflows.checks},{provide:'REPORT_EVIDENCE',useValue:workflows.evidence}]:[]),
     {provide:'ACCOUNT_AUTH',useValue:access?.accountAuth??auth},{provide:'STAFF_AUTH',useValue:access?.staffAuth??enrollments?.auth??auth},
     {provide:'STAFF_PROOF_AUTH',useValue:access?.staffProofAuth??access?.staffAuth??auth},
     {provide:'CONSENT_AUTH',useValue:access?.consentAuth??access?.accountAuth??auth},
+    ...(smsWebhooks?[{provide:'SMS_WEBHOOKS',useValue:smsWebhooks}]:[]),
     ...(access?.consents?[{provide:'CONSENTS',useValue:access.consents}]:[]),
     ...(vehicles ? [{ provide: 'VEHICLES', useValue: vehicles }] : []),
     ...(enrollments ? [{provide:'DRAFT_AUTH',useValue:enrollments.auth},{provide:'ENROLLMENTS',useValue:enrollments.store}] : []),
@@ -324,7 +344,8 @@ export async function createApp(auth: IdentityVerifier, accounts: AccountStore, 
   ] }) class AppModule {}
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false });
   app.use((_req:unknown,_res:unknown,next:()=>void)=>identityRequest(next));
-  app.useBodyParser('json',{limit:enrollments?.evidence?'3mb':'100kb'});
+  app.useBodyParser('json',{limit:enrollments?.evidence||workflows?'3mb':'100kb'});
+  if(smsWebhooks)app.useBodyParser('urlencoded',{extended:false,limit:'16kb',parameterLimit:100});
   if (corsOrigin) {
     const origin = new URL(corsOrigin);
     if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== corsOrigin) throw new Error('CORS_ORIGIN must be one exact HTTP(S) origin.');

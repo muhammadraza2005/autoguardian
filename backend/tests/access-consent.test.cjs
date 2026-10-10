@@ -22,7 +22,7 @@ async function approveNoSeals(f,save=false){
 }
 async function fixture(){
  const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create role autoguardian_identity_login nologin;
- create schema auth;create table auth.users(id uuid primary key);
+ create schema auth;create table auth.users(id uuid primary key,phone text,phone_confirmed_at timestamptz);
  create table auth.sessions(id uuid primary key,user_id uuid,aal text,factor_id uuid,not_after timestamptz);
  create table auth.mfa_factors(id uuid primary key,user_id uuid,factor_type text,status text);
  create table auth.mfa_amr_claims(session_id uuid,authentication_method text,updated_at timestamptz);

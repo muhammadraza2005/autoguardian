@@ -1,7 +1,7 @@
 import { runtime } from '@/config/runtime';
 
 export class ApiError extends Error {
-  constructor(public readonly status: number, message: string) {
+  constructor(public readonly status: number, message: string, public readonly code?:string) {
     super(message);
     this.name = 'ApiError';
   }
@@ -40,6 +40,10 @@ export async function apiRequest<T>(path: string, options: ApiOptions): Promise<
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
   // Do not put a raw server response (possibly containing PII) into a UI error.
-  if (!response.ok) throw new ApiError(response.status, 'The request could not be completed.');
+  if (!response.ok) {
+    const payload:unknown=await response.json().catch(()=>null);
+    const code=payload&&typeof payload==='object'&&'code' in payload&&typeof payload.code==='string'&&/^[A-Z0-9_]{1,64}$/.test(payload.code)?payload.code:undefined;
+    throw new ApiError(response.status, 'The request could not be completed.',code);
+  }
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
