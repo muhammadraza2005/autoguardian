@@ -18,6 +18,7 @@ import {SealCodeEntry} from './SealCodeEntry';
 import {availableSealChoices} from './sealChoices';
 import {profileScope} from '@/features/auth/authEvents';
 import {workingCopies} from './workingCopies';
+import {WorkingCopyStatus} from './WorkingCopyStatus';
 import { colors } from '@/theme/tokens';
 import { SealLocationPanel } from './SealLocationPanel';
 import { enrollmentRoute } from './wizard';
@@ -129,7 +130,11 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
   const [uploading,setUploading]=useState<Record<number,boolean>>({});const [newPhotos,setNewPhotos]=useState<z.infer<typeof evidenceMetadata>[]>([]);
   const allPhotos=[...new Map([...photos,...newPhotos].map(p=>[p.id,p])).values()];
   const finished=useRef(false);const attempt=useRef<{key:string;body:SealFittingBody}|null>(restored?.pending??null);
-  const save=useMutation({mutationFn:(value:{key:string;body:SealFittingBody})=>saveSealFitting(request,fitting.draftId,value.key,value.body),
+  const save=useMutation({mutationFn:async (value:{key:string;body:SealFittingBody})=>{
+    workingCopies.write(scope,fitting.draftId,{kind:'seals',draftRevision:fitting.draftRevision,
+      fittingRevision:fitting.fittingRevision,package:chosen,slots,pending:value});
+    await workingCopies.flush();
+    return saveSealFitting(request,fitting.draftId,value.key,value.body);},
     onSuccess:result=>{finished.current=true;workingCopies.remove(scope,'seals',fitting.draftId);attempt.current=null;setUncertain(false);
       cache.setQueryData(['seal-fitting',profile?.tenantId,profile?.id,result.draftId],result);
       void cache.invalidateQueries({queryKey:['seal-stock',profile?.tenantId,profile?.id]});
@@ -174,7 +179,7 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
     attempt.current={key:randomUUID(),body:parsed.data};save.mutate(attempt.current);
   }
   return <>
-    <Copy>{t('liveEnrollment.workingCopy')}</Copy>
+    <WorkingCopyStatus />
     {fitting.package!==null && !fitting.current && <Notice tone="warning">{t('liveSeals.stale')}</Notice>}
     <Card><Heading>{t('liveSeals.selectPackage')}</Heading><Copy>{t('liveSeals.packageChange')}</Copy>
       {(['NONE','STANDARD','ONE_ALARM','FOUR_ALARMS'] as const).map(p=><Action key={p} label={t('liveSeals.packages.'+p)} secondary={p!==chosen}
@@ -218,7 +223,7 @@ function FittingEditor({fitting,photos,organizationId,onSaved,onBusyChange,onDir
         <Label>{t('liveSeals.photo')}</Label>
         <Copy>{slot.photoId && allPhotos.some(p=>p.id===slot.photoId)?t('liveSeals.photoAttached'):t('liveSeals.noPhoto')}</Copy>
         {!slot.sealCode && <Copy>{t('liveSeals.sealBeforePhoto')}</Copy>}
-        <EvidencePanel draftId={fitting.draftId} kinds={['SEAL_FITTING_PHOTO']} compact disabled={save.isPending || uncertain || checking || codeEntry!==null || !slot.sealCode}
+        <EvidencePanel draftId={fitting.draftId} kinds={['SEAL_FITTING_PHOTO']} recoverySlot={'fitting-'+slot.position} compact disabled={save.isPending || uncertain || checking || codeEntry!==null || !slot.sealCode}
           uploadLabel={t('liveSeals.uploadPhoto')} onUploaded={photo=>{
             setNewPhotos(previous=>[...previous.filter(p=>p.id!==photo.id),photo]);
             setSlots(previous=>previous.map(s=>s.position===slot.position?{...s,photoId:photo.id}:s));setProblem(null);

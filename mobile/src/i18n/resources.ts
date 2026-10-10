@@ -10,10 +10,16 @@ import { sealLocationEn, sealLocationFr } from './sealLocationResources';
 import { readinessEn, readinessFr } from './readinessResources';
 import { ownerEn, ownerFr } from './ownerResources';
 import { wizardEn, wizardFr } from './wizardResources';
+import { pdfEvidenceEn, pdfEvidenceFr } from './pdfEvidenceResources';
+import { submissionEn, submissionFr } from './submissionResources';
+import { registrationReviewEn, registrationReviewFr } from './registrationReviewResources';
 export const resources = {
   en: {
     translation: {
       stitch: stitchEn,
+      pdfEvidence: pdfEvidenceEn,
+      registrationSubmission: submissionEn,
+      registrationReview: registrationReviewEn,
       devAuth: devAuthEn,
       ownedVehicles: vehicleEn,
       liveEnrollment: enrollmentEn,
@@ -70,6 +76,9 @@ export const resources = {
   fr: {
     translation: {
       stitch: stitchFr,
+      pdfEvidence: pdfEvidenceFr,
+      registrationSubmission: submissionFr,
+      registrationReview: registrationReviewFr,
       devAuth: devAuthFr,
       ownedVehicles: vehicleFr,
       liveEnrollment: enrollmentFr,

@@ -1,4 +1,5 @@
 export const evidenceReviewEn = {
+  nativeImages:'View each sample image or PDF here before recording a decision. PDF review requires viewing every page. Device acceptance remains pending.',
   title: 'Sample evidence review', notice: 'Development agent self-review only. These decisions do not approve production enrollment.',
   inspectFirst: 'Download and inspect each saved file before recording a decision. Use fictional samples only. Upload corrections in Documents; each new file needs its own review.',
   nativePending: 'Sample file viewing and review decisions are available in the development browser. Secure mobile file viewing is still pending.',
@@ -12,6 +13,7 @@ export const evidenceReviewEn = {
   retry: 'Retry the same decision', discard: 'Discard pending attempt and refresh',
 };
 export const evidenceReviewFr = {
+  nativeImages:'Examinez chaque image ou PDF fictif ici avant de décider. Consultez toutes les pages des PDF. Les tests sur appareil restent en attente.',
   title: 'Examen des pièces de test', notice: 'Auto-évaluation de l’agent en développement uniquement. Ces décisions ne valident pas une inscription réelle.',
   inspectFirst: 'Téléchargez et examinez chaque fichier avant de décider. Utilisez uniquement des exemples fictifs. Ajoutez les corrections dans Documents ; chaque nouveau fichier doit être examiné.',
   nativePending: 'La consultation et les décisions de test sont disponibles dans le navigateur de développement. La consultation sécurisée sur mobile reste à réaliser.',

@@ -29,12 +29,15 @@ The four milestones below are the working plan for the upcoming development. Bui
 - [x] Development preview identities and section-navigation guards.
 - [x] API request helper, optional Supabase client setup, and native session-storage adapter.
 - [x] NestJS identity/profile, owner vehicle reads and development enrollment APIs.
-- [x] Fourteen database migrations in source, tenant isolation, restricted database roles, row-level security and scoped audit records. Hosted 011–013 are confirmed; migration 014 is pending installation.
+- [x] Seventeen database migrations in source, tenant isolation, restricted database roles, row-level security and scoped audit records. Hosted 011–016 are confirmed; 017 for independent review is locally tested and pending installation.
 - [x] Connected development enrollment drafts, encrypted sample owner details/consent, browser sample evidence and provisional seal fitting with QR/manual checks.
 - [x] Hosted development migrations 011–012 and encrypted private Storage round-trip/access denial verified.
 - [x] Saved four-slot development seal location descriptions with revision conflicts, retries, stale-data hiding and English/French form/review controls. See [setup and acceptance](docs/DEVELOPMENT-SEAL-LOCATIONS.md).
 - [x] Development evidence self-review in the browser: sample downloads, acceptable/correction decisions, fixed reasons, append-only history, exact retries and revision invalidation. Production approval remains pending. See [setup and acceptance](docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
-- [x] Latest evidence-review checks: backend build and 28 tests; mobile TypeScript/lint and 44 tests; 123 database foundation checks; offline dependency compatibility with its reliability warning.
+- [x] Encrypted native vehicle/seal/owner recovery, attachment/review/submission retry journals, camera/file selection and image/PDF viewing. Automated PDF rendering checks pass; physical-device acceptance remains pending. See [native guide](docs/DEVELOPMENT-NATIVE-EVIDENCE.md).
+- [x] Submission/finalization component with trusted prerequisite checks, duplicate protection, atomic vehicle/ownership/audit writes and owner-only reads. Hosted 016 is installed. Samples cannot activate; remaining trusted integrations are required. See [setup](docs/ENROLLMENT-SUBMISSION.md).
+- [x] Independent authority review, correction/replacement, audit history, agent feedback and trusted review confirmations under the approved TENANT_ADMIN policy. Migration 017 is pending; see [setup](docs/REGISTRATION-REVIEWS.md).
+- [x] Latest checks: backend build and 38 tests; mobile TypeScript/lint and 60 tests; 123 database foundation checks; offline dependency compatibility with its reliability warning.
 - [x] Web and Android Hermes bundles exported successfully.
 
 **Still to verify:** signed-in browser/camera interaction, French wrapping, keyboard/accessibility behavior and Android device acceptance. Phone testing was deferred by the project owner. Bundle exports do not establish native encryption or release acceptance. See [the verification report](docs/ENROLLMENT-VERIFICATION-2026-10-10.md).
@@ -53,7 +56,7 @@ The four milestones below are the working plan for the upcoming development. Bui
 | Delegation | Account entry points only | Backup invitations/acceptance/removal, seller mandates/acceptance/revocation, expiry, and scoped permissions. |
 | Ownership transfer | Not implemented | Buyer invitation/OTP, identity review, seller confirmation, registry handling where configured, completion/refusal, and removal of former-owner access. |
 | Agent enrollment | Connected five-step development wizard, saved drafts, encrypted sample identity/evidence, sample consent, packages, fitting and readiness | Production agent login, owner OTP/consent, native evidence capture, evidence/physical review, confirmed payment, submission, authority approval, activation and assisted phone changes. |
-| Offline operation | Browser development working-copy recovery only | Encrypted native database **and attachment files**, offline access policy, persistent drafts, sync/retry, stock reconciliation and safe conflict resolution. |
+| Offline operation | Browser working copies and encrypted native form/file/review recovery with revision-bound retries | Full offline startup/access policy, automatic durable sync, stock reconciliation and device acceptance. |
 | Seals | Development assigned stock, QR/manual codes, reservations and fitting diagnostics | Production issuance/allocations, signed identifiers, placement rules, physical inspection, replacement/revocation and lost/damaged handling. |
 | Institutional operations | Registry/clearance previews | Separate police, registry, and insurer scopes; logged identity access; owner consent; real clearance issuance/refusal/expiry/consumption; missing reports; inspection and incident workflows. |
 | Administration | Sample dashboard and user search | Organizations/accounts, accreditation/suspension, enrollment reviews, stock allocation, configuration/templates, incident queues, financial operations, audits, support procedures, and filtered CSV/PDF reports. |
@@ -65,11 +68,29 @@ The four milestones below are the working plan for the upcoming development. Bui
 
 ### Milestone 1 — Finish vehicle registration: start here now
 
-Build on the existing backend, database and enrollment wizard. Complete real login, agent permissions, owner phone OTP and consent, document/photo capture, QR seal issuance and fitting, enrollment review and vehicle activation. Connect everything to the agent app and owner vehicle list. This milestone is achieved when an authorized agent can register a vehicle and its owner can see it in their account. Begin arranging SMS/USSD and mobile-money provider access now. Registration stays gated until every required identity, consent, evidence, seal, payment and review check is satisfied.
+Build on the existing backend, database and enrollment wizard. Complete login/agent permissions, authenticated consent, document/photo handling, production QR seals, independent review, payment handling and gated vehicle activation. Connect these to the agent app and owner vehicle list. SMS and owner phone OTP integration are assigned to Milestone 2 by the project owner; verification hooks remain part of the activation prerequisites. Real registration stays gated until every required identity, consent, evidence, seal, payment and review check is satisfied. Manual browser/device acceptance is retained for the end.
+
+#### Remaining work strictly within Milestone 1
+
+| Registration work | Implementation remaining | Manual input or acceptance |
+| --- | --- | --- |
+| Agent access and owner consent | Production agent authentication/permissions, real consent records and trusted owner-verification hooks | Confirm staff authentication requirements and approved consent text. SMS/OTP implementation is Milestone 2. |
+| Registration evidence — implementation done | Android document/photo handling, PDF viewing, encrypted recovery and automated checks implemented | Phone acceptance remains at the end; approved evidence standards belong to the review task. |
+| Registration seals | Production issuance, authenticated QR identifiers, placement validation and physical inspection records | Confirm issuance rules, category-specific positions and who performs inspection. General stock administration/reconciliation is Milestone 3. |
+| Registration approval — implementation done | Independent TENANT_ADMIN reviewer access, corrections/replacements, approval, audit and trusted review confirmations implemented; actual seal confirmation comes from the seal task | Reviewer policy approved by the project owner. Apply 017; prepare separate reviewer account and test at final manual acceptance. General administration is Milestone 3. |
+| Registration payment | Payment contract, trusted confirmation, failure/retry handling and activation gate | Select provider and provide sandbox access for real integration. Subscriptions and expanded billing are Milestone 3. |
+| Submission and owner visibility — component done | Prerequisites, snapshot checks, duplicate protection, atomic vehicle/ownership/audit writes and owner reads implemented; remaining tasks must supply trusted confirmations | Migration 016 installed and verified; final signed-in browser/Android acceptance remains at the end. |
+
+Full offline startup, automatic durable sync and stock reconciliation are excluded
+from this milestone and retained in Milestone 3. App-wide release acceptance,
+monitoring, performance, backup/restore, deployment and store publication remain
+Milestone 4. Registration-specific tests, permissions, audit records and bilingual
+copy are required here. Existing development sample features are preparation,
+not completed production registration.
 
 ### Milestone 2 — Make vehicle checks and owner responses work
 
-Connect the consumer app so a buyer can check a vehicle by plate, chassis number or QR code. Show its permitted status information, send the owner an alert, accept a secure approval or refusal and return the result to the buyer. Add response deadlines, backup alerts, incident reporting, missing-vehicle reports and sale-status changes. Connect SMS and USSD so basic-phone users can perform the supported checks and responses. This milestone is achieved when the complete buyer-check-to-owner-response journey works, including refusal, timeout and expired results.
+Connect SMS delivery and owner phone OTP verification deferred from Milestone 1, then connect the consumer app so a buyer can check a vehicle by plate, chassis number or QR code. Show its permitted status information, send the owner an alert, accept a secure approval or refusal and return the result to the buyer. Add response deadlines, backup alerts, incident reporting, missing-vehicle reports and sale-status changes. Connect SMS and USSD so basic-phone users can perform the supported checks and responses. This milestone is achieved when the complete buyer-check-to-owner-response journey works, including refusal, timeout and expired results.
 
 ### Milestone 3 — Add payments, subscriptions and pilot administration
 
@@ -82,14 +103,17 @@ Finish French and English coverage, verify security controls and audit logging a
 ## What to do in the upcoming days
 
 - [x] Confirm hosted development migrations 011–013 and restricted function privileges by read-only inspection.
-- [ ] Apply development migration 014 once; check sample evidence reviews, draft/owner invalidation and bilingual layouts. Do not replay 011–013.
+- [x] Confirm hosted migration 014, review table forced RLS, append-only executor grants, denied client access and review policies. Do not replay 011–014.
+- [x] Install development migration 015 and verify bound native upload setup. All read-only setup checks pass; do not replay installed migrations.
+- [ ] Install migration 016 once and run the updated read-only verifier; follow [SQL Editor instructions](docs/ENROLLMENT-SUBMISSION.md).
+- [ ] Check signed-in sample evidence reviews, draft/owner invalidation and bilingual layouts.
 - [ ] Resume Android and signed-in browser acceptance of the existing wizard; fix reproduced issues.
 - [ ] Confirm category-specific seal positions, production seal issuance and evidence-review requirements.
 - [ ] Confirm authority review/approval rules and production agent authentication requirements.
 - [ ] Select SMS/USSD and mobile-money providers and obtain sandbox access; arrange the USSD code.
 - [ ] Implement milestone 1 through the database, API and mobile app, with tests for duplicates, permissions, retries and prerequisite failures.
 
-Phone OTP was previously deferred. Revisit that decision before completing production registration; do not treat sample consent, simulated OTP or unconfirmed payment as production approval. Dates should be assigned after provider access, pilot rules and team capacity are confirmed.
+SMS/phone OTP integration is moved to Milestone 2 by the project owner. Manual browser/device acceptance is retained for the end; continue independent implementation first. No payment provider has been selected. Owner verification still gates real activation; sample consent and unconfirmed payment are not production approval. Dates should be assigned after provider access, pilot rules and team capacity are confirmed.
 
 ## What we can build and what needs external input
 

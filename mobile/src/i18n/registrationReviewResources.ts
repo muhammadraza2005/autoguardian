@@ -1,0 +1,26 @@
+export const registrationReviewEn={
+  title:'Registration reviews',policy:'An independent authority administrator checks owner identification, registration or purchase proof, vehicle photos and confirmed seals before approval.',
+  sample:'Development sample. Decisions cannot activate a vehicle.',loading:'Loading reviews…',empty:'No enrollments to review.',open:'Open review',back:'Back to reviews',previous:'Previous',next:'Next',
+  refresh:'Refresh',inspect:'Inspect file',inspected:'I inspected the complete file and checked that its details match this enrollment.',
+  accept:'Accept evidence',correct:'Request correction',replace:'Choose a replacement for this file',replaceWith:'Replace with this file',cancelReplace:'Cancel replacement',
+  approve:'Approve registration review',attest:'I checked the owner ID, registration/purchase proof and required photos against the vehicle details, and verified the seal confirmation.',
+  evidenceReady:'All required evidence accepted',evidenceMissing:'Evidence is missing, pending or needs review/correction',sealReady:'Trusted seal confirmation is valid',sealMissing:'Trusted seal confirmation is required',
+  approved:'Current production review approved',frozen:'This enrollment has been submitted. Its review and evidence are locked.',history:'Decision history',
+  failed:'Review could not be completed. Refresh or retry.',denied:'Independent authority reviewer access is required.',setup:'Review setup is required on the server.',conflict:'The enrollment or review changed. Refresh before deciding.',
+  uncertain:'The save result is unknown. Retry the exact saved decision or discard the local attempt and refresh.',retry:'Retry saved decision',discard:'Discard local attempt and refresh',close:'Close file',
+  reasons:{BLURRY:'Unreadable or blurry',INCOMPLETE:'Incomplete',WRONG_DOCUMENT:'Wrong document or view',DETAILS_MISMATCH:'Details do not match'},
+  decisions:{NOT_REVIEWED:'Not reviewed',ACCEPTED:'Accepted',NEEDS_CORRECTION:'Correction requested',SUPERSEDED:'Replaced',APPROVED:'Approved'},
+};
+export const registrationReviewFr={
+  title:'Examen des immatriculations',policy:'Un administrateur indépendant de l’autorité vérifie l’identité du propriétaire, le document d’immatriculation ou d’achat, les photos et la confirmation des scellés avant approbation.',
+  sample:'Exemple de développement. Les décisions ne peuvent pas activer un véhicule.',loading:'Chargement des examens…',empty:'Aucun dossier à examiner.',open:'Ouvrir le dossier',back:'Retour aux dossiers',previous:'Précédent',next:'Suivant',
+  refresh:'Actualiser',inspect:'Examiner le fichier',inspected:'J’ai examiné le fichier entier et vérifié que ses informations correspondent à ce dossier.',
+  accept:'Accepter la pièce',correct:'Demander une correction',replace:'Choisir un fichier de remplacement',replaceWith:'Remplacer par ce fichier',cancelReplace:'Annuler le remplacement',
+  approve:'Approuver l’examen du dossier',attest:'J’ai comparé l’identité, le document d’immatriculation ou d’achat et les photos aux informations du véhicule, et vérifié la confirmation des scellés.',
+  evidenceReady:'Toutes les pièces requises sont acceptées',evidenceMissing:'Pièces manquantes, en attente, à examiner ou à corriger',sealReady:'La confirmation des scellés est valide',sealMissing:'Une confirmation fiable des scellés est requise',
+  approved:'Examen de production actuel approuvé',frozen:'Ce dossier a été soumis. Son examen et ses pièces sont verrouillés.',history:'Historique des décisions',
+  failed:'L’examen n’a pas abouti. Actualisez ou réessayez.',denied:'L’accès d’un examinateur indépendant de l’autorité est requis.',setup:'La configuration de l’examen est requise sur le serveur.',conflict:'Le dossier ou son examen a changé. Actualisez avant de décider.',
+  uncertain:'Le résultat est inconnu. Réessayez la décision enregistrée ou abandonnez la tentative locale et actualisez.',retry:'Réessayer la décision enregistrée',discard:'Abandonner la tentative locale et actualiser',close:'Fermer le fichier',
+  reasons:{BLURRY:'Illisible ou flou',INCOMPLETE:'Incomplet',WRONG_DOCUMENT:'Mauvais document ou angle',DETAILS_MISMATCH:'Informations incohérentes'},
+  decisions:{NOT_REVIEWED:'Non examiné',ACCEPTED:'Accepté',NEEDS_CORRECTION:'Correction demandée',SUPERSEDED:'Remplacé',APPROVED:'Approuvé'},
+};

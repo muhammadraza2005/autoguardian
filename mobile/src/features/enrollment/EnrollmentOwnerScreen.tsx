@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { TextInput, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, TextInput, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { randomUUID } from 'expo-crypto';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +8,9 @@ import { z } from 'zod';
 import { useSession } from '@/features/auth/SessionProvider';
 import { ApiError } from '@/services/api/client';
 import { Action, AppHeader, Card, Copy, Heading, Label, Notice, StitchPage, stitchStyles } from '@/components/ui/Stitch';
-import { ownerDetailsSchema, readOwner, saveOwner, recordOwnerConsent, type OwnerSnapshot, type OwnerSave, type OwnerConsent } from './owner';
+import { ownerDetailsSchema, readOwner, saveOwner, recordOwnerConsent, type OwnerSnapshot } from './owner';
+import {loadOwnerRecovery,saveOwnerRecovery,removeOwnerRecovery} from './ownerRecovery';
+import type {OwnerAttempt,OwnerRecovery} from './ownerRecoverySchema';
 
 function OwnerError({ error }: { error: unknown }) {
   const { t } = useTranslation(); const status = error instanceof ApiError ? error.status : undefined;
@@ -32,12 +34,14 @@ export default function EnrollmentOwnerScreen({embedded=false,onBusyChange,onDir
     {profile && safeId && !query.isFetching && !query.isError && query.data &&
       <OwnerForm key={[profile.tenantId, profile.id, safeId, query.dataUpdatedAt].join(':')} snapshot={query.data}
         onBusy={setBusy} onBusyChange={onBusyChange} onDirtyChange={onDirtyChange} />}
-    {safeId && <Action secondary label={t('liveOwner.reload')} disabled={busy || query.isFetching} onPress={() => void query.refetch()} />}
+    {safeId && <Action secondary label={t('liveOwner.reload')} disabled={busy || query.isFetching} onPress={() => {
+      void removeOwnerRecovery(safeId).then(()=>query.refetch()).catch(()=>{});
+    }} />}
     {!embedded && safeId && <Action secondary label={t('liveOwner.back')} disabled={busy} onPress={() => router.dismissTo({ pathname: '/live-enrollments/review', params: { id: safeId } })} />}
   </>;
   return embedded?content:<View style={{flex:1}}><AppHeader/><StitchPage>{content}</StitchPage></View>;
 }
-type Attempt = { key: string } & ({ kind: 'details'; body: OwnerSave } | { kind: 'consent'; body: OwnerConsent });
+type Attempt = OwnerAttempt;
 function OwnerForm({ snapshot, onBusy, onBusyChange, onDirtyChange }: { snapshot: OwnerSnapshot; onBusy: (busy: boolean) => void;
   onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void }) {
   const { t } = useTranslation(); const { profile, request } = useSession(); const cache = useQueryClient();
@@ -49,9 +53,12 @@ function OwnerForm({ snapshot, onBusy, onBusyChange, onDirtyChange }: { snapshot
   const [terms, setTerms] = useState(false), [data, setData] = useState(false);
   const [busy, setBusy] = useState(false), [uncertain, setUncertain] = useState(false), [invalid, setInvalid] = useState(false);
   const [error, setError] = useState<unknown>(null); const attempt = useRef<Attempt | null>(null);
+  const [restoring,setRestoring]=useState(Platform.OS!=='web'),[recoveryFailed,setRecoveryFailed]=useState(false);
+  const [recoveryUnavailable,setRecoveryUnavailable]=useState(false);
+  const saved=useRef(false);
   const pending = useRef(false), mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; attempt.current = null; }; }, []);
-  const locked = busy || uncertain;
+  const locked = busy || uncertain || restoring || recoveryUnavailable;
   const document = snapshot.documents.find(d => d.language === snapshot.details?.preferredLanguage);
   const parsed = ownerDetailsSchema.safeParse({ ...fields, type, preferredLanguage: language,
     companyRegistration: type === 'COMPANY' ? fields.companyRegistration : null, representativeName: type === 'COMPANY' ? fields.representativeName : null });
@@ -63,14 +70,35 @@ function OwnerForm({ snapshot, onBusy, onBusyChange, onDirtyChange }: { snapshot
     || (snapshot.consent?.status!=='RECORDED' && (terms || data));
   useEffect(()=>{callbacks.current.onBusyChange?.(locked);callbacks.current.onDirtyChange?.(unsaved);},[locked,unsaved]);
   useEffect(()=>()=>{callbacks.current.onBusyChange?.(false);callbacks.current.onDirtyChange?.(false);},[]);
+  useEffect(()=>{
+    if(Platform.OS==='web')return;
+    let active=true;
+    void loadOwnerRecovery(snapshot.draftId).then(value=>{
+      if(!active || !value || value.ownerProfileId!==snapshot.ownerProfileId)return;
+      if(!value.pending && (value.draftRevision!==snapshot.draftRevision || value.ownerGeneration!==snapshot.ownerGeneration))return;
+      setType(value.type);setLanguage(value.language);setFields(value.fields);setTerms(value.terms);setData(value.data);
+      attempt.current=value.pending;setUncertain(Boolean(value.pending));
+    }).catch(()=>{if(active){setRecoveryFailed(true);setRecoveryUnavailable(true);}}).finally(()=>{if(active)setRestoring(false);});
+    return()=>{active=false;};
+  },[snapshot.draftId,snapshot.draftRevision,snapshot.ownerGeneration,snapshot.ownerProfileId]);
+  const recovery=useMemo<Omit<OwnerRecovery,'pending'>>(()=>({draftRevision:snapshot.draftRevision,
+    ownerGeneration:snapshot.ownerGeneration,ownerProfileId:snapshot.ownerProfileId,type,language,fields,terms,data}),
+    [snapshot.draftRevision,snapshot.ownerGeneration,snapshot.ownerProfileId,type,language,fields,terms,data]);
+  useEffect(()=>{
+    if(restoring || recoveryUnavailable || saved.current || Platform.OS==='web')return;
+    void saveOwnerRecovery(snapshot.draftId,{...recovery,pending:attempt.current}).then(()=>{if(mounted.current)setRecoveryFailed(false);})
+      .catch(()=>{if(mounted.current)setRecoveryFailed(true);});
+  },[snapshot.draftId,recovery,restoring,recoveryUnavailable,uncertain,busy]);
   async function send(value: Attempt) {
     if (pending.current) return;
     pending.current = true; attempt.current = value; setBusy(true); onBusy(true); setError(null); setInvalid(false);
     try {
+      if(Platform.OS!=='web')await saveOwnerRecovery(snapshot.draftId,{...recovery,pending:value});
       const result = value.kind === 'details' ? await saveOwner(request, snapshot.draftId, value.key, value.body)
         : await recordOwnerConsent(request, snapshot.draftId, value.key, value.body);
       if (!mounted.current) return;
-      // Plaintext forms and retry bodies stay in component memory, never working-copy storage.
+      saved.current=true;await removeOwnerRecovery(snapshot.draftId);if(!mounted.current)return;
+      // Web owner forms stay in memory. Native recovery is encrypted separately.
       for (const key of ['enrollment-draft', 'enrollment-drafts', 'enrollment-readiness', 'enrollment-evidence', 'seal-fitting'])
         void cache.invalidateQueries({ queryKey: [key, profile?.tenantId, profile?.id] });
       attempt.current = null; setUncertain(false);
@@ -95,7 +123,8 @@ function OwnerForm({ snapshot, onBusy, onBusyChange, onDirtyChange }: { snapshot
     void send({ kind: 'consent', key: randomUUID(), body: { expectedDraftRevision: snapshot.draftRevision, ownerGeneration: snapshot.ownerGeneration,
       version: document.version, language: document.language, ...(accept ? { accept: true, termsAccepted: true, dataAccepted: true } : { accept: false }) } });
   }
-  return <><Copy>{t('liveOwner.memory')}</Copy><Card>
+  return <><Copy>{t(Platform.OS==='web'?'liveOwner.memory':'liveOwner.nativeRecovery')}</Copy>
+    {recoveryFailed && <Notice tone="danger">{t('liveEnrollment.nativeRecoveryFailed')}</Notice>}<Card>
     {(['INDIVIDUAL', 'COMPANY'] as const).map(value => <Action key={value} secondary={type !== value} disabled={locked}
       label={t('liveOwner.' + (value === 'COMPANY' ? 'company' : 'individual'))} onPress={() => setType(value)} />)}
     {(Object.keys(fields) as (keyof typeof fields)[]).filter(field => type === 'COMPANY' || !['companyRegistration', 'representativeName'].includes(field)).map(field =>

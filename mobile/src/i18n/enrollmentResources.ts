@@ -1,4 +1,7 @@
 export const enrollmentEn={
+  nativeRecovery:'Your unfinished vehicle and seal entries are encrypted on this device. Save to send them to the server.',
+  nativeRecoverySaving:'Encrypting unfinished entries on this device…',
+  nativeRecoveryFailed:'Device recovery could not be saved. Keep this screen open and retry saving before leaving.',
   title:'Development enrollment drafts',new:'New enrollment draft',edit:'Review and edit draft',open:'Open draft',
   notice:'Draft only. Owner verification, evidence and payment are still pending. Saving does not enroll a vehicle or grant ownership.',
   loading:'Loading drafts…',empty:'You have no enrollment drafts.',draft:'Draft — not active',revision:'Revision {{revision}}',
@@ -26,6 +29,9 @@ export const enrollmentEn={
   fields:{chassisIdentifier:'Chassis identifier *',plate:'Plate (optional)',category:'Category *',make:'Make (optional)',model:'Model (optional)',manufactureYear:'Year (optional)',color:'Color (optional)'},
 };
 export const enrollmentFr={
+  nativeRecovery:'Vos saisies de véhicule et de scellés sont chiffrées sur cet appareil. Enregistrez pour les envoyer au serveur.',
+  nativeRecoverySaving:'Chiffrement des saisies sur cet appareil…',
+  nativeRecoveryFailed:'Impossible de sauvegarder la reprise sur cet appareil. Gardez cet écran ouvert et réessayez avant de le quitter.',
   title:'Brouillons d’inscription de développement',new:'Nouveau brouillon d’inscription',edit:'Vérifier et modifier le brouillon',open:'Ouvrir le brouillon',
   notice:'Brouillon uniquement. La vérification du propriétaire, les justificatifs et le paiement restent en attente. Enregistrer n’inscrit pas le véhicule et n’accorde pas la propriété.',
   loading:'Chargement des brouillons…',empty:'Vous n’avez aucun brouillon d’inscription.',draft:'Brouillon — non actif',revision:'Révision {{revision}}',

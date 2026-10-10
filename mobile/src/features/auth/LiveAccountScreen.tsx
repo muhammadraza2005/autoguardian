@@ -29,6 +29,8 @@ export default function LiveAccount({embedded=false}:{embedded?:boolean}={}) {
       </Card><Action label={t('navigation.vehicles')} icon="car-outline" onPress={() => router.push('/live-vehicles')} />
       {runtime.developmentEmailAuth && profile.roles.some(role=>role.code==='ENROLLMENT_AGENT' && role.organizationId) &&
         <Action secondary label={t('enrollmentWizard.list')} icon="document-text-outline" onPress={()=>router.navigate('/agent')} />}
+      {profile.roles.some(role=>role.code==='TENANT_ADMIN'&&role.organizationId===null)&&
+        <Action secondary label={t('registrationReview.title')} icon="document-text-outline" onPress={()=>router.push('/registration-reviews')}/>}
       <Action secondary label={t('devAuth.refresh')} onPress={refreshProfile} /></>}
     {signOutError && <Notice tone="danger">{t('devAuth.signOutError')}</Notice>}
     <Action secondary label={t('devAuth.signOut')} onPress={() => void leave()} />

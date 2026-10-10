@@ -10,6 +10,41 @@ const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 const tenant='ce31527e-d1b5-4379-9ddd-1458cfb73431',profile='369cbe75-32c8-40b4-a9ee-f2d9bde379db',org='014db61a-4c68-48cb-86b6-46837f4da873';
 const pdf=Buffer.from('%PDF-1.4\nSynthetic test only\n%%EOF\n');
 const payload={kind:'OWNER_ID',dataBase64:pdf.toString('base64')};
+
+test('revision-bound native uploads retry exactly, reject changed owner/draft and keep binding history restricted',async()=>{
+  const {db,drafts,draft,store}=await foundation();const objects=new Map();let interrupted=true;
+  const service=new EvidenceService(store,{check:async()=>{},put:async(key,bytes)=>{if(!objects.has(key))objects.set(key,bytes);},
+    get:async key=>{if(interrupted)throw new Error('Synthetic interrupted read-back');return objects.get(key);}},evidenceCipher(randomBytes(32)));
+  try{
+    const context=(await service.list(id(1),draft.id)).nativeUploadContext;
+    assert.deepEqual(context,{draftRevision:draft.revision,ownerGeneration:1});
+    const bound={...payload,uploadContext:context};
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(901),bound));interrupted=false;
+    const saved=await service.upload(id(1),draft.id,id(901),bound);
+    assert.equal(saved.attachment.status,'STAGED');await service.upload(id(1),draft.id,id(901),bound);
+    assert.equal(objects.size,1);
+    assert.equal((await db.query('select count(*)::int n from private.native_evidence_upload_bindings')).rows[0].n,1);
+    await assert.rejects(()=>service.upload(id(2),draft.id,id(902),bound),e=>e.getStatus()===403);
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(902),{...bound,uploadContext:{...context,ownerGeneration:2}}),e=>e.getStatus()===409);
+    await assert.rejects(()=>evidenceInput({...bound,uploadContext:{...context,productionVerified:true}}),e=>e.getStatus()===400);
+    await assert.rejects(()=>evidenceInput({...bound,uploadContext:{...context,draftRevision:0}}),e=>e.getStatus()===400);
+    await drafts.save(id(1),draftInput({organizationId:org,ownerProfileId:profile,
+      vehicle:{...draft.vehicle,color:'BLUE'},expectedRevision:draft.revision},true),draft.id);
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(901),bound),e=>e.getStatus()===409);
+    await assert.rejects(()=>store.finish(id(1),draft.id,id(901),context),e=>e.getStatus()===409);
+    const changed=(await service.list(id(1),draft.id)).nativeUploadContext;
+    await db.exec(`update app.enrollment_drafts set owner_generation=owner_generation+1 where id='${draft.id}'`);
+    await assert.rejects(()=>service.upload(id(1),draft.id,id(903),{...payload,uploadContext:changed}),e=>e.getStatus()===409);
+    const permissions=await db.query(`select
+      has_table_privilege('autoguardian_enrollment_executor','private.native_evidence_upload_bindings','UPDATE,DELETE,TRUNCATE') mutable,
+      has_table_privilege('autoguardian_enrollment_api','private.native_evidence_upload_bindings','SELECT,INSERT') direct,
+      has_function_privilege('anon','private.enrollment_attachment_reserve_bound(uuid,uuid,text,text,integer,text,integer,integer)','EXECUTE') anonymous,
+      has_function_privilege('service_role','private.enrollment_attachment_finish_bound(uuid,uuid,integer,integer)','EXECUTE') service`);
+    assert.deepEqual(permissions.rows[0],{mutable:false,direct:false,anonymous:false,service:false});
+    const flags=await db.query("select relrowsecurity,relforcerowsecurity from pg_class where oid='private.native_evidence_upload_bindings'::regclass");
+    assert.deepEqual(flags.rows[0],{relrowsecurity:true,relforcerowsecurity:true});
+  }finally{await db.close();}
+});
 async function foundation() {
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
@@ -28,6 +63,8 @@ async function foundation() {
   const drafts=new PostgresEnrollmentStore(pool,tenant);
   const draft=(await drafts.save(id(1),draftInput({organizationId:org,ownerProfileId:profile,
     vehicle:{chassisIdentifier:'ATTACHMENT-TEST',plate:'ATTACHMENT-001',category:'CAR'}}),undefined,id(80))).draft;
+  // Privileged fixture edits must carry the same scope as runtime mutations.
+  await db.query("select set_config('autoguardian.tenant_id',$1,false),set_config('autoguardian.auth_user_id',$2,false)",[tenant,id(1)]);
   return {db,pool,drafts,draft,store:new PostgresEvidenceStore(pool,tenant)};
 }
 test('attachment validation strips image metadata, rejects invalid/active content and enforces the size limit',async()=>{

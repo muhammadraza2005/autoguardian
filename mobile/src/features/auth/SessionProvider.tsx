@@ -70,7 +70,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
         const generation = ++profileRevision;
         const previousProfile = currentProfile;
         if (!preserve) revision++;
-        if (!auth || (currentAuth && currentAuth.user.id!==auth.user.id)) workingCopies.clear();
+        if (!auth || (currentAuth && currentAuth.user.id!==auth.user.id)) void Promise.resolve(workingCopies.clear()).catch(() => {});
         currentAuth = auth;
         if (!preserve) profileReady = false;
         cancel?.abort();
@@ -84,12 +84,14 @@ export function SessionProvider({ children }: PropsWithChildren) {
         const signal = requestCancel.signal;
         const deadline = setTimeout(() => requestCancel.abort(), 10000);
         void apiRequest<unknown>('/v1/me/profile', { method: 'POST', body: {}, accessToken: auth.access_token, signal })
-          .then(value => {
+          .then(async value => {
             if (!mounted || profileRevision !== generation) return;
             const verifiedProfile = profileSchema.parse(value);
             if (preserve && previousProfile && profileScope(previousProfile)!==profileScope(verifiedProfile)) {
-              revision++;queryClient.clear();workingCopies.clear();
+              revision++;queryClient.clear();await workingCopies.clear();
             }
+            await workingCopies.prepare(profileScope(verifiedProfile));
+            if (!mounted || profileRevision !== generation) return;
             workingCopies.identify(profileScope(verifiedProfile));currentProfile=verifiedProfile;
             profileReady = true;
             setProfile(verifiedProfile); setSession(profileSession(verifiedProfile));
@@ -140,12 +142,14 @@ export function SessionProvider({ children }: PropsWithChildren) {
     if (authError) throw new Error('Email sign-in failed.');
   }
   async function signOut() {
-    workingCopies.clear();
     clearIdentityRef.current();
     setSession(null); setProfile(null); queryClient.clear();
-    if (runtime.isDemo) return;
-    const { error: authError } = await getSupabaseClient().auth.signOut({ scope: 'local' });
-    if (authError) throw new Error('Sign-out failed.');
+    const cleanupFailed=await Promise.resolve(workingCopies.clear()).then(()=>false,()=>true);
+    if (!runtime.isDemo) {
+      const { error: authError } = await getSupabaseClient().auth.signOut({ scope: 'local' });
+      if (authError) throw new Error('Sign-out failed.');
+    }
+    if(cleanupFailed)throw new Error('Encrypted recovery cleanup failed.');
   }
   return <SessionContext.Provider value={{ session, profile, loading, error, setPreviewSection,
     signInWithEmail, signOut, refreshProfile: () => refreshRef.current(),

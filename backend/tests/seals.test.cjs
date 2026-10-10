@@ -21,6 +21,7 @@ async function foundation(){
   const drafts=new PostgresEnrollmentStore(pool,tenant),seals=new PostgresSealStore(pool,tenant);
   const draftBody={organizationId:org,ownerProfileId:profile,vehicle:{chassisIdentifier:'SEAL-TEST',plate:'SEAL-001',category:'CAR'}};
   const draft=(await drafts.save(id(1),draftInput(draftBody),undefined,id(80))).draft;
+  await db.query("select set_config('autoguardian.tenant_id',$1,false),set_config('autoguardian.auth_user_id',$2,false)",[tenant,id(1)]);
   return {db,pool,drafts,seals,draft,draftBody};
 }
 const input=(package='STANDARD',placements=[],expectedFittingRevision=0,expectedDraftRevision=1)=>sealFittingInput({package,placements,expectedFittingRevision,expectedDraftRevision});

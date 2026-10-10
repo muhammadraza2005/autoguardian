@@ -8,6 +8,8 @@ export const evidenceReviewBody = z.object({
   decision: z.enum(['ACCEPTED_SAMPLE', 'NEEDS_CORRECTION']), reason: reason.nullable(),
 }).strict().refine(value => value.decision === 'ACCEPTED_SAMPLE' ? value.reason === null : value.reason !== null);
 export type EvidenceReviewBody = z.infer<typeof evidenceReviewBody>;
+export const evidenceReviewAttemptSchema=z.object({key:z.uuid(),attachmentId:z.uuid(),body:evidenceReviewBody}).strict();
+export type EvidenceReviewAttempt=z.infer<typeof evidenceReviewAttemptSchema>;
 export const evidenceReviewsSchema = z.object({ version: z.literal(1), draftId: z.uuid(), draftRevision: z.number().int().positive(),
   sampleOnly: z.literal(true), productionApproved: z.literal(false), canSubmit: z.literal(false),
   items: z.array(z.object({ attachmentId: z.uuid(), kind: evidenceKindSchema, uploadStatus: z.enum(['PENDING', 'STAGED']),

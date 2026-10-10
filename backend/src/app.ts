@@ -11,6 +11,63 @@ import { EnrollmentStore, draftId, draftInput } from './enrollments';
 import { SealStore, sealFittingInput, sealLocationInput } from './seals';
 import { ReadinessStore } from './readiness';
 import { OwnerService } from './owner';
+import { SubmissionStore, submissionInput } from './submission';
+import { RegistrationReviewService } from './registrationReviews';
+
+@Controller('registration-reviews')
+class RegistrationReviewController {
+  constructor(@Inject('AUTH') private readonly auth: IdentityVerifier,
+    @Inject('REGISTRATION_REVIEWS') private readonly reviews: RegistrationReviewService) {}
+  @Get() async queue(@Headers('authorization') header: string | undefined, @Query() query: Record<string,unknown>) {
+    const actor=await this.auth.verify(header);
+    const limit=query.limit===undefined?20:Number(query.limit),offset=query.offset===undefined?0:Number(query.offset);
+    if(Object.keys(query).some(k=>!['limit','offset'].includes(k)) || !Number.isInteger(limit) || limit<1 || limit>50
+      || !Number.isInteger(offset) || offset<0 || offset>2147483647 || ['limit','offset'].some(k=>query[k]!==undefined
+        && (typeof query[k]!=='string' || !/^\d+$/.test(query[k] as string)))) throw new BadRequestException({code:'INVALID_PAGE'});
+    return this.reviews.queue(actor,limit,offset);
+  }
+  @Get(':id') async read(@Headers('authorization') header: string | undefined,@Param('id') id: string,@Query() query: Record<string,unknown>) {
+    const actor=await this.auth.verify(header);
+    if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.reviews.read(actor,draftId(id));
+  }
+  @Get(':id/feedback') async feedback(@Headers('authorization') header: string | undefined,@Param('id') id: string,@Query() query: Record<string,unknown>) {
+    const actor=await this.auth.verify(header);
+    if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.reviews.feedback(actor,draftId(id));
+  }
+  @Post(':id') @HttpCode(200) async change(@Headers('authorization') header: string | undefined,@Param('id') id: string,
+    @Headers('idempotency-key') key: string | undefined,@Body() body: unknown,@Query() query: Record<string,unknown>) {
+    const actor=await this.auth.verify(header);
+    if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.reviews.change(actor,draftId(id),draftId(key),body);
+  }
+}
+
+@Controller('enrollment-drafts/:id/submission')
+class SubmissionController {
+  constructor(@Inject('DRAFT_AUTH') private readonly auth: IdentityVerifier,
+    @Inject('SUBMISSION') private readonly store: SubmissionStore) {}
+  @Get() async read(@Headers('authorization') header: string | undefined, @Param('id') id: string, @Query() query: Record<string, unknown>) {
+    const actor = await this.auth.verify(header);
+    if (Object.keys(query).length) throw new BadRequestException({ code: 'UNEXPECTED_QUERY_FIELDS' });
+    return this.store.read(actor, draftId(id));
+  }
+  private async change(header: string | undefined, id: string, key: string | undefined, body: unknown, query: Record<string, unknown>, action: 'submit' | 'finalize') {
+    const actor = await this.auth.verify(header);
+    if (Object.keys(query).length) throw new BadRequestException({ code: 'UNEXPECTED_QUERY_FIELDS' });
+    const input = submissionInput(body);
+    return this.store.execute(actor, draftId(id), draftId(key), input.expectedDraftRevision, action, input.expectedSnapshotRevision);
+  }
+  @Post() @HttpCode(200) submit(@Headers('authorization') header: string | undefined, @Param('id') id: string,
+    @Headers('idempotency-key') key: string | undefined, @Body() body: unknown, @Query() query: Record<string, unknown>) {
+    return this.change(header, id, key, body, query, 'submit');
+  }
+  @Post('finalize') @HttpCode(200) finalize(@Headers('authorization') header: string | undefined, @Param('id') id: string,
+    @Headers('idempotency-key') key: string | undefined, @Body() body: unknown, @Query() query: Record<string, unknown>) {
+    return this.change(header, id, key, body, query, 'finalize');
+  }
+}
 
 @Controller('enrollment-drafts/:id/owner')
 class OwnerController {
@@ -194,10 +251,11 @@ class ApiErrors implements ExceptionFilter {
 }
 
 export async function createApp(auth: IdentityVerifier, accounts: AccountStore, corsOrigin?: string, vehicles?: VehicleStore,
-  enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore; readiness?:ReadinessStore; owner?:OwnerService }) {
+  enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore; readiness?:ReadinessStore; owner?:OwnerService; submission?:SubmissionStore; registrationReviews?:RegistrationReviewService }) {
   @Module({ controllers: [AccountController, ...(vehicles ? [VehicleController] : []), ...(enrollments ? [EnrollmentController] : []),
     ...(enrollments?.evidence?[EvidenceController]:[]),...(enrollments?.seals?[SealStockController,SealFittingController]:[]),
-    ...(enrollments?.readiness?[ReadinessController]:[]), ...(enrollments?.owner?[OwnerController]:[])], providers: [
+    ...(enrollments?.readiness?[ReadinessController]:[]), ...(enrollments?.owner?[OwnerController]:[]), ...(enrollments?.submission?[SubmissionController]:[]),
+    ...(enrollments?.registrationReviews?[RegistrationReviewController]:[])], providers: [
     { provide: 'AUTH', useValue: auth }, { provide: 'ACCOUNTS', useValue: accounts },
     ...(vehicles ? [{ provide: 'VEHICLES', useValue: vehicles }] : []),
     ...(enrollments ? [{provide:'DRAFT_AUTH',useValue:enrollments.auth},{provide:'ENROLLMENTS',useValue:enrollments.store}] : []),
@@ -205,6 +263,8 @@ export async function createApp(auth: IdentityVerifier, accounts: AccountStore, 
     ...(enrollments?.seals?[{provide:'SEALS',useValue:enrollments.seals}]:[]),
     ...(enrollments?.readiness?[{provide:'READINESS',useValue:enrollments.readiness}]:[]),
     ...(enrollments?.owner?[{provide:'OWNER',useValue:enrollments.owner}]:[]),
+    ...(enrollments?.submission?[{provide:'SUBMISSION',useValue:enrollments.submission}]:[]),
+    ...(enrollments?.registrationReviews?[{provide:'REGISTRATION_REVIEWS',useValue:enrollments.registrationReviews}]:[]),
   ] }) class AppModule {}
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false });
   app.useBodyParser('json',{limit:enrollments?.evidence?'3mb':'100kb'});

@@ -6,12 +6,14 @@ authority reviewer permissions and cannot approve production registration.
 
 ## Setup
 
-Apply migrations in order. Hosted 011–013 are now confirmed by read-only inspection;
+Apply migrations in order. Hosted 011–014 are now confirmed by read-only inspection;
 do not replay installed migrations.
-Apply [014](../supabase/migrations/202610100014_development_evidence_reviews.sql)
+For a fresh development setup, apply [014](../supabase/migrations/202610100014_development_evidence_reviews.sql)
 once as postgres in the development Supabase SQL Editor after 013. The restricted
 backend login cannot install schema changes. No new credentials or provider
-settings are needed. Hosted installation was not performed by this increment.
+settings are needed. On 10 October 2026, the existing hosted installation passed
+read-only function, forced-RLS, append-only grant, denied-client-access and policy
+checks. No migration was rerun. Signed-in acceptance remains pending.
 
 Build/restart the backend, then run from `backend/`:
 
@@ -30,7 +32,10 @@ Missing setup returns 503; the app displays an explicit setup message.
    including fitting photos. Download and inspect each file before deciding.
 3. Mark a staged sample acceptable, or choose a correction reason: unreadable,
    incomplete, wrong document/view or mismatched details. Pending uploads cannot
-   be reviewed. Native decision controls remain disabled pending secure viewing.
+   be reviewed. Native sample images can be viewed in memory; decision controls
+   require the current image load event. Native PDFs render in the app; every
+   page must render before a sample decision is enabled.
+   See [native setup and acceptance](DEVELOPMENT-NATIVE-EVIDENCE.md).
 4. Refresh to verify decisions persist. Upload a correction in Documents: the new
    attachment starts unreviewed; the original decision remains in the history.
    No replacement/supersession policy is inferred, and old files are not deleted.
@@ -69,13 +74,13 @@ endpoint; downloaded files must remain fictional.
 
 ## Production work still required
 
-Define authorized independent reviewer roles, separation of duties, evidence
-standards, corrections/supersession and retention rules. Add secure native capture
-and viewing, actual identity/document checks and physical seal inspection. Bind
-production decisions to verified prerequisites and the approved review policy;
-implement finalization only after authentication, owner consent, payment and
-authority requirements are satisfied. A requested download is not proof of human
-inspection, and accepting a sample does not establish identity verification.
+The project owner has approved independent TENANT_ADMIN review. That separate
+workflow, correction/replacement, audit and trusted review receipts are implemented
+in [migration 017 and its guide](REGISTRATION-REVIEWS.md); installation is pending.
+Native capture/PDF viewing and the finalization component are also implemented.
+Actual identity/consent verification, physical seal inspection and payment remain
+their separate integrations. This sample self-review still cannot approve a
+production registration. A requested download is not proof of human inspection.
 
 ## Automated validation
 
@@ -85,6 +90,6 @@ stale revisions, invalid payloads, cross-tenant denial, revoked access, direct
 table/function denial, immutable history, vehicle-revision and owner invalidation. Mobile contract
 tests reject production claims and malformed review states and check scoped API
 retries and bilingual keys. Auth/Storage are provider doubles in this scenario;
-this does not prove hosted or native acceptance. Backend build/28 tests, mobile
-TypeScript/lint/44 tests, 123 database checks and web/Android exports passed.
+this does not prove hosted or native acceptance. Latest backend build/34 tests,
+mobile TypeScript/lint/57 tests, 123 database checks and web/Android exports passed.
 Offline dependency compatibility passed with the tool's reliability warning.

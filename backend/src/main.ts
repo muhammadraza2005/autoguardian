@@ -8,6 +8,8 @@ import { configuredEvidence, PostgresEvidenceStore } from './evidence';
 import { PostgresSealStore } from './seals';
 import { PostgresReadinessStore } from './readiness';
 import { configuredOwner, PostgresOwnerStore } from './owner';
+import { PostgresSubmissionStore } from './submission';
+import { PostgresRegistrationReviewStore, RegistrationReviewService } from './registrationReviews';
 
 async function main() {
   const allowDevelopmentEmail = developmentEmailAllowed(process.env);
@@ -23,12 +25,14 @@ async function main() {
   try {
     await accounts.checkConnection();
     const identity = new SupabaseIdentityVerifier(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, allowDevelopmentEmail);
+    const evidence=configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail);
     const app = await createApp(identity, accounts, process.env.CORS_ORIGIN,
       new PostgresVehicleStore(pool, tenant), { auth: new DevelopmentDraftVerifier(identity,allowDevelopmentEmail),
         store: new PostgresEnrollmentStore(pool,tenant), seals:new PostgresSealStore(pool,tenant),
         readiness: new PostgresReadinessStore(pool,tenant),
+        submission: new PostgresSubmissionStore(pool,tenant),
         owner: configuredOwner(process.env,new PostgresOwnerStore(pool,tenant),allowDevelopmentEmail),
-        evidence: configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail) });
+        evidence, registrationReviews:new RegistrationReviewService(new PostgresRegistrationReviewStore(pool,tenant),evidence) });
     const shutdown = app.close.bind(app);
     app.close = async () => { await shutdown(); await pool.end(); };
     await app.listen(port, process.env.HOST ?? '127.0.0.1');

@@ -1,17 +1,43 @@
 # AutoGuardian database foundation
 
+## Independent review — 10 October 2026
+
+[Migration 017](migrations/202610100017_independent_registration_reviews.sql)
+implements the approved independent TENANT_ADMIN policy and scoped review receipt
+producers. It awaits manual installation after installed/verified 016.
+See [exact setup instructions](../docs/REGISTRATION-REVIEWS.md). The read-only
+verifier now expects 18 functions and the private append-only review table.
+
+## Registration finalization — 10 October 2026
+
+[Migration 016](migrations/202610100016_enrollment_finalization.sql) is implemented
+and locally tested, installed and verified in hosted development. Do not replay
+it. See [the integration boundary](../docs/ENROLLMENT-SUBMISSION.md). The verifier
+now also expects migration 017's review functions and the new
+restricted tables. No development draft is promoted or activated by installation.
+
+## Native upload bindings — 10 October 2026
+
+[Migration 015](migrations/202610100015_native_evidence_uploads.sql) adds forced-RLS,
+append-only native upload context bindings and restricted reservation/staging
+wrappers. It is installed and verified in hosted development; do not replay it.
+The verifier now expects 017 and exits nonzero until present.
+No new bucket, credentials or environment settings are
+required. See [native implementation and limits](../docs/DEVELOPMENT-NATIVE-EVIDENCE.md).
+
 ## Development evidence reviews — 10 October 2026
 
 New [migration 014](migrations/202610100014_development_evidence_reviews.sql)
 adds forced-RLS, append-only sample self-review decisions and restricted functions.
 Apply it once as postgres after 013, without replaying installed migrations.
-Hosted installation remains pending. See [setup and limits](../docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
+Hosted installation and review table/function security were confirmed by read-only
+inspection on 10 October 2026. Do not replay it. See [setup and limits](../docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
 
 ## Development placement notes — 10 October 2026
 
 New [migration 013](migrations/202610100013_seal_location_notes.sql) adds restricted,
 revision-bound sample location notes and save events. Hosted 011–013 are now
-confirmed by read-only inspection; do not replay them. New 014 remains pending. See
+confirmed by read-only inspection; do not replay them. Migration 014 is also confirmed. See
 [setup and limits](../docs/DEVELOPMENT-SEAL-LOCATIONS.md).
 
 ## Owner details and sample consent (migration 010)

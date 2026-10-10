@@ -3,7 +3,12 @@
 The Review step now includes development evidence self-review with sample
 downloads, correction reasons, exact retries and refresh controls in English/French.
 Migration 014 is required; see [setup and acceptance](DEVELOPMENT-EVIDENCE-REVIEWS.md).
-Native viewing/decision controls and production approval remain pending.
+Native sample camera/file selection, encrypted recovery and image/PDF self-review
+are implemented. Hosted migration 015 is installed. Device acceptance and
+production approval remain pending. The Review step includes the new gated
+submission/activation panel, requiring pending migration 016; see
+[setup and finalization](ENROLLMENT-SUBMISSION.md). See
+[native setup and limits](DEVELOPMENT-NATIVE-EVIDENCE.md).
 
 Implemented 9 October 2026. The genuine development agent flow now uses the
 original Clean Trust agent header, navy/yellow styling, cards and bottom tabs.
@@ -70,8 +75,8 @@ revisions and retry keys.
 **Submission unavailable** stays disabled. Phone OTP remains deferred. Production
 authentication, authenticated owner consent, full evidence and physical seal
 validation, payment, authority review rules and atomic finalization are pending.
-Native private uploads remain gated; encrypted offline storage and synchronization
-are still unfinished.
+Production private uploads remain gated. Native development samples have encrypted
+recovery and bound retries; full offline access and automatic synchronization remain unfinished.
 
 ## Validation and remaining acceptance
 

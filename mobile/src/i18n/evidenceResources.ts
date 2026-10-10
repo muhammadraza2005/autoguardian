@@ -1,4 +1,8 @@
 export const evidenceEn={
+  capture:'Take sample photo: {{kind}}',preview:'View sample image',closePreview:'Close image',
+  nativeConflict:'This upload conflicts with the saved draft. Its encrypted copy is retained. Discard this attempt, refresh and capture evidence for the current owner.',
+  discardEncrypted:'Discard this device upload attempt',
+  nativeEncrypted:'Sample capture uses encrypted device recovery. PDF samples need browser review. Use fictional files only; device acceptance is pending.',
   checklistTitle:'Required documents and photos',checklistProgress:'{{count}} of {{total}} requirements saved',
   checklistHint:'Save a sample owner ID, either registration or purchase proof, and six distinct photos. Saved files are not verified evidence.',
   checklistStatuses:{COMPLETE:'Saved — not approved',PENDING:'Upload pending — not complete',MISSING:'Missing — add a sample file'},
@@ -11,7 +15,7 @@ export const evidenceEn={
   openHint:'Use “Upload documents and photos” at the top of this screen to add sample files. Save any draft changes first.',
   saveFirst:'Save this draft, then choose “Upload documents and photos” on its card in the drafts list.',
   title:'Draft documents and photos',samples:'Development testing: use sample files only. These uploads do not verify identity or approve enrollment.',
-  nativePending:'File uploads are currently available in the development browser. Secure capture on mobile devices is pending.',
+  nativePending:'Mobile sample capture requires encrypted device storage and migration 015. PDF viewing and device acceptance remain pending.',
   loading:'Loading attachments…',setupPending:'Uploads are unavailable until private storage and migrations through 011 are configured.',empty:'No files have been uploaded.',
   failed:'The file could not be saved. Use JPG/PNG for photos or JPG/PNG/PDF for documents, up to 2 MB. Use a distinct image for each photo requirement. Check the connection and try again.',
   staged:'Saved for review — not approved',pending:'Upload not confirmed',download:'Download sample for review',
@@ -26,6 +30,10 @@ export const evidenceEn={
     CHASSIS_PHOTO:'Add chassis photo',PLATE_PHOTO:'Add plate photo'},
 };
 export const evidenceFr={
+  capture:'Prendre une photo fictive : {{kind}}',preview:'Voir l’image fictive',closePreview:'Fermer l’image',
+  nativeConflict:'Cet envoi est en conflit avec le brouillon enregistré. Sa copie chiffrée est conservée. Abandonnez cette tentative, actualisez et capturez les justificatifs du propriétaire actuel.',
+  discardEncrypted:'Abandonner cette tentative sur l’appareil',
+  nativeEncrypted:'La capture fictive utilise une reprise chiffrée sur l’appareil. Examinez les PDF dans le navigateur. Utilisez uniquement des fichiers fictifs ; les tests sur appareil restent en attente.',
   checklistTitle:'Documents et photos requis',checklistProgress:'{{count}} justificatifs sur {{total}} enregistrés',
   checklistHint:'Ajoutez une pièce d’identité fictive, un certificat d’immatriculation ou une preuve d’achat et six photos distinctes. Les fichiers enregistrés ne sont pas vérifiés.',
   checklistStatuses:{COMPLETE:'Enregistré — non approuvé',PENDING:'Envoi en attente — incomplet',MISSING:'Manquant — ajouter un fichier fictif'},
@@ -38,7 +46,7 @@ export const evidenceFr={
   openHint:'Utilisez « Envoyer des documents et photos » en haut de cet écran pour ajouter des fichiers fictifs. Enregistrez d’abord vos modifications.',
   saveFirst:'Enregistrez ce brouillon, puis choisissez « Envoyer des documents et photos » sur sa fiche dans la liste des brouillons.',
   title:'Documents et photos du brouillon',samples:'Tests de développement : utilisez uniquement des fichiers fictifs. Ces envois ne vérifient pas l’identité et ne valident pas l’inscription.',
-  nativePending:'L’envoi est disponible dans le navigateur de développement. La capture sécurisée sur mobile reste en attente.',
+  nativePending:'La capture fictive sur mobile nécessite le stockage chiffré et la migration 015. La lecture des PDF et les tests sur appareil restent en attente.',
   loading:'Chargement des pièces jointes…',setupPending:'L’envoi nécessite le stockage privé et les migrations jusqu’à 011.',empty:'Aucun fichier envoyé.',
   failed:'Impossible d’enregistrer le fichier. Photos : JPG/PNG ; documents : JPG/PNG/PDF, 2 Mo maximum. Utilisez une image distincte pour chaque photo requise. Vérifiez la connexion et réessayez.',
   staged:'Enregistré pour examen — non approuvé',pending:'Envoi non confirmé',download:'Télécharger le fichier fictif pour examen',

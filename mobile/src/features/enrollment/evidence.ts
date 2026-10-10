@@ -7,6 +7,9 @@ export type EvidenceKind=z.infer<typeof evidenceKindSchema>;
 export const evidenceMetadata=z.object({id:z.uuid(),kind:evidenceKindSchema,mimeType:z.enum(['application/pdf','image/jpeg','image/png']),
   byteSize:z.number().int().min(1).max(2097152),status:z.enum(['PENDING','STAGED']),createdAt:z.iso.datetime({offset:true})});
 type Request=(path:string,options?:{method?:'POST';body?:unknown;idempotencyKey?:string;signal?:AbortSignal})=>Promise<unknown>;
+export const nativeUploadContextSchema=z.object({draftRevision:z.number().int().positive().max(2147483647),
+  ownerGeneration:z.number().int().positive().max(2147483647)}).strict();
+export type NativeUploadContext=z.infer<typeof nativeUploadContextSchema>;
 export function sampleFilePayload(kind:EvidenceKind,dataUrl:string,size:number) {
   if(!Number.isInteger(size) || size<1 || size>2097152) throw new Error('Invalid sample file size.');
   const match=/^data:(application\/pdf|image\/jpeg|image\/png);base64,([A-Za-z0-9+/]+={0,2})$/.exec(dataUrl);
@@ -15,7 +18,8 @@ export function sampleFilePayload(kind:EvidenceKind,dataUrl:string,size:number) 
 }
 export async function listEvidence(request:Request,id:string,signal?:AbortSignal) {
   const result=z.object({items:z.array(evidenceMetadata).max(30),evidenceChecklist:evidenceChecklistSchema,
-    uploadsEnabled:z.boolean(),sampleOnly:z.literal(true),maxBytes:z.literal(2097152)})
+    uploadsEnabled:z.boolean(),nativeUploadContext:nativeUploadContextSchema.nullable().optional().default(null),
+    sampleOnly:z.literal(true),maxBytes:z.literal(2097152)})
     .parse(await request('/v1/enrollment-drafts/'+z.uuid().parse(id)+'/attachments',{signal}));
   if(new Set(result.items.map(item=>item.id)).size!==result.items.length) throw new Error('Invalid attachment list.');
   for(const requirement of evidenceRequirements) {
@@ -26,7 +30,7 @@ export async function listEvidence(request:Request,id:string,signal?:AbortSignal
   }
   return result;
 }
-export async function uploadEvidence(request:Request,id:string,key:string,body:{kind:EvidenceKind;dataBase64:string},signal?:AbortSignal) {
+export async function uploadEvidence(request:Request,id:string,key:string,body:{kind:EvidenceKind;dataBase64:string;uploadContext?:NativeUploadContext},signal?:AbortSignal) {
   const result=z.object({attachment:evidenceMetadata.extend({status:z.literal('STAGED')})}).parse(await request(
     '/v1/enrollment-drafts/'+z.uuid().parse(id)+'/attachments',{method:'POST',idempotencyKey:z.uuid().parse(key),body,signal}));
   if(result.attachment.id.toLowerCase()!==key.toLowerCase() || result.attachment.kind!==body.kind) throw new Error('Unexpected attachment.');

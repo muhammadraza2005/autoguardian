@@ -10,6 +10,7 @@ import { AppHeader, Action, Card, Copy, Heading, Label, Notice, StitchPage, stit
 import { draftBodySchema, readDraftPage, readOwnerOptions, saveDraft, type EnrollmentDraft, type EnrollmentDraftBody } from './drafts';
 import {profileScope} from '@/features/auth/authEvents';
 import {workingCopies} from './workingCopies';
+import {WorkingCopyStatus} from './WorkingCopyStatus';
 import { enrollmentRoute } from './wizard';
 import { colors } from '@/theme/tokens';
 
@@ -75,8 +76,11 @@ export function DraftEditor({draft,onSaved,onBusyChange,onDirtyChange}:{draft?:E
   const inputs=useRef<Partial<Record<keyof typeof fields,TextInput|null>>>({});
   const [uncertain,setUncertain]=useState(Boolean(restored?.pending));const finished=useRef(false);
   const attempt=useRef<{body:EnrollmentDraftBody;key:string;revision?:number}|null>(restored?.pending??null);
-  const save=useMutation({mutationFn:(submission:{body:EnrollmentDraftBody;key:string;revision?:number})=>saveDraft(request,submission.body,
-    draft?{id:draft.id,revision:submission.revision}:{key:submission.key}),
+  const save=useMutation({mutationFn:async (submission:{body:EnrollmentDraftBody;key:string;revision?:number})=>{
+    workingCopies.write(scope,copyId,{kind:'vehicle',baseRevision:draft?.revision??null,
+      organization,owner,fields,key,pending:submission});
+    await workingCopies.flush();
+    return saveDraft(request,submission.body,draft?{id:draft.id,revision:submission.revision}:{key:submission.key});},
     onSuccess:result=>{
       finished.current=true;workingCopies.remove(scope,'vehicle',copyId);attempt.current=null;setUncertain(false);
       void cache.invalidateQueries({queryKey:['enrollment-drafts',profile?.tenantId,profile?.id]});
@@ -132,7 +136,7 @@ export function DraftEditor({draft,onSaved,onBusyChange,onDirtyChange}:{draft?:E
     attempt.current={body:result.data,key,...(draft?{revision:draft.revision}:{})};save.mutate(attempt.current);
   }
   return <>
-    <Copy>{t('liveEnrollment.workingCopy')}</Copy>
+    <WorkingCopyStatus />
     <Notice tone="warning">{t('liveEnrollment.notice')}</Notice>
     {draft && <Notice>{t('liveEnrollment.saved')} · {t('liveEnrollment.revision',{revision:draft.revision})}</Notice>}
     <Card style={ownerInvalid || organizationInvalid?{borderColor:colors.danger,borderWidth:2}:undefined}>

@@ -48,7 +48,10 @@ test('draft migration can be installed by a non-superuser schema owner, as on ho
       '202610060004_owned_vehicle_reads.sql','202610060005_enrollment_drafts.sql','202610060006_development_owner_selection.sql',
       '202610060007_enrollment_attachments.sql','202610060008_development_seal_fitting.sql',
       '202610080009_enrollment_readiness.sql','202610080010_enrollment_owner_consent.sql',
-      '202610090011_enrollment_evidence_checklist.sql','202610090012_seal_fitting_validation.sql']) {
+      '202610090011_enrollment_evidence_checklist.sql','202610090012_seal_fitting_validation.sql',
+      '202610100013_seal_location_notes.sql','202610100014_development_evidence_reviews.sql',
+      '202610100015_native_evidence_uploads.sql','202610100016_enrollment_finalization.sql',
+      '202610100017_independent_registration_reviews.sql']) {
       await db.exec(await fs.readFile(path.resolve(__dirname,'../../supabase/migrations',f),'utf8'));
     }
     assert.equal((await db.query("select pg_has_role('migration_author','autoguardian_enrollment_executor','MEMBER') member")).rows[0].member,true);

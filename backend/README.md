@@ -1,12 +1,43 @@
 # AutoGuardian backend
 
+## Independent review — 10 October 2026
+
+The approved independent TENANT_ADMIN workflow is implemented: reviewer queue,
+audited files, corrections/replacements, exact retries, immutable history, agent
+feedback and scoped evidence/review confirmations. Migration 017 awaits manual
+installation. See [exact setup and acceptance](../docs/REGISTRATION-REVIEWS.md).
+Backend build/all 38 tests pass; manual browser/Android acceptance is deferred.
+
+## Submission and finalization — 10 October 2026
+
+Migration 016 and the authenticated submission/status/finalize endpoints are
+implemented. Trusted prerequisites, content snapshots, exact retries, duplicate
+checks and atomic vehicle/ownership/audit writes are enforced. Existing owner
+reads expose the new vehicle only to its registered owner. Development samples
+cannot activate. Hosted 016 is installed and verified; see the
+[installation instructions and integration boundary](../docs/ENROLLMENT-SUBMISSION.md).
+Backend build and all 34 tests pass; provider/reviewer fixtures do not establish
+real production confirmation.
+
+## Revision-bound native sample uploads (10 October 2026)
+
+Migration 015 adds scoped native upload context and append-only binding records.
+Attachment uploads can include `uploadContext: { draftRevision, ownerGeneration }`;
+reservation and final staging validate it under the draft lock. Changed contexts
+return 409; exact retries retain one attachment/binding. Legacy browser samples
+continue to work without the optional context. Missing 015 returns a null native
+context and keeps native capture disabled. Hosted 015 is installed and verified.
+See [native setup and acceptance](../docs/DEVELOPMENT-NATIVE-EVIDENCE.md).
+
 ## Development evidence self-review (10 October 2026)
 
 Migration 014 adds current-draft evidence reviews and append-only decisions with
 fixed correction reasons, exact retries and revision conflicts. Development agent
 access stays scoped to their own draft; sample acceptance never grants production
 approval. See [API, setup and acceptance](../docs/DEVELOPMENT-EVIDENCE-REVIEWS.md).
-Apply missing migrations in order; hosted 014 has not been installed by this work.
+Hosted 014 is installed, confirmed by read-only inspection on 10 October 2026,
+including forced RLS, append-only grants, denied client access and review policies.
+Do not replay it. Signed-in browser acceptance remains pending.
 
 ## Seal placement descriptions (10 October 2026)
 

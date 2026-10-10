@@ -1,4 +1,5 @@
 export const ownerEn = {
+  nativeRecovery:'Unfinished sample owner details and consent requests are encrypted on this device. Editing saved owner details invalidates consent, evidence and fitting.',
   open: 'Owner details and sample consent', title: 'Proposed owner details',
   notice: 'Development only. Use fictional information. These details do not verify identity or phone possession and do not create ownership.',
   memory: 'Unsaved details stay in this screen only. Save before leaving. Changing saved details clears sample consent and evidence and makes fitting stale.',
@@ -22,6 +23,7 @@ export const ownerEn = {
   reload: 'Reload saved owner details (discard edits)', back: 'Return to enrollment review',
 };
 export const ownerFr = {
+  nativeRecovery:'Les données fictives du propriétaire et les demandes de consentement non terminées sont chiffrées sur cet appareil. Modifier les données enregistrées invalide le consentement, les justificatifs et la pose.',
   open: 'Identité et consentement exemple', title: 'Identité du propriétaire proposé',
   notice: 'Développement uniquement. Utilisez des données fictives. Ces données ne vérifient ni l’identité ni le téléphone et ne créent aucun droit de propriété.',
   memory: 'Les modifications restent uniquement dans cet écran. Enregistrez avant de quitter. Modifier les données enregistrées invalide le consentement exemple, les justificatifs et la pose.',

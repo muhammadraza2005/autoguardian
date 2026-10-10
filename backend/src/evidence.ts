@@ -54,10 +54,16 @@ export function evidenceCipher(key:Buffer) {
   };
 }
 export async function evidenceInput(body:unknown) {
-  if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).some(k=>!['kind','dataBase64'].includes(k))) {
+  if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).some(k=>!['kind','dataBase64','uploadContext'].includes(k))) {
     throw new BadRequestException({code:'INVALID_EVIDENCE'});
   }
-  const {kind,dataBase64}=body as {kind:Kind;dataBase64:string};
+  const {kind,dataBase64,uploadContext}=body as {kind:Kind;dataBase64:string;uploadContext?:UploadContext};
+  if(uploadContext!==undefined && (!uploadContext || typeof uploadContext!=='object' || Array.isArray(uploadContext)
+    || Object.keys(uploadContext).length!==2 || Object.keys(uploadContext).some(k=>!['draftRevision','ownerGeneration'].includes(k))
+    || !Number.isInteger(uploadContext.draftRevision) || uploadContext.draftRevision<1 || uploadContext.draftRevision>2147483647
+    || !Number.isInteger(uploadContext.ownerGeneration) || uploadContext.ownerGeneration<1 || uploadContext.ownerGeneration>2147483647)) {
+    throw new BadRequestException({code:'INVALID_UPLOAD_CONTEXT'});
+  }
   if(!evidenceKinds.includes(kind) || typeof dataBase64!=='string') throw new BadRequestException({code:'INVALID_EVIDENCE'});
   if(dataBase64.length>Math.ceil(EVIDENCE_MAX/3)*4) throw new PayloadTooLargeException({code:'EVIDENCE_TOO_LARGE'});
   if(!dataBase64 || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(dataBase64)) {
@@ -84,8 +90,9 @@ export async function evidenceInput(body:unknown) {
     } catch {throw new BadRequestException({code:'INVALID_EVIDENCE'});}
   }
   if(bytes.length>EVIDENCE_MAX) throw new PayloadTooLargeException({code:'EVIDENCE_TOO_LARGE'});
-  return {kind,bytes,mime,sha:digest(bytes)};
+  return {kind,bytes,mime,sha:digest(bytes),...(uploadContext?{uploadContext}: {})};
 }
+type UploadContext={draftRevision:number;ownerGeneration:number};
 export interface EvidenceStorage {check():Promise<void>;put(path:string,bytes:Buffer):Promise<void>;get(path:string):Promise<Buffer>}
 export class SupabaseEvidenceStorage implements EvidenceStorage {
   private readonly client:SupabaseClient;
@@ -119,9 +126,19 @@ export class PostgresEvidenceStore {
     return this.call(actor,'enrollment_attachment_list',[id]);
   }
   reserve(actor:string,id:string,key:string,input:Awaited<ReturnType<typeof evidenceInput>>):Promise<RecordRow> {
+    if(input.uploadContext) return this.call(actor,'enrollment_attachment_reserve_bound',
+      [id,key,input.kind,input.mime,input.bytes.length,input.sha,input.uploadContext.draftRevision,input.uploadContext.ownerGeneration]);
     return this.call(actor,'enrollment_attachment_reserve',[id,key,input.kind,input.mime,input.bytes.length,input.sha]);
   }
-  finish(actor:string,id:string,key:string):Promise<Metadata> {return this.call(actor,'enrollment_attachment_finish',[id,key]);}
+  finish(actor:string,id:string,key:string,context?:UploadContext):Promise<Metadata> {
+    return context?this.call(actor,'enrollment_attachment_finish_bound',[id,key,context.draftRevision,context.ownerGeneration])
+      :this.call(actor,'enrollment_attachment_finish',[id,key]);
+  }
+  async nativeContext(actor:string,id:string):Promise<UploadContext|null> {
+    try {return await this.call(actor,'native_evidence_upload_context',[id]);}
+    catch(error) {if(error instanceof ServiceUnavailableException
+      && (error.getResponse() as {code?:string}).code==='EVIDENCE_SETUP_REQUIRED')return null;throw error;}
+  }
   read(actor:string,id:string,key:string):Promise<RecordRow> {return this.call(actor,'enrollment_attachment_read',[id,key,'ENROLLMENT_REVIEW']);}
   reviews(actor:string,id:string):Promise<Reviews> {return this.call(actor,'development_evidence_reviews_read',[id]);}
   saveReview(actor:string,id:string,attachment:string,key:string,input:ReviewInput):Promise<Reviews> {
@@ -166,7 +183,8 @@ export class EvidenceService {
     if(result.evidenceChecklist?.version!==1) throw new ServiceUnavailableException({code:'EVIDENCE_SETUP_REQUIRED'});
     let enabled=false;
     if(this.storage && this.cipher) {try {await this.storage.check();enabled=true;} catch { /* Keep setup failures generic. */ }}
-    return {...result,uploadsEnabled:enabled,sampleOnly:true,maxBytes:EVIDENCE_MAX};
+    const nativeUploadContext=await this.store.nativeContext(actor,id);
+    return {...result,uploadsEnabled:enabled,nativeUploadContext,sampleOnly:true,maxBytes:EVIDENCE_MAX};
   }
   async upload(actor:string,id:string,key:string,body:unknown) {
     if(!this.storage || !this.cipher) throw unavailable();
@@ -180,13 +198,17 @@ export class EvidenceService {
     }
     // Read-back proves the stored ciphertext decrypts to this exact scoped payload.
     this.cipher.decrypt(await this.storage.get(row.object_path),row);
-    return {attachment:await this.store.finish(actor,id,key)};
+    return {attachment:await this.store.finish(actor,id,key,input.uploadContext)};
   }
   async read(actor:string,id:string,key:string,body:unknown) {
     if(!body || typeof body!=='object' || Array.isArray(body) || Object.keys(body).length!==1
       || (body as {reason?:unknown}).reason!=='ENROLLMENT_REVIEW') throw new BadRequestException({code:'READ_REASON_REQUIRED'});
     if(!this.storage || !this.cipher) throw unavailable();
     const row=await this.store.read(actor,id,key); // Commits an audit entry before object access.
+    return this.readReviewRecord(row);
+  }
+  async readReviewRecord(row:RecordRow) {
+    if(!this.storage || !this.cipher) throw unavailable();
     await this.storage.check();const bytes=this.cipher.decrypt(await this.storage.get(row.object_path),row);
     return {id:row.id,mimeType:row.mime_type,dataBase64:bytes.toString('base64')};
   }

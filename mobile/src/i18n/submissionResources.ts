@@ -1,0 +1,16 @@
+export const submissionEn={title:'Registration submission',loading:'Loading registration status…',
+  failed:'Registration could not be confirmed. Refresh the status or retry the pending request.',
+  sample:'This development draft cannot be submitted or activated.',ownerPending:'A verified owner account is still required.',
+  seals:'Production seals and inspection',submit:'Submit registration',finalize:'Activate verified registration',
+  active:'Registration is active. The vehicle is available in the registered owner’s account.',
+  uncertain:'The result is unknown. Retry the same request, or refresh to check the saved status.',retry:'Retry the same request',
+  discard:'Discard pending request and refresh',states:{DRAFT:'Draft',SUBMITTED:'Submitted — awaiting activation',ACTIVE:'Active'},
+  checks:{COMPLETE:'Confirmed',MISSING:'Required',STALE:'Changed — confirmation required',REJECTED:'Rejected',EXPIRED:'Expired'}};
+export const submissionFr={title:'Soumission de l’inscription',loading:'Chargement du statut…',
+  failed:'L’inscription n’a pas pu être confirmée. Actualisez le statut ou réessayez la demande en attente.',
+  sample:'Ce brouillon de développement ne peut pas être soumis ni activé.',ownerPending:'Un compte propriétaire vérifié est encore requis.',
+  seals:'Scellés réels et inspection',submit:'Soumettre l’inscription',finalize:'Activer l’inscription vérifiée',
+  active:'L’inscription est active. Le véhicule est disponible dans le compte du propriétaire enregistré.',
+  uncertain:'Résultat inconnu. Réessayez la même demande ou actualisez pour vérifier le statut enregistré.',retry:'Réessayer la même demande',
+  discard:'Abandonner la demande en attente et actualiser',states:{DRAFT:'Brouillon',SUBMITTED:'Soumise — activation en attente',ACTIVE:'Active'},
+  checks:{COMPLETE:'Confirmé',MISSING:'Requis',STALE:'Modifié — nouvelle confirmation requise',REJECTED:'Refusé',EXPIRED:'Expiré'}};

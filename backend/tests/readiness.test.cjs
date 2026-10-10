@@ -21,6 +21,7 @@ async function foundation(){
   const drafts=new PostgresEnrollmentStore(pool,tenant),seals=new PostgresSealStore(pool,tenant),readiness=new PostgresReadinessStore(pool,tenant);
   const body={organizationId:org,ownerProfileId:profile,vehicle:{chassisIdentifier:'READINESS-TEST',plate:'READY-001',category:'CAR'}};
   const draft=(await drafts.save(id(1),draftInput(body),undefined,id(80))).draft;
+  await db.query("select set_config('autoguardian.tenant_id',$1,false),set_config('autoguardian.auth_user_id',$2,false)",[tenant,id(1)]);
   return {db,pool,drafts,seals,readiness,draft,body};
 }
 const state=(result,code)=>result.checks.find(check=>check.code===code).status;
@@ -77,6 +78,7 @@ test('readiness denies cross-agent, cross-tenant and revoked access and validate
       await db.exec('rollback');
     }
     await db.exec('begin;set local role autoguardian_enrollment_api');
+    await db.query("select set_config('autoguardian.tenant_id','',true),set_config('autoguardian.auth_user_id','',true)");
     await assert.rejects(()=>db.query('select private.enrollment_readiness($1)',[draft.id]),e=>e.code==='AG404');
     await db.exec('rollback');
     const auth={verify:async header=>{if(header!=='Bearer agent')throw new UnauthorizedException();return id(1);}};
