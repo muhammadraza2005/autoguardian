@@ -1,0 +1,29 @@
+{
+  "observedDate": "2026-10-22",
+  "timezone": "Asia/Karachi",
+  "readOnly": true,
+  "databaseConnected": true,
+  "operationsPresent": {
+    "billing024": true,
+    "administration025": true,
+    "billingOperations026": false,
+    "africasTalking027": false,
+    "channels028": false,
+    "ownerPin029": false
+  },
+  "availableConnection": {
+    "ownsPrivateSchema": false,
+    "canManageMigrationRoles": false
+  },
+  "localSetup": {
+    "providerCredentialsPresent": false,
+    "hookSecretPresent": true,
+    "telecomEncryptionKeyPresent": true,
+    "gatewayTokenPresent": true,
+    "smsEnabled": false,
+    "channelsEnabled": false,
+    "hookEnabled": false,
+    "pinEndpointsEnabled": false
+  },
+  "hostedChangesPerformed": false
+}

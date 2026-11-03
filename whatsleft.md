@@ -2,6 +2,16 @@
 
 Status reviewed: **10 October 2026**.
 
+Telecom implementation updated: **21 October 2026** — Africa's Talking backend
+transport, OTP hook and persistent SMS/USSD adapters are implemented locally.
+Hosted/provider acceptance is pending; see [Milestone 2](milestone-2.md) and
+[setup guide](docs/AFRICAS-TALKING-SETUP.md).
+
+Owner PIN update — **22 October 2026**: migration 029, audited enrollment/lockout,
+action-bound proof, app setup/confirmation and verified USSD PIN responses are
+implemented. Client policy and actual handset acceptance remain pending; see
+[PIN setup](docs/OWNER-PIN-SETUP.md).
+
 For milestone 1's completion estimate, detailed checklist and next-session
 context, read [milestone-1.md](milestone-1.md).
 
@@ -61,7 +71,7 @@ The four milestones below are the working plan for the upcoming development. Bui
 | Seals | Development assigned stock, QR/manual codes, reservations and fitting diagnostics | Production issuance/allocations, signed identifiers, placement rules, physical inspection, replacement/revocation and lost/damaged handling. |
 | Institutional operations | Registry/clearance previews | Separate police, registry, and insurer scopes; logged identity access; owner consent; real clearance issuance/refusal/expiry/consumption; missing reports; inspection and incident workflows. |
 | Administration | Sample dashboard and user search | Organizations/accounts, accreditation/suspension, enrollment reviews, stock allocation, configuration/templates, incident queues, financial operations, audits, support procedures, and filtered CSV/PDF reports. |
-| SMS/USSD | Shared parser and simulated menus/adapters; outbound SDK/receipts implemented | Live inbound provider/session authentication, client configuration, USSD provisioning and handset acceptance. |
+| SMS/USSD | Africa's Talking transport/receipts, signed Auth hook, inbound SMS/USSD adapters and encrypted persistent sessions implemented locally; Twilio runtime removed | Apply hosted 027/028 after prerequisites; provision resources/ingress, approve production policies and accept actual simulator/handset journeys. |
 | Institutional API/connectors | Planned only | Partner authentication/scopes, API contracts, webhooks, DGI/police/insurer adapters, and locks activated only when agreements permit. |
 | Production release | Development checks only | Meaningful business/security tests, entry-level Android testing, performance, monitoring, recovery, signed builds, store publication, technical documentation, and bilingual role guides. |
 
@@ -92,9 +102,11 @@ not completed production registration.
 
 ### Milestone 2 — Make vehicle checks and owner responses work
 
-Connect SMS delivery and owner phone OTP verification deferred from Milestone 1, then connect the consumer app so a buyer can check a vehicle by plate, chassis number or QR code. Show its permitted status information, send the owner an alert, accept a secure approval or refusal and return the result to the buyer. Add response deadlines, backup alerts, incident reporting, missing-vehicle reports and sale-status changes. Connect SMS and USSD so basic-phone users can perform the supported checks and responses. This milestone is achieved when the complete buyer-check-to-owner-response journey works, including refusal, timeout and expired results.
+Use Africa's Talking for both SMS and USSD, replacing the superseded Twilio transport. Deliver Supabase Auth phone OTPs through a Send SMS Hook, then connect outbound alerts/results, two-way SMS commands and USSD menus to shared backend rules. Connect the consumer app so a buyer can check a vehicle by plate, chassis number or QR code, see permitted information, alert the owner and receive a secure approval/refusal. Include deadlines, backup alerts, incidents, missing-vehicle reports and sale-status changes. Acceptance covers approval, refusal, timeout and expired results across app/basic-phone journeys. Africa's Talking hosted setup and live acceptance remain pending; confirm account resources and SMS routing for DRC/Kinshasa before live rollout. See the [revised Milestone 2](milestone-2.md) and [integration plan](docs/AFRICAS-TALKING-INTEGRATION-PLAN.md).
 
 ### Milestone 3 — Add payments, subscriptions and pilot administration
+
+Sandbox payment processing, billing screens, subscription state/reminders, provider-status reconciliation, pilot administration and native automatic retry components are now implemented locally. Hosted setup, production confirmation/settlement integration, approved rules and Android acceptance remain. See [Milestone 3 implementation and setup](docs/MILESTONE-3-IMPLEMENTATION.md) and [task status](milestone-3.md).
 
 Integrate mobile money for registration, paid checks and subscription renewals, including confirmed callbacks, receipts, retries and reconciliation. Implement free-check allowances, subscription reminders, grace periods and suspension rules. Build basic administration for agents, organizations, enrollment approvals, seal stock, incidents and configuration. Complete encrypted offline agent drafts and safe synchronization. This milestone is achieved when payments control the correct operations and administrators can manage daily pilot activity. All payment-provider integration belongs to Milestone 3, including registration and paid checks. Earlier milestone flows retain fail-closed payment gates until trusted provider confirmations exist.
 
@@ -115,7 +127,8 @@ Finish French and English coverage, verify security controls and audit logging a
 - [ ] Configure actual seal signing origin/key ring; complete production wizard/storage wiring and final physical acceptance. [Instructions](docs/PRODUCTION-REGISTRATION-SEALS.md).
 - [x] Resolve authority review and staff factor choices: independent TENANT_ADMIN and password/TOTP.
 - [ ] Publish real registration consent after supplying organization/authority/contact/retention details; apply 018.
-- [ ] Select SMS/USSD and mobile-money providers and obtain sandbox access; arrange the USSD code.
+- [x] Select Africa's Talking for SMS and USSD — client decision, 21 October 2026.
+- [ ] Obtain Africa's Talking Sandbox access, confirm target-network coverage and provision SMS sender/two-way shortcode and USSD code; follow the revised Milestone 2. Payment setup remains in Milestone 3.
 - [ ] Implement milestone 1 through the database, API and mobile app, with tests for duplicates, permissions, retries and prerequisite failures.
 
 SMS/phone OTP integration is moved to Milestone 2 by the project owner. Manual browser/device acceptance is retained for the end; continue independent implementation first. No payment provider has been selected. Owner verification still gates real activation; sample consent and unconfirmed payment are not production approval. Dates should be assigned after provider access, pilot rules and team capacity are confirmed.
@@ -126,7 +139,7 @@ We can implement the frontend workflows, backend, database, permissions, offline
 
 The following still need project-owner decisions or external access:
 
-- [ ] SMS/USSD, mobile-money, card, and other messaging provider choices, accounts, credentials, and costs.
+- [ ] Africa's Talking SMS/USSD accounts, server-side credentials, confirmed target-network coverage and costs; payment-provider access/costs remain tracked in Milestone 3.
 - [ ] USSD code allocation and basic-phone access arrangements.
 - [ ] DGI, police, and insurer agreements, API access, and connector documentation.
 - [ ] Final prices, revenue splits, quotas, deadlines, validity periods, review rules, and cash policy.

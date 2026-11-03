@@ -9,9 +9,12 @@ import {useSession} from '@/features/auth/SessionProvider';
 import {readVehicleDetail} from '@/features/vehicles/contracts';
 import {AppHeader,StitchPage,Heading,Copy,Card,Label,Action,Notice,stitchStyles as u} from '@/components/ui/Stitch';
 import {WorkflowError,useScreenFocused} from './Screens';
+import {PinEntry,useOwnerPinStatus,useTransientPin} from '@/features/ownerPin/PinEntry';
+import {pinInput,requestPinProof} from '@/features/ownerPin/contracts';
 export default function SaleScreen(){
   const {t}=useTranslation(),router=useRouter(),{request,profile}=useSession(),params=useLocalSearchParams<{id?:string}>(),focused=useScreenFocused();
   const parsed=z.uuid().safeParse(params.id),id=parsed.success?parsed.data:undefined;
+  const pinStatus=useOwnerPinStatus(focused),pin=useTransientPin();
   const [reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState<unknown>(),[saved,setSaved]=useState(false);
   const key=useRef<string|null>(null),lock=useRef(false),attempt=useRef<{expectedStatus:string;saleStatus:string;reason:string}|null>(null);
   const vehicle=useQuery({queryKey:['sale-vehicle',profile?.id,id],queryFn:({signal})=>readVehicleDetail(request,id!,signal),enabled:!!id&&focused,gcTime:0,retry:false,refetchOnMount:'always'});
@@ -19,20 +22,29 @@ export default function SaleScreen(){
   async function submit(saleStatus:string){
     if(lock.current||!id||!vehicle.data)return;lock.current=true;setBusy(true);setError(undefined);setSaved(false);
     key.current??=randomUUID();attempt.current??={expectedStatus:vehicle.data.saleStatus,saleStatus,reason};
-    try{await request('/v1/me/vehicle-status/'+id,{method:'POST',idempotencyKey:key.current,body:attempt.current});setSaved(true);key.current=null;attempt.current=null;await Promise.all([vehicle.refetch(),history.refetch()]);}
-    catch(e){setError(e);}finally{lock.current=false;setBusy(false);}
+    const generation=pin.generation.current;
+    try{let proof:string|undefined;
+      if(pinStatus.data?.policyEnabled){proof=await requestPinProof(request,{vehicleId:id,requestKey:key.current,...attempt.current},pin.pin);
+        if(generation!==pin.generation.current)throw new Error();}
+      pin.clear();await request('/v1/me/vehicle-status/'+id,{method:'POST',idempotencyKey:key.current,body:{...attempt.current,...(proof?{proof}:{})}});
+      setSaved(true);key.current=null;attempt.current=null;await Promise.all([vehicle.refetch(),history.refetch()]);}
+    catch(e){setError(e);}finally{pin.clear();lock.current=false;setBusy(false);}
   }
+  const pinUnavailable=pinStatus.isPending||pinStatus.isError||!!pinStatus.data?.policyEnabled&&(!pinStatus.data.configured||!pinStatus.data.phoneCurrent||!pinInput(pin.pin));
   return <View style={{flex:1}}><AppHeader/><StitchPage><Heading>{t('m2.sale')}</Heading><Notice>{t('m2.development')}</Notice>
     {vehicle.isError&&<WorkflowError error={vehicle.error}/>} {error!==undefined&&<WorkflowError error={error}/>}
+    {pinStatus.isError&&<WorkflowError error={pinStatus.error}/>}
     {vehicle.data&&!vehicle.isError&&<Card><Label>{vehicle.data.plate??vehicle.data.chassisIdentifier}</Label><Copy>{t('ownedVehicles.sales.'+vehicle.data.saleStatus)}</Copy>
       <Label>{t('m2.reason')}</Label><TextInput accessibilityLabel={t('m2.reason')} value={reason} onChangeText={v=>{setReason(v);key.current=null;attempt.current=null;}} editable={!busy} maxLength={500} style={u.input}/>
-      <Action label={t('m2.list')} disabled={busy||reason.trim().length<3||vehicle.data.saleStatus!=='NOT_FOR_SALE'} onPress={()=>void submit('FOR_SALE')}/>
-      <Action secondary label={t('m2.unlist')} disabled={busy||reason.trim().length<3||!['FOR_SALE','AGENT_SALE'].includes(vehicle.data.saleStatus)} onPress={()=>void submit('NOT_FOR_SALE')}/>
+      {pinStatus.data?.policyEnabled&&<PinEntry value={pin.pin} onChange={pin.setPin} disabled={busy}/>}
+      <Action label={t('m2.list')} disabled={busy||pinUnavailable||reason.trim().length<3||vehicle.data.saleStatus!=='NOT_FOR_SALE'} onPress={()=>void submit('FOR_SALE')}/>
+      <Action secondary label={t('m2.unlist')} disabled={busy||pinUnavailable||reason.trim().length<3||!['FOR_SALE','AGENT_SALE'].includes(vehicle.data.saleStatus)} onPress={()=>void submit('NOT_FOR_SALE')}/>
     </Card>}{saved&&<Notice>{t('m2.statusSaved')}</Notice>}
     <Heading>{t('m2.history')}</Heading>{history.isError&&<WorkflowError error={history.error}/>}
     {!history.isError&&history.data?.items.map(e=><Card key={e.id}><Copy>{new Date(e.createdAt).toLocaleString()}</Copy><Copy>{t('ownedVehicles.sales.'+e.saleStatus)}</Copy><Copy>{e.reason}</Copy></Card>)}
     <Action secondary label={t('m2.missing')} onPress={()=>router.push({pathname:'/live-checks/reports',params:{vehicleId:id}})}/>
     <Action secondary label={t('ownedVehicles.refresh')} disabled={busy} onPress={()=>{void vehicle.refetch();void history.refetch();}}/>
     <Action secondary label={t('ownedVehicles.backVehicles')} onPress={()=>router.replace('/live-vehicles')}/>
+    <Action secondary label={t('ownerPin.title')} onPress={()=>router.push('/owner-pin')}/>
   </StitchPage></View>;
 }

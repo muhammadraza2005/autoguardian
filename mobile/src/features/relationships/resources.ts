@@ -1,0 +1,16 @@
+export const relationshipEn={title:'Backup contacts and sellers',intro:'Review invitations before accepting. Neither relationship permits approving or refusing a vehicle check.',
+ backup:'Backup contact',seller:'Authorized seller',backupConsent:'I agree to receive vehicle check alerts only. I cannot approve or refuse a sale.',
+ sellerConsent:'I accept this vehicle mandate, for at most 30 days. I cannot approve or refuse vehicle checks.',
+ duration:'Sale listings and seller mandates expire within 30 days.',phone:'Recipient phone, including country code',choose:'Choose a vehicle',selected:'Selected vehicle',
+ invite:'Send invitation',invited:'Invitation sent.',accept:'Agree and send confirmation code',confirm:'Confirm acceptance',revoke:'Revoke or decline',
+ saved:'The server confirmed the change.',error:'Could not complete this request. Check your connection, invitation, PIN and SMS code, then retry.',
+ unavailable:'These services are not configured on this server yet.',empty:'No invitations or relationships.',code:'SMS confirmation code',
+ states:{invited:'Awaiting acceptance',accepted:'Accepted',revoked:'Revoked'},stale:'Expired or no longer valid',more:'More vehicles'};
+export const relationshipFr={title:'Contacts de secours et vendeurs',intro:'Verifiez les invitations avant de les accepter. Aucun de ces liens ne permet de confirmer ou refuser une verification.',
+ backup:'Contact de secours',seller:'Vendeur autorise',backupConsent:"J'accepte les alertes de verification uniquement. Je ne peux ni autoriser ni refuser une vente.",
+ sellerConsent:"J'accepte ce mandat pour ce vehicule, pour 30 jours au maximum. Je ne peux pas confirmer ou refuser les verifications.",
+ duration:'Les annonces et les mandats expirent dans un delai maximal de 30 jours.',phone:'Telephone du destinataire avec indicatif pays',choose:'Choisir un vehicule',selected:'Vehicule choisi',
+ invite:"Envoyer l'invitation",invited:'Invitation envoyee.',accept:'Accepter et envoyer le code',confirm:"Confirmer l'acceptation",revoke:'Revoquer ou refuser',
+ saved:'Le serveur a confirme la modification.',error:'Operation impossible. Verifiez la connexion, votre invitation, le PIN et le code SMS, puis reessayez.',
+ unavailable:'Ces services ne sont pas encore configures sur ce serveur.',empty:'Aucune invitation ou relation.',code:'Code de confirmation SMS',
+ states:{invited:'En attente',accepted:'Accepte',revoked:'Revoque'},stale:'Expire ou non valide',more:'Autres vehicules'};

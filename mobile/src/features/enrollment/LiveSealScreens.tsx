@@ -21,7 +21,7 @@ import {workingCopies} from './workingCopies';
 import {WorkingCopyStatus} from './WorkingCopyStatus';
 import { colors } from '@/theme/tokens';
 import { SealLocationPanel } from './SealLocationPanel';
-import { enrollmentRoute } from './wizard';
+import { draftQueryMountOptions, enrollmentRoute } from './wizard';
 import {verifySealQr} from './productionSeals';
 
 function SealPage({children}:{children:React.ReactNode}){
@@ -69,7 +69,7 @@ export function EnrollmentSealFitting({embedded=false,onSaved,onBusyChange,onDir
   useEffect(()=>{onBusyChange?.(combinedBusy);onDirtyChange?.(editorDirty || locationDirty);},[combinedBusy,editorDirty,locationDirty,onBusyChange,onDirtyChange]);
   const {id}=useLocalSearchParams<{id?:string|string[]}>();const parsed=z.uuid().safeParse(id);const safeId=parsed.success?parsed.data:undefined;
   const draft=useQuery({queryKey:['enrollment-draft',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>readDraft(request,safeId!,signal),
-    enabled:Boolean(profile && safeId),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
+    enabled:Boolean(profile && safeId),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false,...draftQueryMountOptions(embedded)});
   const fitting=useQuery({queryKey:['seal-fitting',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>readSealFitting(request,safeId!,signal),
     enabled:Boolean(profile && safeId),gcTime:0,retry:false,networkMode:'always',refetchOnWindowFocus:false});
   const evidence=useQuery({queryKey:['enrollment-evidence',profile?.tenantId,profile?.id,safeId],queryFn:({signal})=>listEvidence(request,safeId!,signal),

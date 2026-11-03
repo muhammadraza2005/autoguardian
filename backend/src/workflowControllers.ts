@@ -4,6 +4,15 @@ import {CheckService,ReportEvidenceService,checkLookup,fields,workflowText} from
 import {draftId} from './enrollments';
 import {vehiclePage} from './vehicles';
 
+@Controller('telecom')
+export class TelecomStatusController{
+  constructor(@Inject('WORKFLOW_STAFF_AUTH') private readonly auth:IdentityVerifier,@Inject('CHECKS') private readonly checks:CheckService){}
+  @Get('status') async status(@Headers('authorization') h:string|undefined,@Query() q:Record<string,unknown>){
+    const actor=await this.auth.verify(h);if(Object.keys(q).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    return this.checks.store.call(actor,'telecom_health',[]);
+  }
+}
+
 @Controller('vehicle-checks')
 export class CheckController{
   constructor(@Inject('WORKFLOW_AUTH') private readonly auth:IdentityVerifier,@Inject('CHECKS') private readonly checks:CheckService){}
@@ -26,8 +35,9 @@ export class CheckInboxController{
   }
   @Post(':id/decision') @HttpCode(200) async decide(@Headers('authorization') h:string|undefined,@Param('id') id:string,@Body() body:unknown,@Query() q:Record<string,unknown>){
     const actor=await this.auth.verify(h);if(Object.keys(q).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
-    const v=fields(body,['decision']);if(!['approved','refused'].includes(v.decision as string))throw new BadRequestException({code:'INVALID_CHECK_DECISION'});
-    return this.checks.decide(actor,draftId(id),v.decision as 'approved'|'refused');
+    const v=fields(body,['decision','proof'],['decision']);if(!['approved','refused'].includes(v.decision as string)
+      ||v.proof!==undefined&&(typeof v.proof!=='string'||!/^[a-f0-9]{64}$/.test(v.proof)))throw new BadRequestException({code:'INVALID_CHECK_DECISION'});
+    return this.checks.decide(actor,draftId(id),v.decision as 'approved'|'refused',v.proof as string|undefined);
   }
 }
 @Controller('me/vehicle-status')
@@ -39,8 +49,9 @@ export class VehicleStatusController{
   }
   @Post(':id') @HttpCode(200) async change(@Headers('authorization') h:string|undefined,@Param('id') id:string,@Headers('idempotency-key') key:string|undefined,@Body() body:unknown,@Query() q:Record<string,unknown>){
     const actor=await this.auth.verify(h);if(Object.keys(q).length)throw new BadRequestException();
-    const v=fields(body,['expectedStatus','saleStatus','reason']);
-    return this.checks.store.call(actor,'change_vehicle_sale',[draftId(id),draftId(key),workflowText(v.expectedStatus,32),workflowText(v.saleStatus,32),workflowText(v.reason,500,3)]);
+    const v=fields(body,['expectedStatus','saleStatus','reason','proof'],['expectedStatus','saleStatus','reason']);
+    if(v.proof!==undefined&&(typeof v.proof!=='string'||!/^[a-f0-9]{64}$/.test(v.proof)))throw new BadRequestException({code:'INVALID_OWNER_PROOF'});
+    return this.checks.store.call(actor,'change_vehicle_sale',[draftId(id),draftId(key),workflowText(v.expectedStatus,32),workflowText(v.saleStatus,32),workflowText(v.reason,500,3)],v.proof as string|undefined);
   }
 }
 @Controller('vehicle-reports')

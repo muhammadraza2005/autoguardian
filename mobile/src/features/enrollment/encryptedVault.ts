@@ -33,6 +33,7 @@ export function createEncryptedVault(io: VaultIO, crypto: VaultCrypto) {
     return { ...active, name, context: JSON.stringify(['AGNV1', active.identity, id]) };
   }
   return {
+    lock(){++epoch;scope=null;secret=null;fingerprint=null;},
     identify(next: string) {
       if (!next || next.length > 4096) return Promise.reject(new Error('Invalid encrypted scope.'));
       if (next === scope && secret) return queue(async () => {});

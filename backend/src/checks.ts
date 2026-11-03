@@ -1,6 +1,6 @@
 import {BadRequestException,ConflictException,ForbiddenException,HttpException,NotFoundException,ServiceUnavailableException} from '@nestjs/common';
 import {Pool} from 'pg';
-import {createCipheriv,createDecipheriv,randomBytes,randomUUID} from 'node:crypto';
+import {createCipheriv,createDecipheriv,randomBytes,randomUUID,createHash} from 'node:crypto';
 import {setRequestIdentity} from './requestIdentity';
 import {SealSigner} from './productionSeals';
 import {digest,evidenceInput} from './evidence';
@@ -28,14 +28,17 @@ export type CheckResult={id:string;outcome:'pending'|'approved'|'refused'|'timed
   vehicle:null|{id:string;plate:string|null;chassisIdentifier:string;saleStatus:string;recordStatus:string}};
 export class PostgresWorkflowStore{
   constructor(private readonly pool:Pool,readonly tenant:string){}
-  async call<T=unknown>(actor:string,name:string,args:unknown[]):Promise<T>{
+  async call<T=unknown>(actor:string,name:string,args:unknown[],proof?:string):Promise<T>{
     // Only module-owned fixed names can reach SQL; never accept a user function name.
     if(!['lookup_vehicle_check','read_vehicle_check','list_vehicle_checks','decide_vehicle_check','sweep_vehicle_checks',
       'change_vehicle_sale','submit_vehicle_report','read_vehicle_reports','review_vehicle_report','save_report_evidence',
-      'read_report_evidence','read_vehicle_status_history'].includes(name))throw new Error('Unknown workflow operation');
+      'read_report_evidence','read_vehicle_status_history','telecom_health','relationship_invite','relationship_list',
+      'relationship_start_acceptance','relationship_finish_acceptance','relationship_revoke'].includes(name))throw new Error('Unknown workflow operation');
     const client=await this.pool.connect();
     try{
       await client.query('begin');await setRequestIdentity(client,this.tenant,actor);
+      if(proof!==undefined&&!/^[a-f0-9]{64}$/.test(proof))throw new BadRequestException({code:'INVALID_OWNER_PROOF'});
+      await client.query("select set_config('autoguardian.owner_pin_proof',$1,true)",[proof?createHash('sha256').update(proof).digest('hex'):'']);
       const result=await client.query(`select private.${name}(${args.map((_,i)=>'$'+(i+1)).join(',')}) as result`,args);
       await client.query('commit');return result.rows[0].result as T;
     }catch(error){
@@ -67,8 +70,8 @@ export class CheckService{
   }
   read(actor:string,id:string):Promise<CheckResult>{return this.store.call(actor,'read_vehicle_check',[id]);}
   list(actor:string,owner:boolean,cursor:string|null,limit:number){return this.store.call(actor,'list_vehicle_checks',[owner,cursor,limit]);}
-  async decide(actor:string,id:string,decision:'approved'|'refused'){
-    await this.store.call(actor,'decide_vehicle_check',[id,decision]);return {id,outcome:decision,sampleOnly:true};
+  async decide(actor:string,id:string,decision:'approved'|'refused',proof?:string){
+    await this.store.call(actor,'decide_vehicle_check',[id,decision],proof);return {id,outcome:decision,sampleOnly:true};
   }
   sweep(limit=100){return this.store.call('','sweep_vehicle_checks',[limit]);}
 }
@@ -83,30 +86,52 @@ export function configuredChecks(env:NodeJS.ProcessEnv,store:PostgresWorkflowSto
 
 // Report encryption uses a dedicated key and binds every file to its authority/report/id.
 export class ReportEvidenceService{
-  constructor(private readonly store:PostgresWorkflowStore,private readonly key?:Buffer){
+  constructor(private readonly store:PostgresWorkflowStore,private readonly key?:Buffer,
+    private readonly versioned?:{active:string;keys:Record<string,Buffer>}){
     if(key&&key.length!==32)throw new Error('Report evidence key must be 32 bytes');
+    if(versioned&&(!versioned.keys[versioned.active]||Object.keys(versioned.keys).some(v=>!/^[A-Za-z0-9_-]{1,24}$/.test(v)||versioned.keys[v].length!==32)))
+      throw new Error('Invalid report evidence key ring');
   }
   private aad(id:string,report:string){return Buffer.from(JSON.stringify(['AutoGuardian/report/v1',this.store.tenant,report,id]));}
   async upload(actor:string,report:string,key:string,value:unknown){
-    if(!this.key)throw new ServiceUnavailableException({code:'REPORT_EVIDENCE_SETUP_REQUIRED'});
+    const encryptionKey=this.versioned?.keys[this.versioned.active]??this.key;
+    if(!encryptionKey)throw new ServiceUnavailableException({code:'REPORT_EVIDENCE_SETUP_REQUIRED'});
     const body=fields(value,['kind','dataBase64']);
     if(!['VEHICLE_PHOTO','REGISTRATION_DOCUMENT'].includes(body.kind as string))throw new BadRequestException({code:'INVALID_REPORT_EVIDENCE'});
     const input=await evidenceInput(body),id=randomUUID(),nonce=randomBytes(12);
-    const cipher=createCipheriv('aes-256-gcm',this.key,nonce);cipher.setAAD(this.aad(id,report));
+    const cipher=createCipheriv('aes-256-gcm',encryptionKey,nonce);
+    cipher.setAAD(this.versioned?Buffer.concat([this.aad(id,report),Buffer.from(`:v2:${this.versioned.active}`)]):this.aad(id,report));
     const encrypted=Buffer.concat([cipher.update(input.bytes),cipher.final()]);
-    const ciphertext=Buffer.concat([nonce,cipher.getAuthTag(),encrypted]).toString('base64');
+    const encoded=Buffer.concat([nonce,cipher.getAuthTag(),encrypted]).toString('base64');
+    const ciphertext=this.versioned?`v2:${this.versioned.active}:${encoded}`:encoded;
     return this.store.call(actor,'save_report_evidence',[report,key,id,input.mime,input.bytes.length,input.sha,ciphertext]);
   }
   async read(actor:string,id:string,review:boolean){
-    if(!this.key)throw new ServiceUnavailableException({code:'REPORT_EVIDENCE_SETUP_REQUIRED'});
+    if(!this.key&&!this.versioned)throw new ServiceUnavailableException({code:'REPORT_EVIDENCE_SETUP_REQUIRED'});
     const row=await this.store.call<{id:string;report_id:string;ciphertext:string;sha256:string;byte_size:number;mime_type:string}>(actor,'read_report_evidence',[id,randomUUID(),review]);
     try{
-      const bytes=Buffer.from(row.ciphertext,'base64');
-      const cipher=createDecipheriv('aes-256-gcm',this.key,bytes.subarray(0,12));
-      cipher.setAAD(this.aad(row.id,row.report_id));cipher.setAuthTag(bytes.subarray(12,28));
+      const envelope=/^v2:([A-Za-z0-9_-]{1,24}):([A-Za-z0-9+/=]+)$/.exec(row.ciphertext);
+      const version=envelope?.[1],decryptionKey=version?this.versioned?.keys[version]:this.key;
+      if(!decryptionKey)throw new Error('Key unavailable');
+      const bytes=Buffer.from(envelope?envelope[2]:row.ciphertext,'base64');
+      const cipher=createDecipheriv('aes-256-gcm',decryptionKey,bytes.subarray(0,12));
+      cipher.setAAD(version?Buffer.concat([this.aad(row.id,row.report_id),Buffer.from(`:v2:${version}`)]):this.aad(row.id,row.report_id));
+      cipher.setAuthTag(bytes.subarray(12,28));
       const plain=Buffer.concat([cipher.update(bytes.subarray(28)),cipher.final()]);
       if(plain.length!==row.byte_size||digest(plain)!==row.sha256)throw new Error();
       return {id:row.id,mimeType:row.mime_type,dataBase64:plain.toString('base64')};
     }catch{throw new ServiceUnavailableException({code:'REPORT_EVIDENCE_UNAVAILABLE'});}
   }
+}
+export function configuredReportEvidence(env:NodeJS.ProcessEnv,store:PostgresWorkflowStore){
+  const legacy=env.AUTOGUARDIAN_REPORT_EVIDENCE_KEY,ring=env.AUTOGUARDIAN_REPORT_EVIDENCE_KEYS_JSON,active=env.AUTOGUARDIAN_REPORT_EVIDENCE_ACTIVE_KEY;
+  if(legacy&&!/^[a-f0-9]{64}$/i.test(legacy))throw new Error('Invalid report evidence legacy key');
+  if(Boolean(ring)!==Boolean(active))throw new Error('Configure both report evidence key ring and active version');
+  let versioned:{active:string;keys:Record<string,Buffer>}|undefined;
+  if(ring){
+    let parsed:unknown;try{parsed=JSON.parse(ring);}catch{throw new Error('Invalid report evidence key ring');}
+    if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)||Object.keys(parsed).length>20||Object.values(parsed).some(v=>typeof v!=='string'||!/^[a-f0-9]{64}$/i.test(v)))throw new Error('Invalid report evidence key ring');
+    versioned={active:active!,keys:Object.fromEntries(Object.entries(parsed).map(([v,k])=>[v,Buffer.from(k as string,'hex')]))};
+  }
+  return new ReportEvidenceService(store,legacy?Buffer.from(legacy,'hex'):undefined,versioned);
 }

@@ -11,6 +11,7 @@ import { Action, AppHeader, Card, Copy, Heading, Label, Notice, StitchPage, stit
 import { ownerDetailsSchema, readOwner, saveOwner, recordOwnerConsent, type OwnerSnapshot } from './owner';
 import {loadOwnerRecovery,saveOwnerRecovery,removeOwnerRecovery} from './ownerRecovery';
 import type {OwnerAttempt,OwnerRecovery} from './ownerRecoverySchema';
+import {offlineSyncEditors} from './offlineSyncEditors';
 
 function OwnerError({ error }: { error: unknown }) {
   const { t } = useTranslation(); const status = error instanceof ApiError ? error.status : undefined;
@@ -19,6 +20,7 @@ function OwnerError({ error }: { error: unknown }) {
 }
 export default function EnrollmentOwnerScreen({embedded=false,onBusyChange,onDirtyChange}:{embedded?:boolean;
   onBusyChange?:(busy:boolean)=>void;onDirtyChange?:(dirty:boolean)=>void}={}) {
+  useEffect(()=>offlineSyncEditors.enter(),[]);
   const { t } = useTranslation(); const router = useRouter(); const { profile, request } = useSession();
   const { id } = useLocalSearchParams<{ id?: string | string[] }>(); const parsed = z.uuid().safeParse(id);
   const safeId = parsed.success ? parsed.data : undefined;

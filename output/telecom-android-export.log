@@ -1,0 +1,40 @@
+
+> autoguardian-mobile@1.0.0 export:android
+> expo export --platform android --output-dir dist/android
+
+env: load .env
+env: export EXPO_PUBLIC_API_BASE_URL EXPO_PUBLIC_APP_MODE EXPO_PUBLIC_DEV_EMAIL_AUTH EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY EXPO_PUBLIC_SUPABASE_URL
+Using src/app as the root directory for Expo Router.
+Starting Metro Bundler
+
+Android Bundled 20759ms node_modules\expo-router\entry.js (1717 modules)
+
+› Assets (32):
+assets\brand-wordmark.png (21KB)
+assets\fonts\PublicSans-Bold.ttf (85KB)
+assets\fonts\PublicSans-Regular.ttf (85KB)
+assets\fonts\PublicSans-SemiBold.ttf (84KB)
+node_modules\@expo-google-fonts\material-symbols\400Regular\MaterialSymbols_400Regular.ttf (967KB)
+node_modules\@expo\vector-icons\build\vendor\react-native-vector-icons\Fonts\Ionicons.ttf (390KB)
+node_modules\expo-router\assets\arrow_down.png (9.5KB)
+node_modules\expo-router\assets\arrow_right.xml (307B)
+node_modules\expo-router\assets\checkmark.xml (312B)
+node_modules\expo-router\assets\error.png (469B)
+node_modules\expo-router\assets\file.png (138B)
+node_modules\expo-router\assets\forward.png (188B)
+node_modules\expo-router\assets\pkg.png (364B)
+node_modules\expo-router\assets\react-navigation\elements\back-icon-mask.png (653B)
+node_modules\expo-router\assets\react-navigation\elements\back-icon.png (4 variations | 152B)
+node_modules\expo-router\assets\react-navigation\elements\clear-icon.png (4 variations | 425B)
+node_modules\expo-router\assets\react-navigation\elements\close-icon.png (4 variations | 235B)
+node_modules\expo-router\assets\react-navigation\elements\search-icon.png (4 variations | 599B)
+node_modules\expo-router\assets\sitemap.png (465B)
+node_modules\expo-router\assets\unmatched.png (4.8KB)
+
+› android bundles (1):
+_expo/static/js/android/entry-dcfa0a1fc93d1f9d7c80457b9c43ec53.hbc (7.1MB)
+
+› Files (1):
+metadata.json (2.2KB)
+
+Exported: dist/android

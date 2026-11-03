@@ -19,8 +19,10 @@ import { enrollmentRoute, enrollmentSteps, savedWizardSteps, wizardParams, type 
 import { profileScope } from '@/features/auth/authEvents';
 import { workingCopies } from './workingCopies';
 import {runtime} from '@/config/runtime';
+import {offlineSyncEditors} from './offlineSyncEditors';
 
 export default function EnrollmentWizardScreen() {
+  useEffect(()=>offlineSyncEditors.enter(),[]);
   const { t } = useTranslation(); const router = useRouter(); const { profile, request } = useSession();
   const params = useLocalSearchParams<{ id?: string | string[]; step?: string | string[] }>();
   const { id, step, invalid } = wizardParams(params.id, params.step);

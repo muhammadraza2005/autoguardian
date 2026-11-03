@@ -1,0 +1,8 @@
+
+> autoguardian-mobile@1.0.0 typecheck
+> tsc --noEmit
+
+
+> autoguardian-mobile@1.0.0 lint
+> eslint .
+

@@ -1,0 +1,52 @@
+{
+  "clientDate": "2026-10-23",
+  "scope": "Local implementation and automated verification; external provider acceptance is separate.",
+  "backend": {
+    "log": "output/telecom-backend-tests-current.tap",
+    "tests": 152,
+    "passed": 152,
+    "failed": 0
+  },
+  "mobile": {
+    "log": "output/telecom-mobile-tests-current.tap",
+    "tests": 94,
+    "passed": 94,
+    "failed": 0
+  },
+  "mobileChecks": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "expoCompatibility": "passed",
+    "androidHermesExport": "passed",
+    "androidLog": "output/telecom-android-export-current.log"
+  },
+  "approvedRules": {
+    "backup": "Accepted contacts receive alerts only; cannot approve/refuse.",
+    "seller": "Specific vehicle; OTP acceptance; maximum 30 days; no check approval.",
+    "listingDays": 30,
+    "pin": {
+      "maxAttempts": 5,
+      "lockSeconds": 900,
+      "proofSeconds": 60
+    }
+  },
+  "nextMigration": "supabase/migrations/202610220030_vehicle_relationships.sql",
+  "verifier": "supabase/verify-vehicle-relationships.sql",
+  "pending": [
+    "Hosted migration 030 (last verified absent).",
+    "Africa’s Talking sandbox account credentials and channel resources.",
+    "Protected public HTTPS callback configuration.",
+    "Hosted Supabase Send SMS Hook.",
+    "Provider simulator acceptance.",
+    "Real-phone/network tests require production resources.",
+    "Authority-configured production price/free allowance; SRS does not specify amounts.",
+    "Production security/deployment and client acceptance."
+  ],
+  "productionEnabledByThisWork": false,
+  "providerSimulatorTested": false,
+  "realPhoneTested": false,
+  "deploymentTemplates": {
+    "docker": "Prepared; not built here (Docker unavailable).",
+    "nginx": "Prepared; deny by default until provider source addresses and token are configured; not run here."
+  }
+}

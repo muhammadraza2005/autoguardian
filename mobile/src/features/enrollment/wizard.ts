@@ -2,6 +2,11 @@ import { z } from 'zod';
 
 export const enrollmentSteps = ['vehicle', 'owner', 'documents', 'seals', 'review'] as const;
 export type EnrollmentStep = typeof enrollmentSteps[number];
+// The wizard already loads this shared query before mounting its step. A mount
+// refresh would hide/unmount the step and repeat on every subsequent mount.
+export function draftQueryMountOptions(embedded: boolean) {
+  return { refetchOnMount: !embedded };
+}
 export function enrollmentRoute(step: EnrollmentStep = 'vehicle', id?: string) {
   if (id !== undefined) z.uuid().parse(id);
   return { pathname: '/agent/new-enrollment' as const, params: { step, id: id ?? 'new' } };

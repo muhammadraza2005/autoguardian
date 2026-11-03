@@ -88,6 +88,19 @@ test('native vehicle/seal forms recover exact retry payloads and report storage 
   const clearing = restored.clear(); assert.equal(restored.read(scope, 'seals', id(1)), null); await clearing;
   assert.equal(f.key(), null); assert.equal(f.files.size, 0);
 });
+
+test('native synchronization metadata survives encrypted cold recovery with exact attempt payloads',async()=>{
+  const f=fixture(),scope='tenant/agent',first=createNativeWorkingCopies(f.vault());await first.prepare(scope);
+  const value={kind:'seals',draftRevision:3,fittingRevision:1,package:'NONE',
+    slots:[1,2,3,4].map(position=>({position,sealCode:'',photoId:null})),
+    pending:{key:id(4),body:{package:'NONE',placements:[],expectedDraftRevision:3,expectedFittingRevision:1}},
+    sync:{key:id(4),attempts:2,nextAttemptAt:123456,blocked:'CONFLICT'}};
+  first.write(scope,id(1),value);await first.flush();
+  const restored=createNativeWorkingCopies(f.vault());await restored.prepare(scope);
+  assert.deepEqual(restored.list(scope),[{id:id(1),copy:value}]);
+  assert.deepEqual(restored.list('other'),[]);
+  assert.ok([...f.files.values()].every(encrypted=>!encrypted.includes('CONFLICT')));
+});
 test('oversized records and malformed encrypted recovery fail closed', async () => {
   const f = fixture(), vault = f.vault(); await vault.identify('scope');
   await assert.rejects(vault.write('too-large', 'x'.repeat(3 * 1024 * 1024 + 1)));

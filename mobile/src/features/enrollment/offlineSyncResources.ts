@@ -1,0 +1,16 @@
+export const offlineSyncEn={title:'Draft synchronization',
+  notice:'Submitted draft changes and document uploads retry automatically when online and no editor is open. Submission requires the same current server prerequisites. Drafts do not activate vehicle protection.',
+  journal:{owner:'Owner details or consent',evidence:'Document upload',review:'Evidence review',submission:'Enrollment submission'},
+  empty:'No recorded retries waiting in this queue.',pending:'Waiting to synchronize',retry:'Waiting to retry',
+  conflict:'Server conflict — open the draft and review before retrying.',denied:'Access refused — sign in and verify your permissions.',
+  invalid:'Server rejected this draft — review its details.',open:'Open draft',
+  locked:'Sign in online to unlock encrypted draft recovery.',storageFailed:'Encrypted draft storage is unavailable. Keep the original draft and retry recovery.',
+};
+export const offlineSyncFr={title:'Synchronisation des brouillons',
+  notice:'Les modifications soumises et les documents sont renvoyés automatiquement en ligne lorsqu’aucun éditeur n’est ouvert. La soumission exige les mêmes conditions actuelles du serveur. Les brouillons n’activent pas la protection du véhicule.',
+  journal:{owner:'Identité ou consentement du propriétaire',evidence:'Envoi de document',review:'Vérification des pièces',submission:'Soumission de l’inscription'},
+  empty:'Aucune nouvelle tentative enregistrée dans cette file.',pending:'En attente de synchronisation',retry:'En attente d’une nouvelle tentative',
+  conflict:'Conflit serveur — ouvrez le brouillon et vérifiez-le avant de réessayer.',denied:'Accès refusé — reconnectez-vous et vérifiez vos autorisations.',
+  invalid:'Le serveur a refusé ce brouillon — vérifiez ses informations.',open:'Ouvrir le brouillon',
+  locked:'Connectez-vous en ligne pour déverrouiller la récupération chiffrée des brouillons.',storageFailed:'Le stockage chiffré est indisponible. Conservez le brouillon original et réessayez la récupération.',
+};

@@ -1,5 +1,11 @@
 # AutoGuardian mobile foundation
 
+Owner security update — 22 October 2026: `/owner-pin` provides server-backed PIN
+setup with OTP confirmation. Owner responses and sale-status changes request
+masked PIN entry and action-bound proofs when the backend policy is enabled.
+PINs/codes clear on background/navigation and are never persisted offline.
+See [PIN setup and release limits](../docs/OWNER-PIN-SETUP.md).
+
 Milestone 2 adds live consumer phone OTP, `/live-checks` lookup/results/history,
 owner inbox, report/evidence and sale-status screens using the shared backend.
 Provider setup and production authorization remain pending. English/French copy

@@ -1,0 +1,870 @@
+
+> autoguardian-backend@0.1.0 test
+> npm run build && node --test tests/*.test.cjs
+
+
+> autoguardian-backend@0.1.0 build
+> tsc -p tsconfig.json
+
+TAP version 13
+# Subtest: production access requires live password/TOTP session and current accreditation; revoked sessions and factors fail closed
+ok 1 - production access requires live password/TOTP session and current accreditation; revoked sessions and factors fail closed
+  ---
+  duration_ms: 27901.8902
+  type: 'test'
+  ...
+# Subtest: consent publisher is scoped and cannot enable production, grant runtime membership or alter historical wording
+ok 2 - consent publisher is scoped and cannot enable production, grant runtime membership or alter historical wording
+  ---
+  duration_ms: 10946.0946
+  type: 'test'
+  ...
+# Subtest: HTTP uses separate staff and owner authentication and does not let an agent impersonate owner acceptance
+ok 3 - HTTP uses separate staff and owner authentication and does not let an agent impersonate owner acceptance
+  ---
+  duration_ms: 15567.2934
+  type: 'test'
+  ...
+# Subtest: the full finalizer rechecks current consent and authentication even with once-valid receipts
+ok 4 - the full finalizer rechecks current consent and authentication even with once-valid receipts
+  ---
+  duration_ms: 22734.5932
+  type: 'test'
+  ...
+# Subtest: only the independently authenticated owner accepts immutable versioned consent; absent configuration, stale edits and forged fields are rejected
+ok 5 - only the independently authenticated owner accepts immutable versioned consent; absent configuration, stale edits and forged fields are rejected
+  ---
+  duration_ms: 24930.6659
+  type: 'test'
+  ...
+# Subtest: withdrawal remains possible after submission and invalidates the gate; delayed retries never restore consent and activation closes withdrawal
+ok 6 - withdrawal remains possible after submission and invalidates the gate; delayed retries never restore consent and activation closes withdrawal
+  ---
+  duration_ms: 18878.7178
+  type: 'test'
+  ...
+# Subtest: live payments satisfy only the current production registration snapshot and sandbox cannot claim them
+ok 7 - live payments satisfy only the current production registration snapshot and sandbox cannot claim them
+  ---
+  duration_ms: 30214.2605
+  type: 'test'
+  ...
+# Subtest: changed registration snapshots stay paid but cannot unlock the edited draft
+ok 8 - changed registration snapshots stay paid but cannot unlock the edited draft
+  ---
+  duration_ms: 10972.281
+  type: 'test'
+  ...
+# Subtest: production policy is revisioned, MFA controlled and revocation prevents new provider initiation
+ok 9 - production policy is revisioned, MFA controlled and revocation prevents new provider initiation
+  ---
+  duration_ms: 12649.078
+  type: 'test'
+  ...
+# Subtest: production renewals enforce approved access through grace and suspension without changing vehicle protection
+ok 10 - production renewals enforce approved access through grace and suspension without changing vehicle protection
+  ---
+  duration_ms: 16110.6146
+  type: 'test'
+  ...
+# Subtest: settlement import detects mismatches, survives exact retries and cannot turn an unpaid transaction into a paid one
+ok 11 - settlement import detects mismatches, survives exact retries and cannot turn an unpaid transaction into a paid one
+  ---
+  duration_ms: 20157.7289
+  type: 'test'
+  ...
+# Subtest: offline lease requires current MFA accreditation and an approved bounded policy
+ok 12 - offline lease requires current MFA accreditation and an approved bounded policy
+  ---
+  duration_ms: 19948.2357
+  type: 'test'
+  ...
+# Subtest: live configuration stays off by default, rejects sandbox credentials and fixes the production origin
+ok 13 - live configuration stays off by default, rejects sandbox credentials and fixes the production origin
+  ---
+  duration_ms: 117.809
+  type: 'test'
+  ...
+# Subtest: SMS reminder dispatch persists provider acceptance and quarantines ambiguous sends without duplicates
+ok 14 - SMS reminder dispatch persists provider acceptance and quarantines ambiguous sends without duplicates
+  ---
+  duration_ms: 17037.3965
+  type: 'test'
+  ...
+# Subtest: billing operations HTTP authenticates, rejects forged confirmations and keeps production endpoints disabled without live configuration
+ok 15 - billing operations HTTP authenticates, rejects forged confirmations and keeps production endpoints disabled without live configuration
+  ---
+  duration_ms: 14849.5334
+  type: 'test'
+  ...
+# Subtest: billing configuration and payments enforce MFA, tenant permissions, exact retries, encrypted payer privacy and sandbox isolation
+ok 16 - billing configuration and payments enforce MFA, tenant permissions, exact retries, encrypted payer privacy and sandbox isolation
+  ---
+  duration_ms: 28948.0529
+  type: 'test'
+  ...
+# Subtest: paid checks consume one purpose-bound payment; allowance is atomic and failed creation rolls back consumption
+ok 17 - paid checks consume one purpose-bound payment; allowance is atomic and failed creation rolls back consumption
+  ---
+  duration_ms: 11706.5223
+  type: 'test'
+  ...
+# Subtest: renewals extend subscription once, preserve resale vehicle state, schedule reminders and hide former-owner access
+ok 18 - renewals extend subscription once, preserve resale vehicle state, schedule reminders and hide former-owner access
+  ---
+  duration_ms: 13136.8582
+  type: 'test'
+  ...
+# Subtest: payment amount and provider are never accepted as client confirmation
+ok 19 - payment amount and provider are never accepted as client confirmation
+  ---
+  duration_ms: 7.6726
+  type: 'test'
+  ...
+# Subtest: unknown provider outcomes remain durable, mismatches cannot pay, and only MFA administrators can resume reconciliation
+ok 20 - unknown provider outcomes remain durable, mismatches cannot pay, and only MFA administrators can resume reconciliation
+  ---
+  duration_ms: 15442.5246
+  type: 'test'
+  ...
+# Subtest: free allowances are shared by verified phone, bounded by Kinshasa month and not consumed by duplicate checks
+ok 21 - free allowances are shared by verified phone, bounded by Kinshasa month and not consumed by duplicate checks
+  ---
+  duration_ms: 21167.9627
+  type: 'test'
+  ...
+# Subtest: billing HTTP requires verified accounts, separate staff proof for registration and server-owned confirmation fields
+ok 22 - billing HTTP requires verified accounts, separate staff proof for registration and server-owned confirmation fields
+  ---
+  duration_ms: 25411.4377
+  type: 'test'
+  ...
+# Subtest: Login setup rejects the placeholder and accepts SQL punctuation in a password
+ok 23 - Login setup rejects the placeholder and accepts SQL punctuation in a password
+  ---
+  duration_ms: 22495.7423
+  type: 'test'
+  ...
+# Subtest: Email exception is opt-in and refuses production or unspecified environment
+ok 24 - Email exception is opt-in and refuses production or unspecified environment
+  ---
+  duration_ms: 3.3404
+  type: 'test'
+  ...
+# Subtest: Confirmed email works only in development; anonymous/unconfirmed users still fail
+ok 25 - Confirmed email works only in development; anonymous/unconfirmed users still fail
+  ---
+  duration_ms: 110.0347
+  type: 'test'
+  ...
+# Subtest: complete development enrollment through HTTP remains a draft and owner edits invalidate preparation
+ok 26 - complete development enrollment through HTTP remains a draft and owner edits invalidate preparation
+  ---
+  duration_ms: 39629.6091
+  type: 'test'
+  ...
+# Subtest: draft migration can be installed by a non-superuser schema owner, as on hosted Supabase
+ok 27 - draft migration can be installed by a non-superuser schema owner, as on hosted Supabase
+  ---
+  duration_ms: 23400.9657
+  type: 'test'
+  ...
+# Subtest: draft validation normalizes identifiers, rejects activation/client scope, and production agent auth stays closed
+ok 28 - draft validation normalizes identifiers, rejects activation/client scope, and production agent auth stays closed
+  ---
+  duration_ms: 22.4747
+  type: 'test'
+  ...
+# Subtest: draft save, replay, revision checks and duplicate rejection preserve ownership and append events
+ok 29 - draft save, replay, revision checks and duplicate rejection preserve ownership and append events
+  ---
+  duration_ms: 12555.4375
+  type: 'test'
+  ...
+# Subtest: draft HTTP/RLS denies other agents, missing accreditation, revoked grants, client writes and private identity reads
+ok 30 - draft HTTP/RLS denies other agents, missing accreditation, revoked grants, client writes and private identity reads
+  ---
+  duration_ms: 14500.8597
+  type: 'test'
+  ...
+# Subtest: owner selection is organization scoped, exposes synthetic aliases only, and refuses withdrawn or suspended candidates
+ok 31 - owner selection is organization scoped, exposes synthetic aliases only, and refuses withdrawn or suspended candidates
+  ---
+  duration_ms: 15090.1145
+  type: 'test'
+  ...
+# Subtest: revision-bound native uploads retry exactly, reject changed owner/draft and keep binding history restricted
+ok 32 - revision-bound native uploads retry exactly, reject changed owner/draft and keep binding history restricted
+  ---
+  duration_ms: 28254.2144
+  type: 'test'
+  ...
+# Subtest: attachment validation strips image metadata, rejects invalid/active content and enforces the size limit
+ok 33 - attachment validation strips image metadata, rejects invalid/active content and enforces the size limit
+  ---
+  duration_ms: 162.4773
+  type: 'test'
+  ...
+# Subtest: authenticated encryption rejects tampering, wrong keys, owner changes and cross-draft substitution
+ok 34 - authenticated encryption rejects tampering, wrong keys, owner changes and cross-draft substitution
+  ---
+  duration_ms: 34.7292
+  type: 'test'
+  ...
+# Subtest: attachment lifecycle encrypts before storage, survives retries, audits reads and denies other users
+ok 35 - attachment lifecycle encrypts before storage, survives retries, audits reads and denies other users
+  ---
+  duration_ms: 13012.3218
+  type: 'test'
+  ...
+# Subtest: private bucket setup overrides broad client policies without exposing ciphertext objects
+ok 36 - private bucket setup overrides broad client policies without exposing ciphertext objects
+  ---
+  duration_ms: 12843.9764
+  type: 'test'
+  ...
+# Subtest: detailed evidence requires six distinct saved photos and either registration or purchase proof, with safe retries and owner invalidation
+ok 37 - detailed evidence requires six distinct saved photos and either registration or purchase proof, with safe retries and owner invalidation
+  ---
+  duration_ms: 34097.1511
+  type: 'test'
+  ...
+# Subtest: evidence endpoints report missing checklist setup without enabling uploads
+ok 38 - evidence endpoints report missing checklist setup without enabling uploads
+  ---
+  duration_ms: 11.0191
+  type: 'test'
+  ...
+# Subtest: Identity endpoints and runtime RLS enforce the verified user/authority
+ok 39 - Identity endpoints and runtime RLS enforce the verified user/authority
+  ---
+  duration_ms: 14023.6586
+  type: 'test'
+  ...
+# Subtest: lookup unifies trimmed plate/chassis, limits retries, rejects ambiguity and private payloads
+ok 40 - lookup unifies trimmed plate/chassis, limits retries, rejects ambiguity and private payloads
+  ---
+  duration_ms: 15671.212
+  type: 'test'
+  ...
+# Subtest: owner inbox and cross-channel decisions remain request-bound, revoked ownership cannot answer
+ok 41 - owner inbox and cross-channel decisions remain request-bound, revoked ownership cannot answer
+  ---
+  duration_ms: 14846.5232
+  type: 'test'
+  ...
+# Subtest: scheduled reminders, held backups and timeouts are durable, bounded and cancelled atomically
+ok 42 - scheduled reminders, held backups and timeouts are durable, bounded and cancelled atomically
+  ---
+  duration_ms: 23001.1031
+  type: 'test'
+  ...
+# Subtest: authorized sale, missing and recovery changes preserve history and never transfer ownership
+ok 43 - authorized sale, missing and recovery changes preserve history and never transfer ownership
+  ---
+  duration_ms: 20204.9081
+  type: 'test'
+  ...
+# Subtest: report evidence is encrypted, scoped, idempotent and audited; only independent MFA admin reviews
+ok 44 - report evidence is encrypted, scoped, idempotent and audited; only independent MFA admin reviews
+  ---
+  duration_ms: 15660.4399
+  type: 'test'
+  ...
+# Subtest: signed QR and manual seal lookup reject forged, revoked and unknown identifiers
+ok 45 - signed QR and manual seal lookup reject forged, revoked and unknown identifiers
+  ---
+  duration_ms: 11185.8128
+  type: 'test'
+  ...
+# Subtest: workflow migration installs for a non-superuser schema owner and removes temporary schema CREATE
+ok 46 - workflow migration installs for a non-superuser schema owner and removes temporary schema CREATE
+  ---
+  duration_ms: 8890.8172
+  type: 'test'
+  ...
+# Subtest: SMS parsing and simulated USSD handle expiry, retries, correlation and dropped-session retrieval
+ok 47 - SMS parsing and simulated USSD handle expiry, retries, correlation and dropped-session retrieval
+  ---
+  duration_ms: 7921.775
+  type: 'test'
+  ...
+# Subtest: workflow HTTP rejects spoofed input, requires bearer identity, and does not expose inbound simulation routes
+ok 48 - workflow HTTP rejects spoofed input, requires bearer identity, and does not expose inbound simulation routes
+  ---
+  duration_ms: 11162.6769
+  type: 'test'
+  ...
+# Subtest: workflow tables deny direct tenant/client access and keep helper and history grants private
+ok 49 - workflow tables deny direct tenant/client access and keep helper and history grants private
+  ---
+  duration_ms: 9086.9654
+  type: 'test'
+  ...
+# Subtest: PIN hashing uses independent salts and adaptive scrypt; input/policy fields are strict
+ok 50 - PIN hashing uses independent salts and adaptive scrypt; input/policy fields are strict
+  ---
+  duration_ms: 1398.4063
+  type: 'test'
+  ...
+# Subtest: PIN enrollment is OTP/session/account bound and raw PIN or hash never leaves its API response
+ok 51 - PIN enrollment is OTP/session/account bound and raw PIN or hash never leaves its API response
+  ---
+  duration_ms: 20187.112
+  type: 'test'
+  ...
+# Subtest: request/decision/session-bound PIN proof is one-use and cannot be bypassed by the original decision operation
+ok 52 - request/decision/session-bound PIN proof is one-use and cannot be bypassed by the original decision operation
+  ---
+  duration_ms: 23965.3123
+  type: 'test'
+  ...
+# Subtest: incorrect PIN attempts lock persistently; expired proof, revoked sessions and changed phones fail closed
+ok 53 - incorrect PIN attempts lock persistently; expired proof, revoked sessions and changed phones fail closed
+  ---
+  duration_ms: 23955.2268
+  type: 'test'
+  ...
+# Subtest: sale-status PIN proof binds vehicle, idempotency key, statuses and reason without granting seller mandates
+ok 54 - sale-status PIN proof binds vehicle, idempotency key, statuses and reason without granting seller mandates
+  ---
+  duration_ms: 15918.4134
+  type: 'test'
+  ...
+# Subtest: PIN endpoints authenticate, never accept client-generated proof receipts and stay absent when disabled
+ok 55 - PIN endpoints authenticate, never accept client-generated proof receipts and stay absent when disabled
+  ---
+  duration_ms: 12203.3398
+  type: 'test'
+  ...
+# Subtest: PIN verifier confirms private storage, helper denial and legacy gate protection
+ok 56 - PIN verifier confirms private storage, helper denial and legacy gate protection
+  ---
+  duration_ms: 8553.7406
+  type: 'test'
+  ...
+# Subtest: USSD OTP plus PIN confirms one selected request, while ordinary SMS cannot carry or bypass the PIN
+ok 57 - USSD OTP plus PIN confirms one selected request, while ordinary SMS cannot carry or bypass the PIN
+  ---
+  duration_ms: 10588.4677
+  type: 'test'
+  ...
+# Subtest: owner validation and authenticated encryption reject mismatched identities, tampering and fake verification
+ok 58 - owner validation and authenticated encryption reject mismatched identities, tampering and fake verification
+  ---
+  duration_ms: 10.8628
+  type: 'test'
+  ...
+# Subtest: encrypted owner saves, consent withdrawal, exact retries and generation invalidation stay development-only
+ok 59 - encrypted owner saves, consent withdrawal, exact retries and generation invalidation stay development-only
+  ---
+  duration_ms: 33467.7765
+  type: 'test'
+  ...
+# Subtest: owner HTTP endpoints fail closed for revoked agents, foreign drafts, missing key and invalid bodies
+ok 60 - owner HTTP endpoints fail closed for revoked agents, foreign drafts, missing key and invalid bodies
+  ---
+  duration_ms: 22189.4523
+  type: 'test'
+  ...
+# Subtest: sandbox configuration fails closed for production and client inspection does not reveal credentials
+ok 61 - sandbox configuration fails closed for production and client inspection does not reveal credentials
+  ---
+  duration_ms: 2.3939
+  type: 'test'
+  ...
+# Subtest: initiation uses v2 sandbox, bearer authentication, a saved reference, no redirects and no automatic retries
+ok 62 - initiation uses v2 sandbox, bearer authentication, a saved reference, no redirects and no automatic retries
+  ---
+  duration_ms: 64.3836
+  type: 'test'
+  ...
+# Subtest: malformed deposits and unsafe status references never reach the provider
+ok 63 - malformed deposits and unsafe status references never reach the provider
+  ---
+  duration_ms: 0.8736
+  type: 'test'
+  ...
+# Subtest: status retrieval handles NOT_FOUND, checks identity and does not trust HTTP success alone
+ok 64 - status retrieval handles NOT_FOUND, checks identity and does not trust HTTP success alone
+  ---
+  duration_ms: 3.2095
+  type: 'test'
+  ...
+# Subtest: confirmation matches exact decimal amounts, currency, country, payer and reference; pending and failed are not paid
+ok 65 - confirmation matches exact decimal amounts, currency, country, payer and reference; pending and failed are not paid
+  ---
+  duration_ms: 1.1101
+  type: 'test'
+  ...
+# Subtest: retrieves fixed sandbox public keys securely and caches/consolidates concurrent requests
+ok 66 - retrieves fixed sandbox public keys securely and caches/consolidates concurrent requests
+  ---
+  duration_ms: 58.1911
+  type: 'test'
+  ...
+# Subtest: rejects malformed/duplicate/unsupported keys and does not expose responses or credentials
+ok 67 - rejects malformed/duplicate/unsupported keys and does not expose responses or credentials
+  ---
+  duration_ms: 16.4477
+  type: 'test'
+  ...
+# Subtest: expired keys fail closed on provider outage instead of using stale cache
+ok 68 - expired keys fail closed on provider outage instead of using stale cache
+  ---
+  duration_ms: 4.7561
+  type: 'test'
+  ...
+# Subtest: signature-required receiver verifies exact raw bytes before journaling and fails closed
+ok 69 - signature-required receiver verifies exact raw bytes before journaling and fails closed
+  ---
+  duration_ms: 357.2014
+  type: 'test'
+  ...
+# Subtest: all four public callback routes persist untrusted receipts, never wallet details, and deduplicate retries
+ok 70 - all four public callback routes persist untrusted receipts, never wallet details, and deduplicate retries
+  ---
+  duration_ms: 528.5801
+  type: 'test'
+  ...
+# Subtest: sandbox receipt endpoint rejects malformed, wrong-operation and oversized requests
+ok 71 - sandbox receipt endpoint rejects malformed, wrong-operation and oversized requests
+  ---
+  duration_ms: 126.1495
+  type: 'test'
+  ...
+# Subtest: journal survives receiver restart and does not acknowledge new callbacks when capacity is exhausted
+ok 72 - journal survives receiver restart and does not acknowledge new callbacks when capacity is exhausted
+  ---
+  duration_ms: 240.1838
+  type: 'test'
+  ...
+# Subtest: bootstrap service cannot start in production or without explicit sandbox opt-in
+ok 73 - bootstrap service cannot start in production or without explicit sandbox opt-in
+  ---
+  duration_ms: 3.0992
+  type: 'test'
+  ...
+# Subtest: verifies actual rsa-pss-sha512 callback and deterministic receipt fingerprint
+ok 74 - verifies actual rsa-pss-sha512 callback and deterministic receipt fingerprint
+  ---
+  duration_ms: 31.9367
+  type: 'test'
+  ...
+# Subtest: verifies actual rsa-v1_5-sha256 callback and deterministic receipt fingerprint
+ok 75 - verifies actual rsa-v1_5-sha256 callback and deterministic receipt fingerprint
+  ---
+  duration_ms: 4.8349
+  type: 'test'
+  ...
+# Subtest: verifies actual ecdsa-p256-sha256 callback and deterministic receipt fingerprint
+ok 76 - verifies actual ecdsa-p256-sha256 callback and deterministic receipt fingerprint
+  ---
+  duration_ms: 4.3092
+  type: 'test'
+  ...
+# Subtest: verifies actual ecdsa-p384-sha384 callback and deterministic receipt fingerprint
+ok 77 - verifies actual ecdsa-p384-sha384 callback and deterministic receipt fingerprint
+  ---
+  duration_ms: 6.3894
+  type: 'test'
+  ...
+# Subtest: accepts RFC fixed-width ECDSA and SHA256 digest, signed component ordering
+ok 78 - accepts RFC fixed-width ECDSA and SHA256 digest, signed component ordering
+  ---
+  duration_ms: 6.8605
+  type: 'test'
+  ...
+# Subtest: rejects body tampering including whitespace and wrong configured destination
+ok 79 - rejects body tampering including whitespace and wrong configured destination
+  ---
+  duration_ms: 4.0602
+  type: 'test'
+  ...
+# Subtest: ignores spoofed host/forwarded headers and binds the trusted configured URL
+ok 80 - ignores spoofed host/forwarded headers and binds the trusted configured URL
+  ---
+  duration_ms: 9.6097
+  type: 'test'
+  ...
+# Subtest: rejects expired/future/old signatures, excessively broad lifetime and date mismatch
+ok 81 - rejects expired/future/old signatures, excessively broad lifetime and date mismatch
+  ---
+  duration_ms: 6.1781
+  type: 'test'
+  ...
+# Subtest: rejects incomplete coverage, unknown key, algorithm substitution and mismatched EC curve
+ok 82 - rejects incomplete coverage, unknown key, algorithm substitution and mismatched EC curve
+  ---
+  duration_ms: 3.7948
+  type: 'test'
+  ...
+# Subtest: rejects ambiguous multi-signature/header forms and modified content type/signature
+ok 83 - rejects ambiguous multi-signature/header forms and modified content type/signature
+  ---
+  duration_ms: 8.0378
+  type: 'test'
+  ...
+# Subtest: pilot admin rejects overposting, role grants, invalid quotas and configuration
+ok 84 - pilot admin rejects overposting, role grants, invalid quotas and configuration
+  ---
+  duration_ms: 3.1589
+  type: 'test'
+  ...
+# Subtest: pilot administration uses MFA tenant admin, revision guards, immutable audit and idempotent status transitions
+ok 85 - pilot administration uses MFA tenant admin, revision guards, immutable audit and idempotent status transitions
+  ---
+  duration_ms: 22419.4587
+  type: 'test'
+  ...
+# Subtest: pilot configuration is versioned, unconfigured by default and cannot change production access
+ok 86 - pilot configuration is versioned, unconfigured by default and cannot change production access
+  ---
+  duration_ms: 14600.9994
+  type: 'test'
+  ...
+# Subtest: seal allocation respects current accreditation, reservations and physical discrepancies
+ok 87 - seal allocation respects current accreditation, reservations and physical discrepancies
+  ---
+  duration_ms: 10589.9512
+  type: 'test'
+  ...
+# Subtest: pilot tenant isolation and protected administrator accreditation cannot be bypassed
+ok 88 - pilot tenant isolation and protected administrator accreditation cannot be bypassed
+  ---
+  duration_ms: 9242.8272
+  type: 'test'
+  ...
+# Subtest: pilot HTTP API authenticates before parsing and accepts only scoped validated commands
+ok 89 - pilot HTTP API authenticates before parsing and accepts only scoped validated commands
+  ---
+  duration_ms: 10445.6676
+  type: 'test'
+  ...
+# Subtest: production owner and encrypted uploads use actual eligibility, preserve audited read-back and block agent consent and provider-free activation
+ok 90 - production owner and encrypted uploads use actual eligibility, preserve audited read-back and block agent consent and provider-free activation
+  ---
+  duration_ms: 24699.9913
+  type: 'test'
+  ...
+# Subtest: production setup requires independent keys and refuses reserved test signing origins in production
+ok 91 - production setup requires independent keys and refuses reserved test signing origins in production
+  ---
+  duration_ms: 120.5167
+  type: 'test'
+  ...
+# Subtest: HMAC QR rejects altered signatures, tenants, origins, repeated fields and unknown keys; rotation keeps old keys
+ok 92 - HMAC QR rejects altered signatures, tenants, origins, repeated fields and unknown keys; rotation keeps old keys
+  ---
+  duration_ms: 8.9146
+  type: 'test'
+  ...
+# Subtest: production seals cannot be reused across drafts even after release; development stock cannot pass a production save
+ok 93 - production seals cannot be reused across drafts even after release; development stock cannot pass a production save
+  ---
+  duration_ms: 18333.755
+  type: 'test'
+  ...
+# Subtest: sealed registration finalization consumes issued stock atomically, preserves retries and rejects subsequent reuse
+ok 94 - sealed registration finalization consumes issued stock atomically, preserves retries and rejects subsequent reuse
+  ---
+  duration_ms: 21946.3078
+  type: 'test'
+  ...
+# Subtest: physical inspection requires four authentic assigned seals, distinct current photos, actual locations and an independent reviewer
+ok 95 - physical inspection requires four authentic assigned seals, distinct current photos, actual locations and an independent reviewer
+  ---
+  duration_ms: 14552.3305
+  type: 'test'
+  ...
+# Subtest: SRS NONE package needs an explicit current independent decision and never invents fitted seals
+ok 96 - SRS NONE package needs an explicit current independent decision and never invents fitted seals
+  ---
+  duration_ms: 11416.3568
+  type: 'test'
+  ...
+# Subtest: restricted issuance persists exact retries, rejects agents and expired MFA, and omits alarm classification from QR checks
+ok 97 - restricted issuance persists exact retries, rejects agents and expired MFA, and omits alarm classification from QR checks
+  ---
+  duration_ms: 8827.7442
+  type: 'test'
+  ...
+# Subtest: HTTP seal routes require staff proof, reject forged fields and expose no-store scoped responses
+ok 98 - HTTP seal routes require staff proof, reject forged fields and expose no-store scoped responses
+  ---
+  duration_ms: 10041.9315
+  type: 'test'
+  ...
+# Subtest: readiness tracks current staged samples, seal revocation and stale revisions without enabling enrollment
+ok 99 - readiness tracks current staged samples, seal revocation and stale revisions without enabling enrollment
+  ---
+  duration_ms: 18105.3583
+  type: 'test'
+  ...
+# Subtest: readiness denies cross-agent, cross-tenant and revoked access and validates the HTTP boundary
+ok 100 - readiness denies cross-agent, cross-tenant and revoked access and validates the HTTP boundary
+  ---
+  duration_ms: 9912.5227
+  type: 'test'
+  ...
+# Subtest: readiness reports a missing migration as setup required and releases the connection
+ok 101 - readiness reports a missing migration as setup required and releases the connection
+  ---
+  duration_ms: 7.411
+  type: 'test'
+  ...
+# Subtest: independent review denies self-review, unauthorized and cross-tenant actors; tables/history are private and append-only
+ok 102 - independent review denies self-review, unauthorized and cross-tenant actors; tables/history are private and append-only
+  ---
+  duration_ms: 19939.7991
+  type: 'test'
+  ...
+# Subtest: inspection, exact replay, correction and explicit same-kind replacement are snapshot bound
+ok 103 - inspection, exact replay, correction and explicit same-kind replacement are snapshot bound
+  ---
+  duration_ms: 10002.5449
+  type: 'test'
+  ...
+# Subtest: approval requires all evidence and trusted seals; only production receives the two review receipts, later correction revokes them
+ok 104 - approval requires all evidence and trusted seals; only production receives the two review receipts, later correction revokes them
+  ---
+  duration_ms: 12935.6782
+  type: 'test'
+  ...
+# Subtest: review HTTP requires authenticated administrator and inspected attestation; file access uses the scoped audited row
+ok 105 - review HTTP requires authenticated administrator and inspected attestation; file access uses the scoped audited row
+  ---
+  duration_ms: 10575.9919
+  type: 'test'
+  ...
+# Subtest: report evidence key rotation preserves legacy/old versions and binds version labels to authenticated encryption
+ok 106 - report evidence key rotation preserves legacy/old versions and binds version labels to authenticated encryption
+  ---
+  duration_ms: 10806.9538
+  type: 'test'
+  ...
+# Subtest: seal fitting validation rejects duplicated codes/photos, unknown fields, bad revisions and PDF fitting photos
+ok 107 - seal fitting validation rejects duplicated codes/photos, unknown fields, bad revisions and PDF fitting photos
+  ---
+  duration_ms: 8.0196
+  type: 'test'
+  ...
+# Subtest: stock, fitting reservations and photos persist atomically without activation; retries and conflicts preserve the draft
+ok 108 - stock, fitting reservations and photos persist atomically without activation; retries and conflicts preserve the draft
+  ---
+  duration_ms: 16364.7909
+  type: 'test'
+  ...
+# Subtest: seal APIs enforce identity, agent/organization/tenant scope and deny direct table access
+ok 109 - seal APIs enforce identity, agent/organization/tenant scope and deny direct table access
+  ---
+  duration_ms: 11657.6208
+  type: 'test'
+  ...
+# Subtest: read-only diagnostics cover invalid stock and distinct image content; failed saves roll back and retries reflect revocation
+ok 110 - read-only diagnostics cover invalid stock and distinct image content; failed saves roll back and retries reflect revocation
+  ---
+  duration_ms: 12769.248
+  type: 'test'
+  ...
+# Subtest: Africa Talking configuration is opt-in, validates environments, private sender and controlled recipients
+ok 111 - Africa Talking configuration is opt-in, validates environments, private sender and controlled recipients
+  ---
+  duration_ms: 12.4728
+  type: 'test'
+  ...
+# Subtest: HTTP transport sends once, maps each accepted status, rejects wrong recipients and quarantines malformed/5xx results
+ok 112 - HTTP transport sends once, maps each accepted status, rejects wrong recipients and quarantines malformed/5xx results
+  ---
+  duration_ms: 65.4824
+  type: 'test'
+  ...
+# Subtest: AT delivery receipts reconcile early arrival, deduplicate, preserve terminal state and enforce account/recipient scope
+ok 113 - AT delivery receipts reconcile early arrival, deduplicate, preserve terminal state and enforce account/recipient scope
+  ---
+  duration_ms: 11484.16
+  type: 'test'
+  ...
+# Subtest: persisted retries are bounded, unknown sends never resend and persistence failure terminates batch
+ok 114 - persisted retries are bounded, unknown sends never resend and persistence failure terminates batch
+  ---
+  duration_ms: 8701.1835
+  type: 'test'
+  ...
+# Subtest: HTTP delivery route requires trusted ingress, validates form/query, keeps old Twilio route absent
+ok 115 - HTTP delivery route requires trusted ingress, validates form/query, keeps old Twilio route absent
+  ---
+  duration_ms: 11823.0717
+  type: 'test'
+  ...
+# Subtest: unverified phones, stale notifications and unapproved recipients cannot be dispatched
+ok 116 - unverified phones, stale notifications and unapproved recipients cannot be dispatched
+  ---
+  duration_ms: 8289.6088
+  type: 'test'
+  ...
+# Subtest: staff authentication requires provider-verified password and configured MFA and returns bounded context
+ok 117 - staff authentication requires provider-verified password and configured MFA and returns bounded context
+  ---
+  duration_ms: 6.3158
+  type: 'test'
+  ...
+# Subtest: confirmed account authentication bootstraps owner/staff accounts without granting MFA or phone proof
+ok 118 - confirmed account authentication bootstraps owner/staff accounts without granting MFA or phone proof
+  ---
+  duration_ms: 1.3826
+  type: 'test'
+  ...
+# Subtest: forged scope, expired tokens, inconsistent subjects and anonymous/recovery sessions cannot establish staff identity
+ok 119 - forged scope, expired tokens, inconsistent subjects and anonymous/recovery sessions cannot establish staff identity
+  ---
+  duration_ms: 4.6429
+  type: 'test'
+  ...
+# Subtest: removed factors, unconfirmed identities and metadata-only MFA fail closed
+ok 120 - removed factors, unconfirmed identities and metadata-only MFA fail closed
+  ---
+  duration_ms: 1.5088
+  type: 'test'
+  ...
+# Subtest: provider failures cannot become authentication; no policy is inferred silently
+ok 121 - provider failures cannot become authentication; no policy is inferred silently
+  ---
+  duration_ms: 1.1696
+  type: 'test'
+  ...
+# Subtest: submission is fail-closed for samples, strict input, missing setup and missing trusted prerequisites
+ok 122 - submission is fail-closed for samples, strict input, missing setup and missing trusted prerequisites
+  ---
+  duration_ms: 9642.8625
+  type: 'test'
+  ...
+# Subtest: trusted submission/finalization creates exactly one vehicle and ownership visible only to its owner
+ok 123 - trusted submission/finalization creates exactly one vehicle and ownership visible only to its owner
+  ---
+  duration_ms: 9891.8281
+  type: 'test'
+  ...
+# Subtest: new evidence invalidates receipts; rejected/expired/revoked prerequisites block finalization
+ok 124 - new evidence invalidates receipts; rejected/expired/revoked prerequisites block finalization
+  ---
+  duration_ms: 9052.3483
+  type: 'test'
+  ...
+# Subtest: duplicate chassis/plate and a mid-activation failure roll back all domain writes and activation events
+ok 125 - duplicate chassis/plate and a mid-activation failure roll back all domain writes and activation events
+  ---
+  duration_ms: 7323.983
+  type: 'test'
+  ...
+# Subtest: submission HTTP authenticates, rejects client confirmation fields and returns blocked state without writes
+ok 126 - submission HTTP authenticates, rejects client confirmation fields and returns blocked state without writes
+  ---
+  duration_ms: 9163.2129
+  type: 'test'
+  ...
+# Subtest: Standard Webhooks signatures bind raw bytes/id/time, reject forgery/stale/future and support key rotation
+ok 127 - Standard Webhooks signatures bind raw bytes/id/time, reject forgery/stale/future and support key rotation
+  ---
+  duration_ms: 5.2803
+  type: 'test'
+  ...
+# Subtest: telecom encryption binds tenant/state key and refuses changed ciphertext
+ok 128 - telecom encryption binds tenant/state key and refuses changed ciphertext
+  ---
+  duration_ms: 3.7137
+  type: 'test'
+  ...
+# Subtest: expired/ended USSD sessions discard challenge intents, while every menu remains within the configured bound
+ok 129 - expired/ended USSD sessions discard challenge intents, while every menu remains within the configured bound
+  ---
+  duration_ms: 11040.6378
+  type: 'test'
+  ...
+# Subtest: signed OTP hook sends once across replay/restart; payload conflicts, cooldown and unknown sends fail closed
+ok 130 - signed OTP hook sends once across replay/restart; payload conflicts, cooldown and unknown sends fail closed
+  ---
+  duration_ms: 10857.0187
+  type: 'test'
+  ...
+# Subtest: USSD OTP, cumulative replay, restart, scoped references and SMS decisions share atomic backend rules
+ok 131 - USSD OTP, cumulative replay, restart, scoped references and SMS decisions share atomic backend rules
+  ---
+  duration_ms: 9986.3386
+  type: 'test'
+  ...
+# Subtest: gateway forgery, session rebinding, skipped inputs, wrong OTPs, account changes and production gates are rejected
+ok 132 - gateway forgery, session rebinding, skipped inputs, wrong OTPs, account changes and production gates are rejected
+  ---
+  duration_ms: 9307.5849
+  type: 'test'
+  ...
+# Subtest: HTTP hook verifies original JSON bytes and USSD responds as text/plain
+ok 133 - HTTP hook verifies original JSON bytes and USSD responds as text/plain
+  ---
+  duration_ms: 5904.2596
+  type: 'test'
+  ...
+# Subtest: verified phone channels consume shared sandbox allowance atomically and cannot satisfy staff access
+ok 134 - verified phone channels consume shared sandbox allowance atomically and cannot satisfy staff access
+  ---
+  duration_ms: 3298.0144
+  type: 'test'
+  ...
+# Subtest: telecom verifier confirms forced RLS, grants and migration privileges remain restricted
+ok 135 - telecom verifier confirms forced RLS, grants and migration privileges remain restricted
+  ---
+  duration_ms: 3277.1084
+  type: 'test'
+  ...
+# Subtest: check migration installs under a non-superuser schema owner and removes temporary CREATE permission
+ok 136 - check migration installs under a non-superuser schema owner and removes temporary CREATE permission
+  ---
+  duration_ms: 6264.1225
+  type: 'test'
+  ...
+# Subtest: check creation, decisions and outbox are atomic, private and idempotent
+ok 137 - check creation, decisions and outbox are atomic, private and idempotent
+  ---
+  duration_ms: 8151.564
+  type: 'test'
+  ...
+# Subtest: deadlines and expiry use server time, preserve outcomes and invalidate transferred or unsafe approvals
+ok 138 - deadlines and expiry use server time, preserve outcomes and invalidate transferred or unsafe approvals
+  ---
+  duration_ms: 5680.6942
+  type: 'test'
+  ...
+# Subtest: database roles deny direct data access, helper execution and unverified or revoked actors
+ok 139 - database roles deny direct data access, helper execution and unverified or revoked actors
+  ---
+  duration_ms: 5476.0853
+  type: 'test'
+  ...
+# Subtest: deadline checks survive an old transaction timestamp and configuration changes affect only new requests
+ok 140 - deadline checks survive an old transaction timestamp and configuration changes affect only new requests
+  ---
+  duration_ms: 6587.6866
+  type: 'test'
+  ...
+# Subtest: Development vehicle SQL is repeatable and refuses revoked grants
+ok 141 - Development vehicle SQL is repeatable and refuses revoked grants
+  ---
+  duration_ms: 7314.5416
+  type: 'test'
+  ...
+# Subtest: Vehicle HTTP endpoints and PostgreSQL policies isolate current owners
+ok 142 - Vehicle HTTP endpoints and PostgreSQL policies isolate current owners
+  ---
+  duration_ms: 6424.3696
+  type: 'test'
+  ...
+1..142
+# tests 142
+# suites 0
+# pass 142
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 225482.243

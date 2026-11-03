@@ -4,6 +4,20 @@
 
 This repository contains the foundation for AutoGuardian, an Android-first mobile application with a NestJS backend and a Supabase/PostgreSQL database.
 
+Milestone 2 provider decision — 21 October 2026: use Africa's Talking for both
+SMS and USSD, with Supabase Auth OTP delivery through a Send SMS Hook. The
+[revised milestone](milestone-2.md) and [integration brief](docs/AFRICAS-TALKING-INTEGRATION-PLAN.md)
+describe the build. Africa's Talking transport, the OTP hook and inbound SMS/USSD
+adapters are implemented locally; runtime Twilio code was replaced. Follow the
+[setup guide](docs/AFRICAS-TALKING-SETUP.md) for migrations 027/028, trusted ingress
+and disabled-by-default settings. Hosted installation, resource provisioning and
+live acceptance remain pending. The Twilio setup PDF is superseded.
+
+Update — 22 October 2026: migration 029 adds OTP-confirmed owner PIN enrollment,
+salted credentials, lockout, private audit and one-use check/sale proofs. App PIN
+setup/confirmation and verified USSD PIN responses are connected. No PIN policy
+is seeded or enabled. See [PIN setup](docs/OWNER-PIN-SETUP.md).
+
 ## 1. Project Understanding
 
 **What is AutoGuardian?**
@@ -372,7 +386,7 @@ The database foundation, NestJS API architecture, and React Native frontend scaf
 
 | Integration | Provider | Status | Blocker |
 | --- | --- | --- | --- |
-| SMS / OTP | None chosen | ❌ NOT IMPLEMENTED | Awaiting provider credentials |
+| SMS / OTP / USSD | Africa's Talking | 🟡 IMPLEMENTED LOCALLY | Transport/receipts, signed Auth hook and persistent SMS/USSD adapters implemented. Hosted migration, resource/ingress setup and handset acceptance pending; see [setup](docs/AFRICAS-TALKING-SETUP.md). |
 | Payments | None chosen | ❌ NOT IMPLEMENTED | Awaiting provider credentials |
 | External Police DB | None | 📋 PLANNED | Awaiting API agreements |
 

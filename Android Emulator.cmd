@@ -13,9 +13,11 @@ if not exist "%ANDROID_AVD_HOME%\AutoGuardian_Pixel_5.ini" (
   pause
   exit /b 1
 )
-"%ANDROID_HOME%\emulator\emulator.exe" -accel-check
+"%ANDROID_HOME%\emulator\emulator.exe" -accel-check >nul 2>&1
 if errorlevel 1 (
-  echo Restart Windows to activate Windows Hypervisor Platform, then run this launcher again.
+  echo [NOTICE] Hardware acceleration driver is not detected.
+  echo Please run "Install-Hypervisor-Driver.cmd" (Run as Administrator) or restart Windows.
+  echo.
   pause
   exit /b 1
 )

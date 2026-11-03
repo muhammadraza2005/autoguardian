@@ -1,5 +1,14 @@
 # Milestone 2 development handover
 
+Provider revision — 21 October 2026: the client selected Africa's Talking for
+both SMS and USSD. Follow the [revised milestone](../milestone-2.md) and
+[integration brief](AFRICAS-TALKING-INTEGRATION-PLAN.md) for the next build.
+The implementation below is the historical development baseline. Current
+Africa's Talking SMS/USSD adapters, the signed Supabase OTP hook, encrypted shared
+sessions and forward migrations 027/028 are implemented locally; follow the
+[current setup guide](AFRICAS-TALKING-SETUP.md). Hosted/provider acceptance remains
+pending and the old Twilio runtime has been removed.
+
 Implemented locally on 11 October 2026. This is a development handover, not
 production or telecom acceptance. No hosted database, provider account or secrets
 were changed. Keep the previous uncommitted registration work when reviewing.
@@ -15,7 +24,9 @@ Apply in order on the development project, using the migration/schema owner:
 
 These are run-once migrations, not repeatable setup scripts. Migration 023 depends
 on 001–022, including signed production seal tables from 019. Check your migration
-history first; hosted 020/022 installation was not confirmed in this session.
+history first. The project owner later reported hosted 022/023 installation on
+13 October 2026; their verification results remain unrecorded. This historical
+SQL sequence does not install the planned Africa's Talking migration.
 The executor gets temporary schema CREATE for changing function ownership, then
 loses it. No runtime login receives executor membership or table access.
 

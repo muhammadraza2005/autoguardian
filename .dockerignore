@@ -1,0 +1,12 @@
+**
+!backend/
+!backend/package.json
+!backend/package-lock.json
+!backend/tsconfig.json
+!backend/src/
+!backend/src/**
+!backend/scripts/
+!backend/scripts/check-telecom-setup.cjs
+!backend/scripts/check-telecom-http.cjs
+!supabase/
+!supabase/verify-*.sql

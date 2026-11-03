@@ -19,6 +19,7 @@ export function createNativeWorkingCopies(vault: ReturnType<typeof createEncrypt
     }, failure => { if (generation === epoch && revision === writeRevision) { error = failure; notify('failed'); } });
   }
   return {
+    lock(){++epoch;scope=null;memory.clear();error=null;vault.lock();notify('ready');},
     subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener); }; },
     getStatus: () => state,
     async prepare(next: string) {
@@ -40,7 +41,12 @@ export function createNativeWorkingCopies(vault: ReturnType<typeof createEncrypt
     },
     identify(next: string) { if (scope !== next) throw new Error('Encrypted storage is not prepared.'); },
     read: store.read,
-    write(next: string, id: string, value: DraftWorking | SealWorking) { if (scope !== next) return; store.write(next, id, value); persist(); },
+    list: (next:string) => scope===next ? store.list(next) : [],
+    write(next: string, id: string, value: DraftWorking | SealWorking) {
+      if (scope !== next) return;
+      try { store.write(next, id, value); persist(); }
+      catch(failure) { ++writeRevision; error=failure; notify('failed'); }
+    },
     remove(next: string, kind: 'vehicle' | 'seals', id: string) { if (scope !== next) return; store.remove(next, kind, id); persist(); },
     clear() {
       const generation = ++epoch; scope = null; memory.clear(); error = null; notify('saving');

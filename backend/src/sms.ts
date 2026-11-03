@@ -1,110 +1,113 @@
-import {createHash} from 'node:crypto';
+import {createHash,timingSafeEqual} from 'node:crypto';
 import {BadRequestException,ForbiddenException} from '@nestjs/common';
 import {Pool} from 'pg';
-import twilio from 'twilio';
 
-const phonePattern=/^\+[1-9]\d{7,14}$/;
-const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const statuses=new Set(['accepted','queued','sending','sent','delivered','failed','undelivered','canceled']);
+export const phonePattern=/^\+[1-9]\d{7,14}$/;
+export const messageIdPattern=/^[A-Za-z0-9_.:-]{1,200}$/;
 export const smsPhoneHash=(phone:string)=>createHash('sha256').update(phone).digest('hex');
-export type SmsConfiguration={accountSid:string;authToken:string;previousAuthToken?:string;
-  from?:string;messagingServiceSid?:string;callbackBaseUrl:string;allowedRecipients:string[]};
-
-export function smsConfiguration(env:NodeJS.ProcessEnv):SmsConfiguration|undefined{
-  const enabled=env.TWILIO_SMS_ENABLED??'false';
-  if(!['true','false'].includes(enabled))throw new Error('TWILIO_SMS_ENABLED must be true or false.');
-  if(enabled==='false')return undefined;
-  const required=['TWILIO_ACCOUNT_SID','TWILIO_AUTH_TOKEN','TWILIO_STATUS_CALLBACK_BASE_URL','TWILIO_SAMPLE_RECIPIENTS_JSON'] as const;
-  for(const key of required)if(!env[key]?.trim())throw new Error(`Missing ${key}.`);
-  if(!/^AC[0-9a-fA-F]{32}$/.test(env.TWILIO_ACCOUNT_SID!))throw new Error('Invalid TWILIO_ACCOUNT_SID.');
-  // Twilio Auth Tokens are 32 hexadecimal characters; no placeholder accepted.
-  for(const key of ['TWILIO_AUTH_TOKEN','TWILIO_PREVIOUS_AUTH_TOKEN'] as const)
-    if(env[key]&&!/^[0-9a-fA-F]{32}$/.test(env[key]!))throw new Error(`Invalid ${key}.`);
-  const from=env.TWILIO_FROM_NUMBER?.trim()||undefined,service=env.TWILIO_MESSAGING_SERVICE_SID?.trim()||undefined;
-  if(Boolean(from)===Boolean(service))throw new Error('Configure exactly one Twilio sender: FROM_NUMBER or MESSAGING_SERVICE_SID.');
-  if(from&&!phonePattern.test(from))throw new Error('TWILIO_FROM_NUMBER must use E.164 format.');
-  if(service&&!/^MG[0-9a-fA-F]{32}$/.test(service))throw new Error('Invalid TWILIO_MESSAGING_SERVICE_SID.');
-  let url:URL;try{url=new URL(env.TWILIO_STATUS_CALLBACK_BASE_URL!);}catch{throw new Error('Invalid TWILIO_STATUS_CALLBACK_BASE_URL.');}
-  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash
-      ||url.pathname!=='/v1/webhooks/twilio/sms'||url.hostname.includes('_')
-      ||['localhost','127.0.0.1','[::1]'].includes(url.hostname))
-    throw new Error('Twilio callbacks require a public HTTPS URL ending in /v1/webhooks/twilio/sms.');
-  let allowed:unknown;try{allowed=JSON.parse(env.TWILIO_SAMPLE_RECIPIENTS_JSON!);}catch{throw new Error('Invalid TWILIO_SAMPLE_RECIPIENTS_JSON.');}
-  if(!Array.isArray(allowed)||!allowed.length||allowed.length>20||allowed.some(v=>typeof v!=='string'||!phonePattern.test(v)))
-    throw new Error('TWILIO_SAMPLE_RECIPIENTS_JSON must contain 1–20 E.164 test recipients.');
-  return {accountSid:env.TWILIO_ACCOUNT_SID!,authToken:env.TWILIO_AUTH_TOKEN!,previousAuthToken:env.TWILIO_PREVIOUS_AUTH_TOKEN||undefined,
-    from,messagingServiceSid:service,callbackBaseUrl:url.href,allowedRecipients:[...new Set(allowed)]};
+export type SmsConfiguration={environment:'sandbox'|'production';username:string;apiKey:string;from:string;
+  providerAccount:string;gatewayToken:string;allowedRecipients:string[]};
+export function enabled(env:NodeJS.ProcessEnv,key:string){
+  if(!['true','false'].includes(env[key]??'false'))throw new Error(`${key} must be true or false.`);
+  return env[key]==='true';
 }
-
-export type SmsJob={notificationId:string;attemptId:string;requestId:string;kind:'owner_request'|'owner_reminder'|'buyer_result';
+export function smsConfiguration(env:NodeJS.ProcessEnv):SmsConfiguration|undefined{
+  if(!enabled(env,'AFRICASTALKING_SMS_ENABLED'))return undefined;
+  const environment=env.AFRICASTALKING_ENVIRONMENT??'sandbox';
+  if(!['sandbox','production'].includes(environment))throw new Error('Invalid AFRICASTALKING_ENVIRONMENT.');
+  const username=env.AFRICASTALKING_USERNAME??'',apiKey=env.AFRICASTALKING_API_KEY??'',from=env.AFRICASTALKING_SENDER_ID??'';
+  if(!/^[A-Za-z0-9_-]{1,64}$/.test(username)||(environment==='sandbox')!==(username==='sandbox'))throw new Error('Invalid Africa Talking username/environment.');
+  if(!/^[\x21-\x7e]{16,256}$/.test(apiKey)||!/^\+?[A-Za-z0-9_-]{1,20}$/.test(from))throw new Error('Configure Africa Talking API key and approved sender.');
+  const gatewayToken=env.AFRICASTALKING_GATEWAY_TOKEN??'';
+  if(!/^[a-f0-9]{64}$/i.test(gatewayToken))throw new Error('AFRICASTALKING_GATEWAY_TOKEN must be 32 random bytes encoded as hex.');
+  let allowed:unknown;try{allowed=JSON.parse(env.AFRICASTALKING_TEST_RECIPIENTS_JSON??'[]');}catch{throw new Error('Invalid Africa Talking test recipients.');}
+  if(!Array.isArray(allowed)||!allowed.length||allowed.length>20||allowed.some(v=>typeof v!=='string'||!phonePattern.test(v)))
+    throw new Error('AFRICASTALKING_TEST_RECIPIENTS_JSON must contain 1-20 E.164 controlled recipients.');
+  if(environment==='production'&&env.AFRICASTALKING_PRODUCTION_APPROVED!=='true')throw new Error('Africa Talking production acceptance/approval is required.');
+  return {environment:environment as SmsConfiguration['environment'],username,apiKey,from,gatewayToken,
+    providerAccount:`at:${environment}:${username}`,allowedRecipients:[...new Set(allowed)]};
+}
+// This credential authenticates trusted ingress, NOT an Africa's Talking signature.
+// Ingress must verify provider origin, strip caller headers and inject this token.
+// Keep the backend inaccessible outside that ingress.
+export function verifyGateway(token:string|undefined,expected:string){
+  if(!token||!expected||Buffer.byteLength(token)!==Buffer.byteLength(expected)||!timingSafeEqual(Buffer.from(token),Buffer.from(expected)))
+    throw new ForbiddenException({code:'GATEWAY_AUTH_REQUIRED'});
+}
+export function formBody(contentType:string|undefined,body:unknown):Record<string,string>{
+  if(contentType?.split(';')[0].trim().toLowerCase()!=='application/x-www-form-urlencoded'||!body||typeof body!=='object'
+    ||Array.isArray(body)||Object.keys(body).length>30||Object.values(body).some(v=>typeof v!=='string'||v.length>4096))
+    throw new BadRequestException({code:'INVALID_GATEWAY_FORM'});
+  return body as Record<string,string>;
+}
+export type SmsJob={notificationId:string;attemptId:string;requestId:string;kind:'owner_request'|'owner_reminder'|'buyer_result'|'backup_alert';
   phone:string;language:'en'|'fr';responseDeadlineAt:string;sampleOnly:true};
-export type SmsStatus={attemptId:string;accountSid:string;messageSid:string;status:string;errorCode:string;phone:string};
 export interface SmsStore{
-  claim(accountSid:string,allowedHashes:string[]):Promise<SmsJob|null>;
-  submitted(attemptId:string,messageSid:string,status:string,errorCode:string):Promise<void>;
-  sendError(attemptId:string,mode:'rate_limited'|'failed'|'unknown',code:string):Promise<void>;
-  callback(notificationId:string,status:SmsStatus):Promise<void>;
+  claim(account:string,allowedHashes:string[]):Promise<SmsJob|null>;
+  submitted(attempt:string,messageId:string,status:string,errorCode:string):Promise<void>;
+  sendError(attempt:string,mode:'rate_limited'|'failed'|'unknown',code:string):Promise<void>;
+  delivery(account:string,messageId:string,phone:string,status:string,error:string):Promise<void>;
 }
 export class PostgresSmsStore implements SmsStore{
   constructor(private readonly pool:Pool,private readonly tenantId:string){}
-  private async operation(sql:string,values:unknown[]){
+  async operation(sql:string,values:unknown[]){
     const client=await this.pool.connect();try{
       await client.query('begin');
-      // Worker and authenticated provider callback have no application user.
-      // Scope comes from the server's configured tenant, never callback input.
-      await client.query(`select set_config('autoguardian.tenant_id',$1,true),set_config('autoguardian.auth_user_id','',true)`,[this.tenantId]);
+      await client.query(`select set_config('autoguardian.tenant_id',$1,true),set_config('autoguardian.auth_user_id','',true),set_config('autoguardian.session_id','',true)`,[this.tenantId]);
       const result=await client.query(sql,values);await client.query('commit');return result.rows[0]?.result;
     }catch(e){await client.query('rollback');throw e;}finally{client.release();}
   }
-  claim(accountSid:string,allowedHashes:string[]):Promise<SmsJob|null>{
-    return this.operation('select private.sms_claim_notification($1,$2::text[]) as result',[accountSid,allowedHashes]);
-  }
-  async submitted(attemptId:string,messageSid:string,status:string,errorCode:string){
-    await this.operation('select private.sms_record_submission($1,$2,$3,$4)',[attemptId,messageSid,status,errorCode]);
-  }
-  async sendError(attemptId:string,mode:'rate_limited'|'failed'|'unknown',code:string){
-    await this.operation('select private.sms_record_send_error($1,$2,$3)',[attemptId,mode,code]);
-  }
-  async callback(notificationId:string,status:SmsStatus){
-    await this.operation('select private.sms_record_callback($1,$2,$3,$4,$5,$6,$7)',
-      [notificationId,status.attemptId,status.accountSid,status.messageSid,status.status,status.errorCode,status.phone]);
-  }
+  claim(account:string,allowed:string[]):Promise<SmsJob|null>{return this.operation('select private.sms_claim_notification($1,$2::text[]) as result',[account,allowed]);}
+  async submitted(attempt:string,messageId:string,status:string,errorCode:string){await this.operation('select private.sms_record_submission($1,$2,$3,$4)',[attempt,messageId,status,errorCode]);}
+  async sendError(attempt:string,mode:'rate_limited'|'failed'|'unknown',code:string){await this.operation('select private.sms_record_send_error($1,$2,$3)',[attempt,mode,code]);}
+  async delivery(account:string,messageId:string,phone:string,status:string,error:string){await this.operation('select private.sms_receive_delivery($1,$2,$3,$4,$5)',[account,messageId,phone,status,error]);}
 }
-
 export interface SmsProvider{
-  send(input:{to:string;body:string;callbackUrl:string;validityPeriod:number}):Promise<{messageSid:string;status:string;errorCode:string}>;
+  send(input:{to:string;body:string;validityPeriod:number}):Promise<{messageId:string;status:string;errorCode:string}>;
 }
-export class TwilioSmsProvider implements SmsProvider{
-  private readonly client;
-  constructor(private readonly configuration:SmsConfiguration){
-    // Bounded retries are persisted in PostgreSQL. SDK/network retries would
-    // bypass the attempt record, so explicitly disable them.
-    this.client=twilio(configuration.accountSid,configuration.authToken,{autoRetry:false,timeout:10000});
-  }
-  async send(input:{to:string;body:string;callbackUrl:string;validityPeriod:number}){
-    const message=await this.client.messages.create({to:input.to,body:input.body,statusCallback:input.callbackUrl,
-      validityPeriod:input.validityPeriod,...(this.configuration.messagingServiceSid
-        ?{messagingServiceSid:this.configuration.messagingServiceSid}:{from:this.configuration.from!})});
-    return {messageSid:message.sid,status:message.status,errorCode:message.errorCode===null?'':String(message.errorCode)};
+export class AfricasTalkingSmsProvider implements SmsProvider{
+  constructor(private readonly configuration:SmsConfiguration,private readonly request:typeof fetch=fetch,private readonly timeoutMs=3500){}
+  async send(input:{to:string;body:string;validityPeriod:number}){
+    if(!phonePattern.test(input.to)||!this.configuration.allowedRecipients.includes(input.to)||!input.body||input.body.length>640)
+      throw {status:400,code:'RECIPIENT_OR_MESSAGE_DENIED'};
+    const endpoint=this.configuration.environment==='sandbox'?'https://api.sandbox.africastalking.com/version1/messaging':'https://api.africastalking.com/version1/messaging';
+    // One recipient per persisted attempt. Native fetch has no automatic retry.
+    // Africa's Talking has no Twilio per-message validity/callback URL parameter.
+    const response=await this.request(endpoint,{method:'POST',redirect:'error',signal:AbortSignal.timeout(this.timeoutMs),
+      headers:{apiKey:this.configuration.apiKey,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
+      body:new URLSearchParams({username:this.configuration.username,to:input.to,from:this.configuration.from,message:input.body,bulkSMSMode:'1',enqueue:'0'})});
+    if(!response.ok)throw {status:response.status,code:response.status===429?'PROVIDER_RATE_LIMIT':'PROVIDER_HTTP_REJECTION'};
+    const data=await response.json() as {SMSMessageData?:{Recipients?:{number?:unknown;messageId?:unknown;statusCode?:unknown;status?:unknown}[]}};
+    const recipients=data?.SMSMessageData?.Recipients;
+    if(!Array.isArray(recipients)||recipients.length!==1)throw new Error('Uncertain provider response');
+    const recipient=recipients[0];
+    if(recipient.number!==input.to)throw new Error('Uncertain provider recipient');
+    // 101 means API acceptance (Sent), not handset delivery.
+    if(![100,101,102].includes(recipient.statusCode as number)){
+      if(typeof recipient.statusCode==='number'&&Number.isInteger(recipient.statusCode)&&recipient.statusCode>=400&&recipient.statusCode<=499)
+        throw {status:400,code:`AT_${recipient.statusCode}`};
+      throw new Error('Uncertain provider response');
+    }
+    if(typeof recipient.messageId!=='string'||!messageIdPattern.test(recipient.messageId))throw new Error('Uncertain provider identifier');
+    return {messageId:recipient.messageId,status:recipient.statusCode===101?'sent':recipient.statusCode===102?'queued':'accepted',errorCode:''};
   }
 }
 export function smsMessage(job:SmsJob):string{
   if(job.sampleOnly!==true)throw new Error('Only synthetic check notifications are enabled.');
+  if(job.kind==='backup_alert')return job.language==='fr'
+    ?"AutoGuardian TEST: une verification attend le proprietaire. Contactez-le. Alerte uniquement; aucune autorisation de vente."
+    :'AutoGuardian TEST: a vehicle check awaits the owner. Please contact them. Alert only; you cannot authorize the sale.';
   if(job.kind==='owner_request'||job.kind==='owner_reminder')return job.language==='fr'
-    ?`AutoGuardian TEST: demande de verification. Ouvrez l'application avant ${job.responseDeadlineAt}. Ne repondez pas par SMS.`
-    :`AutoGuardian TEST: vehicle check requested. Open the app before ${job.responseDeadlineAt}. Do not reply by SMS.`;
-  return job.language==='fr'
-    ?'AutoGuardian TEST: resultat disponible. Consultez le statut actuel dans l\'application. Ce SMS n\'autorise aucune vente.'
-    :'AutoGuardian TEST: check result ready. Open the app for current status. This SMS does not authorize a sale.';
+    ?`AutoGuardian TEST: demande de verification. Consultez l'application ou le service USSD avant ${job.responseDeadlineAt}.`
+    :`AutoGuardian TEST: vehicle check requested. Use the app or USSD service before ${job.responseDeadlineAt}.`;
+  return job.language==='fr'?"AutoGuardian TEST: resultat disponible dans l'application ou par USSD. Ce SMS n'autorise aucune vente."
+    :'AutoGuardian TEST: check result ready in the app or USSD. This SMS does not authorize a sale.';
 }
-function sendFailure(error:unknown):{mode:'rate_limited'|'failed'|'unknown';code:string}{
+export function sendFailure(error:unknown):{mode:'rate_limited'|'failed'|'unknown';code:string}{
   const value=error as {status?:unknown;code?:unknown};
-  const code=typeof value?.code==='number'&&Number.isInteger(value.code)&&value.code>=1000&&value.code<=999999
-    ?String(value.code):'SEND_OUTCOME_UNKNOWN';
-  if(value?.status===429)return {mode:'rate_limited',code:code==='SEND_OUTCOME_UNKNOWN'?'20429':code};
-  if(typeof value?.status==='number'&&value.status>=400&&value.status<500)return {mode:'failed',code:code==='SEND_OUTCOME_UNKNOWN'?'PROVIDER_REJECTED':code};
-  // Timeouts, connection failures and 5xx responses may follow acceptance.
-  // Without a provider idempotency guarantee, quarantine rather than resend.
+  const code=typeof value?.code==='string'&&/^[A-Z0-9_]{1,64}$/.test(value.code)?value.code:'PROVIDER_REJECTED';
+  if(value?.status===429)return {mode:'rate_limited',code};
+  if(typeof value?.status==='number'&&value.status>=400&&value.status<500)return {mode:'failed',code};
   return {mode:'unknown',code:'SEND_OUTCOME_UNKNOWN'};
 }
 export class SmsDispatcher{
@@ -113,48 +116,26 @@ export class SmsDispatcher{
     if(!Number.isInteger(limit)||limit<1||limit>100)throw new Error('Invalid SMS batch limit.');
     let processed=0;
     for(;processed<limit;processed++){
-      const job=await this.store.claim(this.configuration.accountSid,this.configuration.allowedRecipients.map(smsPhoneHash));
+      const job=await this.store.claim(this.configuration.providerAccount,this.configuration.allowedRecipients.map(smsPhoneHash));
       if(!job)break;
-      if(!this.configuration.allowedRecipients.includes(job.phone)||job.sampleOnly!==true){
-        await this.store.sendError(job.attemptId,'failed','SAMPLE_RECIPIENT_NOT_ALLOWED');continue;
-      }
-      const seconds=job.kind==='owner_request'||job.kind==='owner_reminder'?Math.floor((Date.parse(job.responseDeadlineAt)-Date.now())/1000):300;
+      if(!this.configuration.allowedRecipients.includes(job.phone)||job.sampleOnly!==true){await this.store.sendError(job.attemptId,'failed','SAMPLE_RECIPIENT_NOT_ALLOWED');continue;}
+      const seconds=job.kind==='buyer_result'?300:Math.floor((Date.parse(job.responseDeadlineAt)-Date.now())/1000);
       if(!Number.isFinite(seconds)||seconds<1){await this.store.sendError(job.attemptId,'failed','NOTIFICATION_OBSOLETE');continue;}
-      let result;
-      try{result=await this.provider.send({to:job.phone,body:smsMessage(job),
-        callbackUrl:`${this.configuration.callbackBaseUrl}/${job.notificationId}/${job.attemptId}`,
-        validityPeriod:Math.min(seconds,300)});}catch(error){
-        const failure=sendFailure(error);await this.store.sendError(job.attemptId,failure.mode,failure.code);continue;
-      }
-      // A DB failure here must terminate this drain. Never treat it as a
-      // provider rejection or trigger a second external send.
-      await this.store.submitted(job.attemptId,result.messageSid,result.status,result.errorCode);
+      let result;try{result=await this.provider.send({to:job.phone,body:smsMessage(job),validityPeriod:Math.min(seconds,300)});}
+      catch(error){const failure=sendFailure(error);await this.store.sendError(job.attemptId,failure.mode,failure.code);continue;}
+      // Persistence failure after sending stops the batch; never resend it.
+      await this.store.submitted(job.attemptId,result.messageId,result.status,result.errorCode);
     }
     return processed;
   }
 }
-
-export class TwilioSmsWebhooks{
+export class AfricasTalkingSmsWebhooks{
   constructor(private readonly store:SmsStore,private readonly configuration:SmsConfiguration){}
-  async receive(notificationId:string,attemptId:string,path:string,signature:string|undefined,contentType:string|undefined,body:unknown){
-    if(!uuidPattern.test(notificationId)||!uuidPattern.test(attemptId)
-      ||path!==`/v1/webhooks/twilio/sms/${notificationId}/${attemptId}`)
-      throw new BadRequestException({code:'INVALID_SMS_CALLBACK_PATH'});
-    if(contentType?.split(';')[0].trim().toLowerCase()!=='application/x-www-form-urlencoded'
-      ||!body||typeof body!=='object'||Array.isArray(body)
-      ||Object.values(body).some(value=>typeof value!=='string'))
-      throw new BadRequestException({code:'INVALID_SMS_CALLBACK_BODY'});
-    const params=body as Record<string,string>,url=`${this.configuration.callbackBaseUrl}/${notificationId}/${attemptId}`;
-    // Validate every received parameter, including future provider fields.
-    // The public URL is configured, never derived from Host/forwarded headers.
-    if(!signature||![this.configuration.authToken,this.configuration.previousAuthToken].some(token=>token&&twilio.validateRequest(token,signature,url,params)))
-      throw new ForbiddenException({code:'INVALID_TWILIO_SIGNATURE'});
-    if(params.AccountSid!==this.configuration.accountSid)throw new ForbiddenException({code:'TWILIO_ACCOUNT_MISMATCH'});
-    if(!/^(SM|MM)[0-9a-fA-F]{32}$/.test(params.MessageSid??'')||!statuses.has(params.MessageStatus)
-      ||!phonePattern.test(params.To??'')||!/^\d{0,6}$/.test(params.ErrorCode??''))
-      throw new BadRequestException({code:'INVALID_SMS_CALLBACK_STATUS'});
-    try{await this.store.callback(notificationId,{attemptId,accountSid:params.AccountSid,messageSid:params.MessageSid,
-      status:params.MessageStatus,errorCode:params.ErrorCode??'',phone:params.To});}
-    catch(error){if((error as {code?:string}).code==='42501')throw new ForbiddenException({code:'SMS_CALLBACK_MISMATCH'});throw error;}
+  async receive(token:string|undefined,contentType:string|undefined,body:unknown){
+    verifyGateway(token,this.configuration.gatewayToken);const p=formBody(contentType,body);
+    const mapping:Record<string,string>={Sent:'sent',Submitted:'sent',Buffered:'queued',Success:'delivered',Delivered:'delivered',Failed:'failed',Rejected:'failed',Expired:'undelivered'};
+    if(!messageIdPattern.test(p.id??'')||!phonePattern.test(p.phoneNumber??'')||!Object.hasOwn(mapping,p.status??''))
+      throw new BadRequestException({code:'INVALID_DELIVERY_REPORT'});
+    await this.store.delivery(this.configuration.providerAccount,p.id,p.phoneNumber,mapping[p.status],['Failed','Rejected','Expired'].includes(p.status)?'AT_DELIVERY_FAILED':'');
   }
 }

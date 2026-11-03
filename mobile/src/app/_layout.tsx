@@ -3,7 +3,15 @@ import { StatusBar } from 'expo-status-bar';
 import { AppProviders } from '@/providers/AppProviders';
 import { colors } from '@/theme/tokens';
 import { useFonts } from 'expo-font';
-import { View, Platform } from 'react-native';
+import { View, Platform, NativeModules } from 'react-native';
+
+// Defensive stub: Ensure NativeModules.DevSettings is safely handled in standalone release builds
+if (NativeModules && !NativeModules.DevSettings) {
+  (NativeModules as Record<string, unknown>).DevSettings = {
+    reload: () => {},
+    addMenuItem: () => {},
+  };
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -26,6 +34,9 @@ export default function RootLayout() {
         <Stack.Screen name="administration" options={{ headerShown: false }} />
         <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="live-account" options={{ headerShown: false }} />
+        <Stack.Screen name="billing" options={{headerShown:false}}/>
+        <Stack.Screen name="pilot-administration" options={{headerShown:false}}/>
+        <Stack.Screen name="registration-reviews" options={{headerShown:false}}/>
         <Stack.Screen name="staff-security" options={{ headerShown: false }} />
         <Stack.Screen name="registration-consents" options={{ headerShown: false }} />
         <Stack.Screen name="live-vehicles" options={{ headerShown: false }} />

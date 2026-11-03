@@ -3,16 +3,17 @@ import * as SecureStore from 'expo-secure-store';
 import { AESEncryptionKey, AESSealedData, aesEncryptAsync, aesDecryptAsync, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import { createEncryptedVault } from './encryptedVault';
 
-const keyName = 'autoguardian.enrollment.vault.v1';
+export function createNativeVault(namespace:'enrollment-vault-v1'|'offline-access-v1'){
+const keyName = namespace==='enrollment-vault-v1'?'autoguardian.enrollment.vault.v1':'autoguardian.offline.access.v1';
 // Persistent app-private ciphertext; no plaintext draft, filename or attachment
 // is written here. SecureStore keeps the AES key outside this directory.
-const directory = () => new Directory(Paths.document, 'enrollment-vault-v1');
+const directory = () => new Directory(Paths.document, namespace);
 function file(name: string) {
   if (!/^[a-f0-9]{64}$/.test(name)) throw new Error('Invalid encrypted filename.');
   return new File(directory(), name + '.agenc');
 }
 const encoder = new TextEncoder(), decoder = new TextDecoder();
-export const nativeVault = createEncryptedVault({
+return createEncryptedVault({
   keyRead: () => SecureStore.getItemAsync(keyName),
   keyWrite: value => SecureStore.setItemAsync(keyName, value, { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY }),
   keyDelete: () => SecureStore.deleteItemAsync(keyName),
@@ -42,3 +43,5 @@ export const nativeVault = createEncryptedVault({
     return decoder.decode(plain);
   },
 });
+}
+export const nativeVault=createNativeVault('enrollment-vault-v1');

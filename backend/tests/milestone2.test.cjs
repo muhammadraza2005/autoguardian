@@ -59,7 +59,7 @@ test('owner inbox and cross-channel decisions remain request-bound, revoked owne
 test('scheduled reminders, held backups and timeouts are durable, bounded and cancelled atomically',async()=>{
   const f=await workflowFixture();try{
     const r=await f.create();await f.db.exec(`update private.check_alert_jobs set due_at=now()-interval '1 minute'`);
-    assert.deepEqual(await f.checks.sweep(),{timedOut:0,alertsRecorded:2});assert.deepEqual(await f.checks.sweep(),{timedOut:0,alertsRecorded:0});
+    assert.deepEqual(await f.checks.sweep(),{timedOut:0,alertsRecorded:2,backupAlertsQueued:0});assert.deepEqual(await f.checks.sweep(),{timedOut:0,alertsRecorded:0,backupAlertsQueued:0});
     const jobs=(await f.db.query('select kind,state from private.check_alert_jobs order by kind')).rows;
     assert.deepEqual(jobs,[{kind:'backup',state:'awaiting_configuration'},{kind:'reminder',state:'recorded'}]);
     assert.equal((await f.db.query("select count(*)::int n from private.vehicle_check_notifications where kind='owner_reminder'")).rows[0].n,1);

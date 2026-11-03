@@ -1,0 +1,57 @@
+{
+  "preparedDate": "2026-10-22",
+  "timezone": "Asia/Karachi",
+  "backend": {
+    "build": "passed",
+    "tests": {
+      "total": 142,
+      "passed": 142,
+      "failed": 0
+    },
+    "productionDependencyAdvisories": 0
+  },
+  "mobile": {
+    "typecheck": "passed",
+    "lint": "passed",
+    "tests": {
+      "total": 93,
+      "passed": 93,
+      "failed": 0
+    },
+    "expoCompatibility": "passed",
+    "expoDoctor": {
+      "passed": 21,
+      "total": 21
+    },
+    "webExport": "passed",
+    "androidHermesExport": "passed",
+    "dependencyAdvisories": {
+      "moderate": 3,
+      "high": 18,
+      "total": 21
+    },
+    "dependencyReview": "SDK 57 compatible patches applied; dry-run found the remaining advisories unresolved without incompatible SDK changes. No forced downgrade was applied."
+  },
+  "databaseTests": {
+    "engine": "PGlite",
+    "schemaOwnerInstallation": "passed under non-superuser",
+    "telecomVerifierChecks": 8,
+    "ownerPinVerifierChecks": 9,
+    "realPostgresConcurrency": "not accepted"
+  },
+  "externalAcceptance": {
+    "hostedMigrationsApplied": false,
+    "providerConfigured": false,
+    "simulatorTested": false,
+    "realHandsetsTested": false,
+    "productionReleased": false
+  },
+  "limitations": [
+    "Controlled allowlisted recipients only; operational checks remain TEST/synthetic.",
+    "Hosted schema-owner connection and migrations 026-029 required.",
+    "Provider resources, trusted ingress and Supabase hook configuration required.",
+    "PIN policy requires explicit administrator approval/configuration.",
+    "Production paid-check entitlements, backup delegation, seller mandates/listing expiry and recovery policies remain pending.",
+    "Real devices/concurrency/load/restore and independent security acceptance remain pending."
+  ]
+}

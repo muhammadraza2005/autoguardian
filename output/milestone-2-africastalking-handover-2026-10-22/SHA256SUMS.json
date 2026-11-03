@@ -1,0 +1,102 @@
+[
+  {
+    "path": "supabase/preflight-milestone2-telecom.sql",
+    "sha256": "2550a107f82afa4c0523e23b545963ea9efd2b72d94cf861a223807431445c08"
+  },
+  {
+    "path": "supabase/migrations/202610130026_billing_operations.sql",
+    "sha256": "12bfe580eeeaf2fd63b5a2a033fbc3f3adacdd38262bdb661a6f98a7cab831b3"
+  },
+  {
+    "path": "supabase/migrations/202610210027_africastalking_sms.sql",
+    "sha256": "bb0f88db7597a924c0f05aa5cfb5221ca57950e2ad7280f813682a59a99d2750"
+  },
+  {
+    "path": "supabase/migrations/202610210028_telecom_channels.sql",
+    "sha256": "a23718c1d99b91f55e31a5aaad43f5be10a4457e907aaaeeb406566cbb4723f8"
+  },
+  {
+    "path": "supabase/migrations/202610220029_owner_pin_step_up.sql",
+    "sha256": "ef198f6222ab18bfe9599acacec448776445243ddff974909a22a94339611389"
+  },
+  {
+    "path": "supabase/verify-billing-operations.sql",
+    "sha256": "05002f184c91faaaf3ca8cf291eedad859a91c9aa1051ecab6aea72f26f745d6"
+  },
+  {
+    "path": "supabase/verify-africastalking-telecom.sql",
+    "sha256": "cf80caa6399c4cd401998f8449bd89637276a05ea7d6df79abf4078cef153001"
+  },
+  {
+    "path": "supabase/verify-owner-pin.sql",
+    "sha256": "e5fc8c966ef9cd91c5e4fcbabb2edb880d200d235946aedc5d2044ade608f9ab"
+  },
+  {
+    "path": "supabase/verify-twilio-sms-delivery.sql",
+    "sha256": "27dcdec8dd420ed7546300eca5b703b0c4271a32b52ce8d8ee9df4918f05dfd5"
+  },
+  {
+    "path": "supabase/verify-milestone2-workflows.sql",
+    "sha256": "2a98139eaa2343a0d4133e3ef0c0a5fcab6f3ac2c48e52fa05df7aaadacbfb86"
+  },
+  {
+    "path": "backend/.env.example",
+    "sha256": "43dd1f5ab0e893c9016139225684c13e618dbd5a906a8f46ad6b13647bef09c6"
+  },
+  {
+    "path": "backend/scripts/check-telecom-setup.cjs",
+    "sha256": "3fdfad2627197a24f6c84715eb94c0dda7db43ecbb5e8aa3a650577ca005e9ab"
+  },
+  {
+    "path": "docs/AFRICAS-TALKING-SETUP.md",
+    "sha256": "1d0b5c70232e8093922a8ad48dc7fe8ea0f5f75b2b940793f7d2cfae9197ca85"
+  },
+  {
+    "path": "docs/OWNER-PIN-SETUP.md",
+    "sha256": "5f8d16e93f4600ea0dc948d54e96b5cb0b2d7e019c83a710fed727cd5c14b068"
+  },
+  {
+    "path": "docs/MILESTONE2-AFRICAS-TALKING-HANDOVER.md",
+    "sha256": "4ec23b01498db0d138468fd5c4e1bc5642c0ca381d1f8edb23447d814b2fe98c"
+  },
+  {
+    "path": "milestone-2.md",
+    "sha256": "c17950a1b558a4daecd3dd1836b393921a3443ff35781280fd3dfbb4a5c82b52"
+  },
+  {
+    "path": "output/telecom-validation.json",
+    "sha256": "dbd7cbb1a9199894feb8a73232da77b328591df94ae7ba5f528b0deb950edf2b"
+  },
+  {
+    "path": "output/telecom-hosted-inventory.json",
+    "sha256": "fce6bee5f8b546927747834937df9b1aa18f4faa406d6b9685e2be401717bc32"
+  },
+  {
+    "path": "output/telecom-dependency-audit.json",
+    "sha256": "015080e9d0b337e47c2ceb992d819ddeb3916ba0d266f1d6b553eaeb84030b9f"
+  },
+  {
+    "path": "output/mobile-dependency-audit.json",
+    "sha256": "96c5c715132a58ceebb13b2668df18cc063bf4d2feabfb546930a003b6599726"
+  },
+  {
+    "path": "output/telecom-backend-tests-final.tap",
+    "sha256": "2e4344f3ae9b85a3b5a3f694d0ee8ad87e3330322664499400a88286d8ac2625"
+  },
+  {
+    "path": "output/telecom-mobile-tests.tap",
+    "sha256": "8f607f48ad0cdf201152bcbcd30225d24b395a2d933a59d3962678e8dd70c569"
+  },
+  {
+    "path": "output/telecom-mobile-checks.log",
+    "sha256": "7e8bfdb0478608c315623ead817ac68248e3c4a618f43e96e296f58f5132a0d1"
+  },
+  {
+    "path": "output/telecom-web-export.log",
+    "sha256": "f2747cbd790f164ce084de06ff936f87c1e76ecb32d955e11ec9074524240ebe"
+  },
+  {
+    "path": "output/telecom-android-export.log",
+    "sha256": "db389f6b36797d5c31d5f1f4a6ed012b12cb15dcc620053eb076afb34cf866eb"
+  }
+]

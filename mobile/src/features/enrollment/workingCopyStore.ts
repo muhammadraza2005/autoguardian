@@ -6,16 +6,20 @@ const draftBody=z.object({organizationId:uuid,ownerProfileId:uuid,vehicle:z.obje
 const fittingBody=z.object({expectedDraftRevision:z.number().int().positive(),expectedFittingRevision:z.number().int().nonnegative(),
   package:z.enum(['NONE','STANDARD','ONE_ALARM','FOUR_ALARMS']),placements:z.array(z.object({position:z.number().int().min(1).max(4),
     sealCode:field,photoId:uuid.nullable()}).strict()).max(4)}).strict();
+const syncSchema=z.object({key:uuid,attempts:z.number().int().nonnegative().max(100000),
+  nextAttemptAt:z.number().finite().nonnegative(),blocked:z.enum(['CONFLICT','DENIED','INVALID']).nullable()}).strict();
 export const draftWorkingSchema=z.object({kind:z.literal('vehicle'),baseRevision:z.number().int().positive().nullable(),organization:uuid,
   owner:z.union([uuid,z.literal('')]),fields:vehicleFields,key:uuid,
-  pending:z.object({key:uuid,body:draftBody,revision:z.number().int().positive().optional()}).strict().nullable()}).strict();
+  pending:z.object({key:uuid,body:draftBody,revision:z.number().int().positive().optional()}).strict().nullable(),sync:syncSchema.optional()}).strict();
 export const sealWorkingSchema=z.object({kind:z.literal('seals'),draftRevision:z.number().int().positive(),fittingRevision:z.number().int().nonnegative(),
   package:z.enum(['NONE','STANDARD','ONE_ALARM','FOUR_ALARMS']).nullable(),
   slots:z.array(z.object({position:z.number().int().min(1).max(4),sealCode:field,photoId:uuid.nullable()}).strict()).length(4),
-  pending:z.object({key:uuid,body:fittingBody}).strict().nullable()}).strict();
+  pending:z.object({key:uuid,body:fittingBody}).strict().nullable(),sync:syncSchema.optional()}).strict();
 const copySchema=z.discriminatedUnion('kind',[draftWorkingSchema,sealWorkingSchema]);
 export type DraftWorking=z.infer<typeof draftWorkingSchema>;
 export type SealWorking=z.infer<typeof sealWorkingSchema>;
+export type WorkingCopy=DraftWorking|SealWorking;
+export type WorkingCopyEntry={id:string;copy:WorkingCopy};
 type Store=Pick<Storage,'getItem'|'setItem'|'removeItem'>;
 const prefix='autoguardian:working:v1:';
 // Synthetic development form fields and references only. Never file bytes, names,
@@ -33,10 +37,23 @@ export function createWorkingCopyStore(store:Store){
       try{const raw=store.getItem(key(scope,kind,id));if(!raw || raw.length>20000)return null;
         const value=copySchema.parse(JSON.parse(raw));return value.kind===kind?value:null;}catch{return null;}
     },
+    list(scope:string):WorkingCopyEntry[]{
+      if(store.getItem(identity)!==scope)return [];
+      const start=prefix+encodeURIComponent(scope)+':';
+      return keys().filter(k=>k.startsWith(start)).flatMap(k=>{
+        const [kind,...rest]=k.slice(start.length).split(':');const id=rest.join(':');
+        if(kind!=='vehicle' && kind!=='seals')return [];
+        const copy=this.read(scope,kind,id);return copy?[{id,copy}]:[];
+      });
+    },
     write(scope:string,id:string,value:DraftWorking|SealWorking){
       if(store.getItem(identity)!==scope)return;
       const parsed=copySchema.safeParse(value);if(!parsed.success)return;
-      const k=key(scope,value.kind,id),all=keys();if(!all.includes(k)){if(all.length>=100)store.removeItem(all.shift()!);all.push(k);}
+      const k=key(scope,value.kind,id),all=keys();if(!all.includes(k)){if(all.length>=100)throw new Error('Working-copy storage is full.');all.push(k);}
+      // Form rerenders must not discard the retry schedule or conflict for the
+      // same committed attempt. A new attempt key starts a fresh schedule.
+      const previous=this.read(scope,value.kind,id);
+      if(!parsed.data.sync && previous?.sync && parsed.data.pending?.key===previous.sync.key)parsed.data.sync=previous.sync;
       store.setItem(index,JSON.stringify(all));store.setItem(k,JSON.stringify(parsed.data));
     },
     remove(scope:string,kind:'vehicle'|'seals',id:string){const k=key(scope,kind,id);store.removeItem(k);store.setItem(index,JSON.stringify(keys().filter(v=>v!==k)));},

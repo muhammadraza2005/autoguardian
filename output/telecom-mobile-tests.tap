@@ -1,0 +1,700 @@
+
+> autoguardian-mobile@1.0.0 test
+> node --experimental-strip-types --test tests/*.test.mjs
+
+TAP version 13
+# (node:6564) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:6564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/owner/registrationConsent.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: consent contract rejects fake verification, unsupported claims and missing approved wording
+ok 1 - consent contract rejects fake verification, unsupported claims and missing approved wording
+  ---
+  duration_ms: 24.9819
+  type: 'test'
+  ...
+# Subtest: uncertain consent results retry identical owner choices and cannot silently change version or language
+ok 2 - uncertain consent results retry identical owner choices and cannot silently change version or language
+  ---
+  duration_ms: 2.7081
+  type: 'test'
+  ...
+# Subtest: authenticator flow uses actual provider challenges and never treats an invalid code or provider failure as success
+ok 3 - authenticator flow uses actual provider challenges and never treats an invalid code or provider failure as success
+  ---
+  duration_ms: 1.2455
+  type: 'test'
+  ...
+# Subtest: access and consent screens have matching English and French resources
+ok 4 - access and consent screens have matching English and French resources
+  ---
+  duration_ms: 0.7327
+  type: 'test'
+  ...
+# (node:31476) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:31476) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/billing/billingOperationsResources.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: billing responses reject production claims, leaked payer details, unsupported status and malformed money
+ok 5 - billing responses reject production claims, leaked payer details, unsupported status and malformed money
+  ---
+  duration_ms: 14.2241
+  type: 'test'
+  ...
+# Subtest: billing English and French cover the same user states and fields
+ok 6 - billing English and French cover the same user states and fields
+  ---
+  duration_ms: 1.771
+  type: 'test'
+  ...
+# Subtest: live receipt contracts cannot accept sandbox confirmations or leak private wallet details
+ok 7 - live receipt contracts cannot accept sandbox confirmations or leak private wallet details
+  ---
+  duration_ms: 3.4052
+  type: 'test'
+  ...
+# (node:1752) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:1752) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/services/storage/tabStorage.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: tab auth survives a new adapter after refresh, sign-out removes it, and unavailable storage falls back to memory
+ok 8 - tab auth survives a new adapter after refresh, sign-out removes it, and unavailable storage falls back to memory
+  ---
+  duration_ms: 1.9295
+  type: 'test'
+  ...
+# Subtest: returning to the tab and refreshing tokens preserve the verified account; sign-out and identity/scope changes do not
+ok 9 - returning to the tab and refreshing tokens preserve the verified account; sign-out and identity/scope changes do not
+  ---
+  duration_ms: 27.8578
+  type: 'test'
+  ...
+# Subtest: working forms and replay keys recover after reload, remain account scoped, reject file bytes and clear on sign-out
+ok 10 - working forms and replay keys recover after reload, remain account scoped, reject file bytes and clear on sign-out
+  ---
+  duration_ms: 19.4876
+  type: 'test'
+  ...
+# (node:22568) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:22568) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/auth/phoneOtp.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: international phone normalization never guesses a national number or treats OTP typing as proof
+ok 11 - international phone normalization never guesses a national number or treats OTP typing as proof
+  ---
+  duration_ms: 3.0093
+  type: 'test'
+  ...
+# Subtest: buyer contract rejects extra identity and seal data and expiry is independent of outcome
+ok 12 - buyer contract rejects extra identity and seal data and expiry is independent of outcome
+  ---
+  duration_ms: 11.6229
+  type: 'test'
+  ...
+# Subtest: check retrieval scopes full reference and does not return stale data on network failure
+ok 13 - check retrieval scopes full reference and does not return stale data on network failure
+  ---
+  duration_ms: 2.3542
+  type: 'test'
+  ...
+# Subtest: new milestone screens have matching English and French keys
+ok 14 - new milestone screens have matching English and French keys
+  ---
+  duration_ms: 1.761
+  type: 'test'
+  ...
+# Subtest: phone sign-in calls the provider and rejects expired/rate-limited/incorrect codes and missing sessions
+ok 15 - phone sign-in calls the provider and rejects expired/rate-limited/incorrect codes and missing sessions
+  ---
+  duration_ms: 2.0479
+  type: 'test'
+  ...
+# (node:32564) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:32564) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/auth/profile.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: email development flag cannot enable the email screen in release or demo mode
+ok 16 - email development flag cannot enable the email screen in release or demo mode
+  ---
+  duration_ms: 45.6047
+  type: 'test'
+  ...
+# Subtest: loaded profile cannot grant unfinished privileged sections or infer an absent verifier role
+ok 17 - loaded profile cannot grant unfinished privileged sections or infer an absent verifier role
+  ---
+  duration_ms: 15.3215
+  type: 'test'
+  ...
+# (node:11756) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:11756) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/drafts.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: draft save retries retain the same creation key and edits send the expected revision
+ok 18 - draft save retries retain the same creation key and edits send the expected revision
+  ---
+  duration_ms: 18.5395
+  type: 'test'
+  ...
+# Subtest: draft responses cannot present active enrollment or private owner evidence
+ok 19 - draft responses cannot present active enrollment or private owner evidence
+  ---
+  duration_ms: 6.5308
+  type: 'test'
+  ...
+# Subtest: duplicate, revoked-agent and network failures propagate without local save confirmation
+ok 20 - duplicate, revoked-agent and network failures propagate without local save confirmation
+  ---
+  duration_ms: 1.8343
+  type: 'test'
+  ...
+# Subtest: owner choices use a scoped endpoint and cannot expose identity or claim verification
+ok 21 - owner choices use a scoped endpoint and cannot expose identity or claim verification
+  ---
+  duration_ms: 6.4615
+  type: 'test'
+  ...
+# (node:28636) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:28636) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/wizard.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: embedded seals reuse the wizard draft without restarting loading; standalone and manual refresh still fetch
+ok 22 - embedded seals reuse the wizard draft without restarting loading; standalone and manual refresh still fetch
+  ---
+  duration_ms: 53.6087
+  type: 'test'
+  ...
+# Subtest: connected agent shell is restricted to development and genuine organization-scoped roles
+ok 23 - connected agent shell is restricted to development and genuine organization-scoped roles
+  ---
+  duration_ms: 4.1754
+  type: 'test'
+  ...
+# Subtest: wizard routes preserve the draft identity, explicitly clear it for new drafts, and reject invalid deep links
+ok 24 - wizard routes preserve the draft identity, explicitly clear it for new drafts, and reject invalid deep links
+  ---
+  duration_ms: 8.3209
+  type: 'test'
+  ...
+# Subtest: sign-in and account links admit only server-assigned scoped agent roles in either workflow
+ok 25 - sign-in and account links admit only server-assigned scoped agent roles in either workflow
+  ---
+  duration_ms: 0.7229
+  type: 'test'
+  ...
+# Subtest: progress counts saved preparation only; stale fitting and production blockers never become completed review
+ok 26 - progress counts saved preparation only; stale fitting and production blockers never become completed review
+  ---
+  duration_ms: 0.9235
+  type: 'test'
+  ...
+# (node:35772) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:35772) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/evidenceReviews.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: review contracts reject production claims, unsupported decisions and inconsistent correction states
+ok 27 - review contracts reject production claims, unsupported decisions and inconsistent correction states
+  ---
+  duration_ms: 15.7377
+  type: 'test'
+  ...
+# Subtest: review writes retain scoped route, revisions and exact retry payload
+ok 28 - review writes retain scoped route, revisions and exact retry payload
+  ---
+  duration_ms: 4.5621
+  type: 'test'
+  ...
+# Subtest: review controls, decisions and correction reasons have matching bilingual resources
+ok 29 - review controls, decisions and correction reasons have matching bilingual resources
+  ---
+  duration_ms: 0.6976
+  type: 'test'
+  ...
+# (node:29420) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:29420) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/evidenceChecklist.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: sample upload checks size/type and repeats only the exact scoped payload/key
+ok 30 - sample upload checks size/type and repeats only the exact scoped payload/key
+  ---
+  duration_ms: 37.4326
+  type: 'test'
+  ...
+# Subtest: attachment reads require a review reason and never accept another file or a non-sample capability
+ok 31 - attachment reads require a review reason and never accept another file or a non-sample capability
+  ---
+  duration_ms: 18.0219
+  type: 'test'
+  ...
+# Subtest: the detailed checklist rejects incomplete schemas, false completion and generic photo substitution
+ok 32 - the detailed checklist rejects incomplete schemas, false completion and generic photo substitution
+  ---
+  duration_ms: 7.6562
+  type: 'test'
+  ...
+# Subtest: purchase proof satisfies the alternative and pending photos never complete a requirement
+ok 33 - purchase proof satisfies the alternative and pending photos never complete a requirement
+  ---
+  duration_ms: 1.5575
+  type: 'test'
+  ...
+# (node:6932) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:6932) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/auth/access.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: signed-out accounts cannot enter a section
+ok 34 - signed-out accounts cannot enter a section
+  ---
+  duration_ms: 1.8232
+  type: 'test'
+  ...
+# Subtest: consumer grants cannot reveal privileged sections
+ok 35 - consumer grants cannot reveal privileged sections
+  ---
+  duration_ms: 0.3742
+  type: 'test'
+  ...
+# Subtest: an agent grant does not grant other privileged sections
+ok 36 - an agent grant does not grant other privileged sections
+  ---
+  duration_ms: 0.2448
+  type: 'test'
+  ...
+# Subtest: release bundles cannot enable fixtures through the public demo flag
+ok 37 - release bundles cannot enable fixtures through the public demo flag
+  ---
+  duration_ms: 113.2302
+  type: 'test'
+  ...
+# (node:23732) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:23732) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/encryptedVault.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: AES-GCM recovery persists ciphertext only and rejects tampering and record substitution
+ok 38 - AES-GCM recovery persists ciphertext only and rejects tampering and record substitution
+  ---
+  duration_ms: 16.1647
+  type: 'test'
+  ...
+# Subtest: tenant/role changes erase old keys; logout locks immediately even when ciphertext cleanup fails
+ok 39 - tenant/role changes erase old keys; logout locks immediately even when ciphertext cleanup fails
+  ---
+  duration_ms: 2.4987
+  type: 'test'
+  ...
+# Subtest: logout during encryption cannot resurrect files; failed writes preserve the last committed value
+ok 40 - logout during encryption cannot resurrect files; failed writes preserve the last committed value
+  ---
+  duration_ms: 2.9528
+  type: 'test'
+  ...
+# Subtest: native vehicle/seal forms recover exact retry payloads and report storage errors
+ok 41 - native vehicle/seal forms recover exact retry payloads and report storage errors
+  ---
+  duration_ms: 17.7212
+  type: 'test'
+  ...
+# Subtest: native synchronization metadata survives encrypted cold recovery with exact attempt payloads
+ok 42 - native synchronization metadata survives encrypted cold recovery with exact attempt payloads
+  ---
+  duration_ms: 18.1269
+  type: 'test'
+  ...
+# Subtest: oversized records and malformed encrypted recovery fail closed
+ok 43 - oversized records and malformed encrypted recovery fail closed
+  ---
+  duration_ms: 1.5518
+  type: 'test'
+  ...
+# Subtest: attachment retry journals encrypt file bytes and bind recovery to draft, slot and original owner generation
+ok 44 - attachment retry journals encrypt file bytes and bind recovery to draft, slot and original owner generation
+  ---
+  duration_ms: 10.3554
+  type: 'test'
+  ...
+# Subtest: owner identity and consent retries recover only from authenticated encrypted records
+ok 45 - owner identity and consent retries recover only from authenticated encrypted records
+  ---
+  duration_ms: 51.622
+  type: 'test'
+  ...
+# Subtest: native review recovery retains the original decision key and rejects production claims
+ok 46 - native review recovery retains the original decision key and rejects production claims
+  ---
+  duration_ms: 24.6661
+  type: 'test'
+  ...
+# (node:21060) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:21060) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/encryptedVault.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: cold startup reads only encrypted server-approved identity and expires at its bounded deadline
+ok 47 - cold startup reads only encrypted server-approved identity and expires at its bounded deadline
+  ---
+  duration_ms: 18.7872
+  type: 'test'
+  ...
+# Subtest: clock rollback, session/account changes and sign-out cannot restore offline authorization
+ok 48 - clock rollback, session/account changes and sign-out cannot restore offline authorization
+  ---
+  duration_ms: 7.6081
+  type: 'test'
+  ...
+# Subtest: tampered ciphertext, mismatched grants, writable policies and excessive validity fail closed
+ok 49 - tampered ciphertext, mismatched grants, writable policies and excessive validity fail closed
+  ---
+  duration_ms: 12.9755
+  type: 'test'
+  ...
+# Subtest: local token claims are used only to bind the encrypted cache, and malformed identities cannot open it
+ok 50 - local token claims are used only to bind the encrypted cache, and malformed identities cannot open it
+  ---
+  duration_ms: 2.2184
+  type: 'test'
+  ...
+# (node:25724) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:25724) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/offlineJournalSync.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: document retry retains journal, honors persisted conflict after restart and removes only confirmed attempt
+ok 51 - document retry retains journal, honors persisted conflict after restart and removes only confirmed attempt
+  ---
+  duration_ms: 20.8533
+  type: 'test'
+  ...
+# Subtest: journal worker fails closed on corrupt ledger and cancels on account change before removing recovery
+ok 52 - journal worker fails closed on corrupt ledger and cancels on account change before removing recovery
+  ---
+  duration_ms: 2.5693
+  type: 'test'
+  ...
+# Subtest: finalization retry requires unchanged fresh snapshot and server-confirmed prerequisites
+ok 53 - finalization retry requires unchanged fresh snapshot and server-confirmed prerequisites
+  ---
+  duration_ms: 15.2961
+  type: 'test'
+  ...
+# (node:25556) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:25556) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/offlineSync.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: pending retry survives restart with the exact key/body, respects backoff, reconciles only after success
+ok 54 - pending retry survives restart with the exact key/body, respects backoff, reconciles only after success
+  ---
+  duration_ms: 42.2852
+  type: 'test'
+  ...
+# Subtest: conflicting revisions stay preserved and do not get automatically retried after restart
+ok 55 - conflicting revisions stay preserved and do not get automatically retried after restart
+  ---
+  duration_ms: 26.4083
+  type: 'test'
+  ...
+# Subtest: editor/account pause aborts the send and never clears uncertain original recovery
+ok 56 - editor/account pause aborts the send and never clears uncertain original recovery
+  ---
+  duration_ms: 7.6291
+  type: 'test'
+  ...
+# Subtest: duplicate ticks serialize sends and do not lose an edit made during a send
+ok 57 - duplicate ticks serialize sends and do not lose an edit made during a send
+  ---
+  duration_ms: 2.8965
+  type: 'test'
+  ...
+# Subtest: storage failure prevents network submission, and confirmed result removal failure reports recovery risk
+ok 58 - storage failure prevents network submission, and confirmed result removal failure reports recovery risk
+  ---
+  duration_ms: 4.8895
+  type: 'test'
+  ...
+# Subtest: editor ownership remains held until every mounted editor releases and releases are idempotent
+ok 59 - editor ownership remains held until every mounted editor releases and releases are idempotent
+  ---
+  duration_ms: 0.3639
+  type: 'test'
+  ...
+# Subtest: queue capacity never evicts an older submitted operation to make room for a new form
+ok 60 - queue capacity never evicts an older submitted operation to make room for a new form
+  ---
+  duration_ms: 43.0607
+  type: 'test'
+  ...
+# (node:26916) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:26916) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/ownerPin/contracts.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: owner PIN status and actions reject invented success, mismatched targets and exposed credentials
+ok 61 - owner PIN status and actions reject invented success, mismatched targets and exposed credentials
+  ---
+  duration_ms: 20.4326
+  type: 'test'
+  ...
+# (node:33732) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:33732) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/i18n/ownerResources.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: owner schemas validate individual/company fields and prohibit fabricated consent or verified status
+ok 62 - owner schemas validate individual/company fields and prohibit fabricated consent or verified status
+  ---
+  duration_ms: 53.0884
+  type: 'test'
+  ...
+# Subtest: owner adapters bind route/request keys, propagate denial and strip server-only fields
+ok 63 - owner adapters bind route/request keys, propagate denial and strip server-only fields
+  ---
+  duration_ms: 5.8314
+  type: 'test'
+  ...
+# Subtest: owner fields and consent states have both languages
+ok 64 - owner fields and consent states have both languages
+  ---
+  duration_ms: 0.3871
+  type: 'test'
+  ...
+# (node:19680) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:19680) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/pdfPreview.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Warning: Setting up fake worker.
+# Warning: Setting up fake worker.
+# Warning: Indexing all PDF objects
+# Subtest: the exact registration test-pack PDFs parse, expose their synthetic labels and render in the bundled viewer
+ok 65 - the exact registration test-pack PDFs parse, expose their synthetic labels and render in the bundled viewer
+  ---
+  duration_ms: 237.6095
+  type: 'test'
+  ...
+# Subtest: bundled offline engine parses and renders real PDF pages; malformed documents fail closed
+ok 66 - bundled offline engine parses and renders real PDF pages; malformed documents fail closed
+  ---
+  duration_ms: 30.1594
+  type: 'test'
+  ...
+# Subtest: PDF preview restricts navigation, messages, payloads and network; labels cannot inject markup
+ok 67 - PDF preview restricts navigation, messages, payloads and network; labels cannot inject markup
+  ---
+  duration_ms: 0.9235
+  type: 'test'
+  ...
+# Subtest: PDF review only marks inspection after every page renders, and rendering errors are reported
+ok 68 - PDF review only marks inspection after every page renders, and rendering errors are reported
+  ---
+  duration_ms: 6.4263
+  type: 'test'
+  ...
+# (node:31180) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:31180) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/sealChoices.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: production consent cannot reuse sample documents or claims; saved owner preparation does not pretend consent
+ok 69 - production consent cannot reuse sample documents or claims; saved owner preparation does not pretend consent
+  ---
+  duration_ms: 12.2141
+  type: 'test'
+  ...
+# Subtest: physical approval requires four QR scans and individual checks; client cannot supply trusted scan results
+ok 70 - physical approval requires four QR scans and individual checks; client cannot supply trusted scan results
+  ---
+  duration_ms: 15.8689
+  type: 'test'
+  ...
+# Subtest: QR input goes to authenticated signature verification and revoked/active stock is never selectable
+ok 71 - QR input goes to authenticated signature verification and revoked/active stock is never selectable
+  ---
+  duration_ms: 17.3578
+  type: 'test'
+  ...
+# (node:7184) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:7184) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/readiness.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: readiness rejects incomplete checklists, active claims and production success from sample data
+ok 72 - readiness rejects incomplete checklists, active claims and production success from sample data
+  ---
+  duration_ms: 78.6409
+  type: 'test'
+  ...
+# Subtest: readiness uses the scoped read endpoint, validates route identity and propagates unavailable access
+ok 73 - readiness uses the scoped read endpoint, validates route identity and propagates unavailable access
+  ---
+  duration_ms: 3.5724
+  type: 'test'
+  ...
+# Subtest: every readiness requirement and state has English and French copy
+ok 74 - every readiness requirement and state has English and French copy
+  ---
+  duration_ms: 0.4813
+  type: 'test'
+  ...
+# (node:4060) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:4060) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/administration/registrationReviews.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: independent review contract rejects fake production approvals, missing prerequisites and uninspected decisions
+ok 75 - independent review contract rejects fake production approvals, missing prerequisites and uninspected decisions
+  ---
+  duration_ms: 19.5492
+  type: 'test'
+  ...
+# Subtest: review retries retain exact context/key and files must match the inspected attachment
+ok 76 - review retries retain exact context/key and files must match the inspected attachment
+  ---
+  duration_ms: 6.7181
+  type: 'test'
+  ...
+# Subtest: review resources provide the same English/French actions, reasons and statuses
+ok 77 - review resources provide the same English/French actions, reasons and statuses
+  ---
+  duration_ms: 0.7269
+  type: 'test'
+  ...
+# (node:9584) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:9584) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/i18n/sealLocationResources.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: placement notes require four valid positions and cannot claim policy or inspection approval
+ok 78 - placement notes require four valid positions and cannot claim policy or inspection approval
+  ---
+  duration_ms: 19.2072
+  type: 'test'
+  ...
+# Subtest: placement reads and writes are scoped and exact retries preserve the request key
+ok 79 - placement reads and writes are scoped and exact retries preserve the request key
+  ---
+  duration_ms: 6.5563
+  type: 'test'
+  ...
+# Subtest: all placement controls and states have English and French copy
+ok 80 - all placement controls and states have English and French copy
+  ---
+  duration_ms: 0.3775
+  type: 'test'
+  ...
+# (node:10512) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:10512) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/sealValidation.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: fitting scan accepts a normalized development code and refuses links or consumer tokens
+ok 81 - fitting scan accepts a normalized development code and refuses links or consumer tokens
+  ---
+  duration_ms: 2.6972
+  type: 'test'
+  ...
+# Subtest: validation cannot claim physical verification or completeness with failed/duplicate/missing positions
+ok 82 - validation cannot claim physical verification or completeness with failed/duplicate/missing positions
+  ---
+  duration_ms: 12.5676
+  type: 'test'
+  ...
+# Subtest: checking is a scoped read-only POST bound to both revisions; duplicate choices reach diagnostics without a save key
+ok 83 - checking is a scoped read-only POST bound to both revisions; duplicate choices reach diagnostics without a save key
+  ---
+  duration_ms: 13.3175
+  type: 'test'
+  ...
+# Subtest: every fitting diagnostic has English and French messages
+ok 84 - every fitting diagnostic has English and French messages
+  ---
+  duration_ms: 0.5368
+  type: 'test'
+  ...
+# (node:18672) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:18672) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/seals.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: guided choices exclude reused, revoked, reserved and excess package types, while allowing this draft’s saved seals
+ok 85 - guided choices exclude reused, revoked, reserved and excess package types, while allowing this draft’s saved seals
+  ---
+  duration_ms: 25.5384
+  type: 'test'
+  ...
+# Subtest: seal drafts cannot imply activation or completeness from a partial fitting
+ok 86 - seal drafts cannot imply activation or completeness from a partial fitting
+  ---
+  duration_ms: 22.3785
+  type: 'test'
+  ...
+# Subtest: fitting saves preserve replay key and revisions; stock is scoped and cannot claim revoked seals are available
+ok 87 - fitting saves preserve replay key and revisions; stock is scoped and cannot claim revoked seals are available
+  ---
+  duration_ms: 15.2265
+  type: 'test'
+  ...
+# (node:5792) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:5792) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/enrollment/submission.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: registration contract rejects fake activation, sample submission, duplicate/missing checks and unexpected owner records
+ok 88 - registration contract rejects fake activation, sample submission, duplicate/missing checks and unexpected owner records
+  ---
+  duration_ms: 16.5976
+  type: 'test'
+  ...
+# Subtest: registration retry preserves operation, exact idempotency key and both revisions
+ok 89 - registration retry preserves operation, exact idempotency key and both revisions
+  ---
+  duration_ms: 2.8292
+  type: 'test'
+  ...
+# (node:8496) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:8496) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Pc/Desktop/Projects/AutoGuardian/mobile/src/features/vehicles/contracts.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to C:\\Users\\Pc\\Desktop\\Projects\\AutoGuardian\\mobile\\package.json.
+# Subtest: owned list uses the scoped endpoint, preserves pending/unpaid states, and strips private fields
+ok 90 - owned list uses the scoped endpoint, preserves pending/unpaid states, and strips private fields
+  ---
+  duration_ms: 7.4748
+  type: 'test'
+  ...
+# Subtest: empty owned list remains empty and malformed responses cannot turn into sample vehicles
+ok 91 - empty owned list remains empty and malformed responses cannot turn into sample vehicles
+  ---
+  duration_ms: 2.9969
+  type: 'test'
+  ...
+# Subtest: detail loads independently and rejects the wrong vehicle or an invalid route before fetching
+ok 92 - detail loads independently and rejects the wrong vehicle or an invalid route before fetching
+  ---
+  duration_ms: 3.3065
+  type: 'test'
+  ...
+# Subtest: access failures and cancelled requests are propagated without a fixture fallback
+ok 93 - access failures and cancelled requests are propagated without a fixture fallback
+  ---
+  duration_ms: 2.3751
+  type: 'test'
+  ...
+1..93
+# tests 93
+# suites 0
+# pass 93
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4294.8157

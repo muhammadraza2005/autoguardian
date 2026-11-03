@@ -1,5 +1,22 @@
 # AutoGuardian backend
 
+## Africa's Talking SMS and USSD — implemented locally 21 October 2026
+
+The backend now sends through Africa's Talking, with delivery receipts, a signed
+Supabase Send SMS Hook, inbound SMS/USSD adapters, verified channel OTPs, encrypted
+persistent sessions and durable replay protection. Migrations 027/028 preserve
+historical records. Runtime Twilio SDK/routes were removed. Checks remain synthetic
+and allowlisted; hosted migration/provider setup and actual simulator/handset
+acceptance remain pending. Follow the [setup guide](../docs/AFRICAS-TALKING-SETUP.md)
+and [Milestone 2 checklist](../milestone-2.md). Run `npm.cmd run telecom:check`
+for read-only setup inspection.
+
+Migration 029 adds OTP-confirmed owner PIN enrollment, salted scrypt credentials,
+persistent lockout, audited one-use proofs for check decisions and sale changes,
+and verified USSD PIN decisions. The app includes setup and sensitive-action PIN
+entry. `OWNER_PIN_ENABLED` and the administrator policy remain off/unconfigured.
+See [PIN setup and limits](../docs/OWNER-PIN-SETUP.md).
+
 ## Connected Milestone 2 development workflows — 11 October 2026
 
 Migration 023, shared HTTP operations and native app screens implement lookup,
@@ -9,14 +26,15 @@ are simulated. Start `npm.cmd run checks:worker` separately from the API.
 Production payment/step-up and live providers remain gated.
 See [SQL order, routes, settings and handover](../docs/MILESTONE2-HANDOVER.md).
 
-## Twilio operational SMS — 10 October 2026
+## Twilio operational SMS — historical baseline, 10 October 2026
 
 Migration 022, a separate sending worker and signed delivery callbacks are
 implemented. Attempts/audit are durable, 429 retries are bounded and uncertain
 sends cannot automatically resend. Server-only configuration remains disabled;
-the developer's Twilio account/sender, hosted 022 and live delivery acceptance
-are pending. The original 70-test baseline passed before the remaining modules.
-See [setup](../docs/TWILIO-SMS-SETUP.md) and the newer handover above.
+live delivery acceptance was never recorded. Hosted 022/023 installation was
+later reported on 13 October 2026; verification remains pending. The original
+70-test baseline passed before the remaining modules. Do not configure a Twilio
+account for the revised build; see the Africa's Talking plan above.
 
 ## Milestone 2 database rules — 10 October 2026
 

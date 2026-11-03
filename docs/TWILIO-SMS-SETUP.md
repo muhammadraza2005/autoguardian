@@ -1,5 +1,12 @@
 # Milestone 2: Twilio operational SMS
 
+Superseded on 21 October 2026: the client selected Africa's Talking for SMS and
+USSD. Do not create/configure a Twilio account for the revised build. Use the
+[Africa's Talking integration plan](AFRICAS-TALKING-INTEGRATION-PLAN.md) and
+[revised Milestone 2](../milestone-2.md). This file describes the historical
+implementation only; its runtime SDK/configuration/routes have now been replaced.
+The previously generated Twilio client setup PDF is also superseded.
+
 The sending worker, signed callback endpoint, persisted attempts and delivery
 audit are implemented. Backend build and all 70 tests pass, including seven SMS
 tests. Migration 021 was installed and its eight checks reported true by the

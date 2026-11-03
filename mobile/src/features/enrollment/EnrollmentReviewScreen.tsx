@@ -15,8 +15,10 @@ import { SealLocationPanel } from './SealLocationPanel';
 import { EvidenceReviewPanel } from './EvidenceReviewPanel';
 import { SubmissionPanel } from './SubmissionPanel';
 import { AuthorityReviewFeedback } from './AuthorityReviewFeedback';
+import {offlineSyncEditors} from './offlineSyncEditors';
 
 export default function EnrollmentReviewScreen({embedded=false,onBusyChange}:{embedded?:boolean;onBusyChange?:(busy:boolean)=>void}={}) {
+  useEffect(()=>offlineSyncEditors.enter(),[]);
   const { t } = useTranslation(); const router = useRouter(); const { profile, request } = useSession();
   const [reviewBusy, setReviewBusy] = useState(false);
   const [submissionBusy,setSubmissionBusy]=useState(false);

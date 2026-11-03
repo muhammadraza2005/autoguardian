@@ -16,18 +16,23 @@ import { SubmissionStore, submissionInput } from './submission';
 import { RegistrationReviewService } from './registrationReviews';
 import {identityRequest} from './requestIdentity';
 import {ConsentStore,consentInput} from './consent';
-import {TwilioSmsWebhooks} from './sms';
+import {AfricasTalkingSmsWebhooks} from './sms';
+import {TelecomController,SmsHookController,TelecomServices,OwnerPinController,OwnerPinPolicyController,RelationshipController} from './telecomControllers';
 import {CheckService,ReportEvidenceService} from './checks';
-import {CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController} from './workflowControllers';
+import {CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController,TelecomStatusController} from './workflowControllers';
+import {BillingController,BillingService} from './billing';
+import {PilotAdministrationController,PilotAdministrationService} from './pilotAdministration';
+import {BillingOperationsController,LiveBillingController} from './billingOperations';
+import {BillingStore} from './billing';
 
-@Controller('webhooks/twilio/sms')
-class TwilioSmsController {
-  constructor(@Inject('SMS_WEBHOOKS') private readonly webhooks:TwilioSmsWebhooks){}
-  @Post(':notificationId/:attemptId') @HttpCode(204)
-  async delivery(@Param('notificationId') notificationId:string,@Param('attemptId') attemptId:string,
-    @Req() request:{originalUrl:string},@Headers('x-twilio-signature') signature:string|undefined,
-    @Headers('content-type') contentType:string|undefined,@Body() body:unknown){
-    await this.webhooks.receive(notificationId,attemptId,request.originalUrl,signature,contentType,body);
+@Controller('webhooks/africastalking/sms')
+class AfricasTalkingSmsController {
+  constructor(@Inject('SMS_WEBHOOKS') private readonly webhooks:AfricasTalkingSmsWebhooks){}
+  @Post('delivery') @HttpCode(204)
+  async delivery(@Headers('x-autoguardian-gateway-token') token:string|undefined,
+    @Headers('content-type') contentType:string|undefined,@Body() body:unknown,@Query() query:Record<string,unknown>){
+    if(Object.keys(query).length)throw new BadRequestException({code:'UNEXPECTED_QUERY_FIELDS'});
+    await this.webhooks.receive(token,contentType,body);
   }
 }
 
@@ -316,21 +321,34 @@ class ProductionSealController {
 export async function createApp(auth: IdentityVerifier, accounts: AccountStore, corsOrigin?: string, vehicles?: VehicleStore,
   enrollments?: { auth: IdentityVerifier; store: EnrollmentStore; evidence?:EvidenceService; seals?:SealStore; productionSeals?:ProductionSealService; readiness?:ReadinessStore; owner?:OwnerService; submission?:SubmissionStore; registrationReviews?:RegistrationReviewService },
   access?:{accountAuth:IdentityVerifier;staffAuth:IdentityVerifier;staffProofAuth?:IdentityVerifier;consentAuth?:IdentityVerifier;consents?:ConsentStore},
-  smsWebhooks?:TwilioSmsWebhooks,
-  workflows?:{auth:IdentityVerifier;staffAuth:IdentityVerifier;checks:CheckService;evidence:ReportEvidenceService}) {
-  @Module({ controllers: [AccountController, ...(vehicles ? [VehicleController] : []), ...(enrollments ? [EnrollmentController] : []),
+  smsWebhooks?:AfricasTalkingSmsWebhooks,
+  workflows?:{auth:IdentityVerifier;staffAuth:IdentityVerifier;checks:CheckService;evidence:ReportEvidenceService},
+  billing?:{auth:IdentityVerifier;staffAuth:IdentityVerifier;service:BillingService},
+  pilot?:{auth:IdentityVerifier;service:PilotAdministrationService},
+  operations?:{auth:IdentityVerifier;staffAuth:IdentityVerifier;store:BillingStore;live?:BillingService},telecom?:TelecomServices) {
+  @Module({ controllers: [AccountController,...(operations?[BillingOperationsController]:[]),...(operations?.live?[LiveBillingController]:[]), ...(vehicles ? [VehicleController] : []), ...(enrollments ? [EnrollmentController] : []),
     ...(enrollments?.evidence?[EvidenceController]:[]),...(enrollments?.seals?[SealStockController,SealFittingController]:[]),
     ...(enrollments?.productionSeals?[ProductionSealController]:[]),
     ...(enrollments?.readiness?[ReadinessController]:[]), ...(enrollments?.owner?[OwnerController]:[]), ...(enrollments?.submission?[SubmissionController]:[]),
     ...(enrollments?.registrationReviews?[RegistrationReviewController]:[]),...(access?.consents?[ConsentController,StaffAccessController]:[]),
-    ...(smsWebhooks?[TwilioSmsController]:[]),...(workflows?[CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController]:[])], providers: [
+    ...(smsWebhooks?[AfricasTalkingSmsController]:[]),...(telecom?.channels?[TelecomController]:[]),...(telecom?.hook?[SmsHookController]:[]),
+    ...(telecom?.pin?[OwnerPinController,OwnerPinPolicyController]:[]),
+    ...(telecom?.relationships?[RelationshipController]:[]),
+    ...(billing?[BillingController]:[]),...(pilot?[PilotAdministrationController]:[]),
+    ...(workflows?[CheckController,CheckInboxController,VehicleStatusController,VehicleReportController,VehicleReportReviewController,TelecomStatusController]:[])], providers: [
+    ...(billing?[{provide:'BILLING',useValue:billing.service},{provide:'BILLING_AUTH',useValue:billing.auth},{provide:'BILLING_STAFF_AUTH',useValue:billing.staffAuth}]:[]),
+    ...(pilot?[{provide:'PILOT_AUTH',useValue:pilot.auth},{provide:'PILOT_ADMINISTRATION',useValue:pilot.service}]:[]),
     { provide: 'AUTH', useValue: auth }, { provide: 'ACCOUNTS', useValue: accounts },
+    ...(operations?[{provide:'BILLING_OPERATIONS_STORE',useValue:operations.store},{provide:'BILLING_OPERATIONS_AUTH',useValue:operations.auth},
+      {provide:'BILLING_OPERATIONS_STAFF',useValue:operations.staffAuth}]:[]),
+    ...(operations?.live?[{provide:'LIVE_BILLING',useValue:operations.live}]:[]),
     ...(workflows?[{provide:'WORKFLOW_AUTH',useValue:workflows.auth},{provide:'WORKFLOW_STAFF_AUTH',useValue:workflows.staffAuth},
       {provide:'CHECKS',useValue:workflows.checks},{provide:'REPORT_EVIDENCE',useValue:workflows.evidence}]:[]),
     {provide:'ACCOUNT_AUTH',useValue:access?.accountAuth??auth},{provide:'STAFF_AUTH',useValue:access?.staffAuth??enrollments?.auth??auth},
     {provide:'STAFF_PROOF_AUTH',useValue:access?.staffProofAuth??access?.staffAuth??auth},
     {provide:'CONSENT_AUTH',useValue:access?.consentAuth??access?.accountAuth??auth},
     ...(smsWebhooks?[{provide:'SMS_WEBHOOKS',useValue:smsWebhooks}]:[]),
+    ...(telecom?[{provide:'TELECOM',useValue:telecom}]:[]),
     ...(access?.consents?[{provide:'CONSENTS',useValue:access.consents}]:[]),
     ...(vehicles ? [{ provide: 'VEHICLES', useValue: vehicles }] : []),
     ...(enrollments ? [{provide:'DRAFT_AUTH',useValue:enrollments.auth},{provide:'ENROLLMENTS',useValue:enrollments.store}] : []),
@@ -342,10 +360,10 @@ export async function createApp(auth: IdentityVerifier, accounts: AccountStore, 
     ...(enrollments?.submission?[{provide:'SUBMISSION',useValue:enrollments.submission}]:[]),
     ...(enrollments?.registrationReviews?[{provide:'REGISTRATION_REVIEWS',useValue:enrollments.registrationReviews}]:[]),
   ] }) class AppModule {}
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { logger: false,rawBody:true });
   app.use((_req:unknown,_res:unknown,next:()=>void)=>identityRequest(next));
   app.useBodyParser('json',{limit:enrollments?.evidence||workflows?'3mb':'100kb'});
-  if(smsWebhooks)app.useBodyParser('urlencoded',{extended:false,limit:'16kb',parameterLimit:100});
+  if(smsWebhooks||telecom?.channels)app.useBodyParser('urlencoded',{extended:false,limit:'16kb',parameterLimit:30});
   if (corsOrigin) {
     const origin = new URL(corsOrigin);
     if (!['http:', 'https:'].includes(origin.protocol) || origin.origin !== corsOrigin) throw new Error('CORS_ORIGIN must be one exact HTTP(S) origin.');

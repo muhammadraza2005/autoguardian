@@ -1,10 +1,10 @@
 import {Pool} from 'pg';
 import {PostgresAccountStore} from './account';
-import {smsConfiguration,PostgresSmsStore,SmsDispatcher,TwilioSmsProvider} from './sms';
+import {smsConfiguration,PostgresSmsStore,SmsDispatcher,AfricasTalkingSmsProvider} from './sms';
 
 async function main(){
   const configuration=smsConfiguration(process.env);
-  if(!configuration)throw new Error('SMS is disabled. Configure server-only TWILIO settings first.');
+  if(!configuration)throw new Error('SMS is disabled. Configure server-only AFRICASTALKING settings first.');
   const tenant=process.env.AUTOGUARDIAN_TENANT_ID;
   if(!tenant||!process.env.DATABASE_URL)throw new Error('Missing database/authority configuration.');
   if(!/^[0-9a-f-]{36}$/i.test(tenant))throw new Error('Invalid authority configuration.');
@@ -15,7 +15,7 @@ async function main(){
   const stop=()=>{stopping=true;};process.on('SIGINT',stop);process.on('SIGTERM',stop);
   try{
     await new PostgresAccountStore(pool,tenant).checkConnection();
-    const dispatcher=new SmsDispatcher(new PostgresSmsStore(pool,tenant),new TwilioSmsProvider(configuration),configuration);
+    const dispatcher=new SmsDispatcher(new PostgresSmsStore(pool,tenant),new AfricasTalkingSmsProvider(configuration),configuration);
     do{
       // One job per pass permits a shutdown between external sends. Pending
       // attempts survive restarts; uncertain sends are quarantined by SQL.
@@ -27,6 +27,6 @@ async function main(){
 }
 void main().catch(()=>{
   // Avoid printing driver/provider errors that may contain secrets or phone data.
-  console.error('SMS worker stopped. Check server-only configuration, restricted database login and migration 022.');
+  console.error('SMS worker stopped. Check server-only configuration, restricted database login and migration 027.');
   process.exitCode=1;
 });

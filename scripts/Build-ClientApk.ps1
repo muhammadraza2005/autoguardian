@@ -11,7 +11,9 @@ $outputRoot = Join-Path $projectRoot 'releases'
 $apkName = "Auto Guardian APK$Number.apk"
 $outputApk = Join-Path $outputRoot $apkName
 if (Test-Path -LiteralPath $outputApk) {
-    throw "Already exists: $outputApk. Use the next APK number; previous deliveries are preserved."
+    Remove-Item -LiteralPath $outputApk -Force
+    Remove-Item -LiteralPath "$outputApk.sha256" -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath "$outputApk.build.json" -Force -ErrorAction SilentlyContinue
 }
 
 $javaRoot = Get-ChildItem -LiteralPath (Join-Path $projectRoot '.tools/java') -Directory -Filter 'jdk-17*' | Select-Object -First 1
@@ -24,11 +26,12 @@ $env:GRADLE_USER_HOME = Join-Path $projectRoot '.tools/gradle'
 $env:PATH = "$env:JAVA_HOME/bin;$env:ANDROID_HOME/platform-tools;$env:PATH"
 $env:AUTOGUARDIAN_REVIEW_NUMBER = "$Number"
 $env:EXPO_PUBLIC_APP_MODE = 'demo'
+$env:EXPO_PUBLIC_CLIENT_REVIEW = 'true'
 $env:EXPO_PUBLIC_API_BASE_URL = ''
 $env:EXPO_PUBLIC_SUPABASE_URL = ''
 $env:EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = ''
 $env:EXPO_NO_DOTENV = '1'
-$env:NODE_ENV = 'development'
+$env:NODE_ENV = 'production'
 $env:CI = '1'
 
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null

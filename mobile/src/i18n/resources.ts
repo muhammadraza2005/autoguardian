@@ -16,11 +16,19 @@ import { submissionEn, submissionFr } from './submissionResources';
 import { registrationReviewEn, registrationReviewFr } from './registrationReviewResources';
 import {accessSecurityEn,accessSecurityFr,ownerConsentEn,ownerConsentFr} from './accessConsentResources';
 import {registrationIntegrationEn,registrationIntegrationFr} from './registrationIntegrationResources';
+import {billingEn,billingFr} from '../features/billing/billingResources';
+import {billingOpsEn,billingOpsFr} from '../features/billing/billingOperationsResources';
+import {pilotAdministrationResources} from '../features/administration/pilotAdministrationResources';
+import {offlineSyncEn,offlineSyncFr} from '../features/enrollment/offlineSyncResources';
+import {ownerPinEn,ownerPinFr} from '../features/ownerPin/resources';
+import {relationshipEn,relationshipFr} from '../features/relationships/resources';
+import {pinPolicyEn,pinPolicyFr} from '../features/ownerPin/policyResources';
 export const resources = {
   en: {
     translation: {
       stitch: stitchEn,
-      m2:checkEn,
+      billing:{...billingEn,...billingOpsEn},pilotAdministration:pilotAdministrationResources.en,offlineSync:offlineSyncEn,
+      m2:checkEn,ownerPin:ownerPinEn,relationships:relationshipEn,pinPolicy:pinPolicyEn,
       accessSecurity:accessSecurityEn,ownerConsent:ownerConsentEn,
       registrationIntegration:registrationIntegrationEn,
       pdfEvidence: pdfEvidenceEn,
@@ -82,7 +90,8 @@ export const resources = {
   fr: {
     translation: {
       stitch: stitchFr,
-      m2:checkFr,
+      billing:{...billingFr,...billingOpsFr},pilotAdministration:pilotAdministrationResources.fr,offlineSync:offlineSyncFr,
+      m2:checkFr,ownerPin:ownerPinFr,relationships:relationshipFr,pinPolicy:pinPolicyFr,
       accessSecurity:accessSecurityFr,ownerConsent:ownerConsentFr,
       registrationIntegration:registrationIntegrationFr,
       pdfEvidence: pdfEvidenceFr,

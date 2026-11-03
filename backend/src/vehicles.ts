@@ -25,7 +25,7 @@ export interface VehicleStore {
 }
 const projection = `v.id, v.chassis_identifier as "chassisIdentifier", v.current_plate as "plate",
   v.category, v.make, v.model, v.manufacture_year as "manufactureYear", v.color,
-  v.sale_status as "saleStatus", v.record_status as "recordStatus",
+  SALE_STATUS_PROJECTION as "saleStatus", v.record_status as "recordStatus",
   v.created_at as "createdAt", v.updated_at as "updatedAt", s.start_at as "ownedSince"`;
 
 export class PostgresVehicleStore implements VehicleStore {
@@ -47,7 +47,11 @@ export class PostgresVehicleStore implements VehicleStore {
       if (!tenant.rowCount) throw new ForbiddenException({ code: 'AUTHORITY_UNAVAILABLE' });
       const actor = await client.query(`select id from app.users where tenant_id=$1 and auth_user_id=$2`, [this.tenantId, authUserId]);
       if (!actor.rowCount) throw new ForbiddenException({ code: 'ACCOUNT_UNAVAILABLE' });
-      const rows = await client.query(`select ${projection}
+      // Keep early, isolated enrollment installs readable. Once 030 is installed,
+      // expiry is enforced by the owner-scoped projection, even before a sweep.
+      const version=await client.query("select to_regprocedure('private.owned_vehicle_sale_status(uuid)') is not null as installed");
+      const saleStatus=version.rows[0]?.installed?'private.owned_vehicle_sale_status(v.id)':'v.sale_status';
+      const rows = await client.query(`select ${projection.replace('SALE_STATUS_PROJECTION',saleStatus)}
         from app.vehicles v
         join app.ownerships s on s.tenant_id=v.tenant_id and s.vehicle_id=v.id
         join private.owners o on o.tenant_id=s.tenant_id and o.id=s.owner_id

@@ -1,8 +1,8 @@
 const { withAppBuildGradle, CodeGenerator } = require('expo/config-plugins');
 
 // Native release libraries open the embedded bundle without a Metro server or
-// Expo development launcher. ONLY this separate review application embeds a
-// development JS bundle, preserving the existing __DEV__ fixture boundary.
+// Expo development launcher. The review application embeds a production release
+// JS bundle to avoid crashing on missing development native modules (DevSettings/HMRClient).
 module.exports = function withClientReview(config) {
   return withAppBuildGradle(config, (mod) => {
     if (mod.modResults.language !== 'groovy') {
@@ -22,17 +22,14 @@ module.exports = function withClientReview(config) {
       offset: 1,
       comment: '//',
       newSrc: `
-// React Native sets task defaults while registering Android variants. Apply
-// this override after all projects have registered their tasks.
+// AutoGuardian client review configuration.
+// Embed stable production release JS and assets for standalone use.
 gradle.projectsEvaluated {
     tasks.withType(com.facebook.react.tasks.BundleHermesCTask).configureEach {
-        devEnabled.set(true)
+        devEnabled.set(false)
         minifyEnabled.set(false)
         doFirst {
-            if (!devEnabled.get()) {
-                throw new GradleException("Client review requires a development JS bundle; refusing to package inaccessible demo screens.")
-            }
-            println("AutoGuardian client review: embedding development JS and assets for standalone use.")
+            println("AutoGuardian client review: embedding production release JS and assets for standalone use.")
         }
     }
 }

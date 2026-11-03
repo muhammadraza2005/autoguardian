@@ -1,0 +1,39 @@
+# Include inside the intended HTTPS server block, directly receiving provider
+# connections. The API must be bound to loopback / a private container network.
+# Replace the token server-side; restrict permissions on the rendered config.
+# If a load balancer is in front, configure its verified client-IP mechanism
+# explicitly. Never trust arbitrary X-Forwarded-For as provider identity.
+location /v1/webhooks/africastalking/ {
+    include /etc/nginx/africastalking-allowlist.conf;
+    deny all;
+    limit_except POST { deny all; }
+    access_log off;
+    client_max_body_size 16k;
+    client_body_buffer_size 32k;
+    proxy_set_header X-AutoGuardian-Gateway-Token "REPLACE_WITH_SERVER_GATEWAY_TOKEN";
+    proxy_set_header Host $host;
+    proxy_next_upstream off;
+    proxy_connect_timeout 3s;
+    proxy_read_timeout 15s;
+    proxy_pass http://127.0.0.1:3000;
+}
+
+location = /v1/webhooks/supabase/send-sms {
+    limit_except POST { deny all; }
+    access_log off;
+    client_max_body_size 64k;
+    client_body_buffer_size 128k;
+    # Preserve original JSON bytes and Standard Webhooks headers. The backend
+    # verifies signatures. Supabase does not receive the provider ingress token.
+    proxy_set_header X-AutoGuardian-Gateway-Token "";
+    proxy_set_header Host $host;
+    proxy_next_upstream off;
+    proxy_pass http://127.0.0.1:3000;
+}
+
+location / {
+    proxy_set_header X-AutoGuardian-Gateway-Token "";
+    proxy_set_header Host $host;
+    proxy_next_upstream off;
+    proxy_pass http://127.0.0.1:3000;
+}

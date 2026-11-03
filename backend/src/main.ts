@@ -13,8 +13,13 @@ import { PostgresRegistrationReviewStore, RegistrationReviewService } from './re
 import {SupabaseStaffAuthentication,SupabaseAccountAuthentication,SessionCheckedAuthentication} from './staffAuthentication';
 import {PostgresConsentStore} from './consent';
 import {configuredProductionSeals,PostgresProductionSealStore} from './productionSeals';
-import {smsConfiguration,PostgresSmsStore,TwilioSmsWebhooks} from './sms';
-import {PostgresWorkflowStore,configuredChecks,ReportEvidenceService} from './checks';
+import {smsConfiguration,PostgresSmsStore,AfricasTalkingSmsWebhooks} from './sms';
+import {configuredTelecom} from './telecom';
+import {PostgresWorkflowStore,configuredChecks,configuredReportEvidence} from './checks';
+import {configuredBilling} from './billing';
+import {PilotAdministrationService} from './pilotAdministration';
+import {BillingStore} from './billing';
+import {configuredLiveBilling} from './billingOperations';
 
 async function main() {
   const allowDevelopmentEmail = developmentEmailAllowed(process.env);
@@ -41,8 +46,7 @@ async function main() {
     const evidence=configuredEvidence(process.env,new PostgresEvidenceStore(pool,tenant),allowDevelopmentEmail);
     const sms=smsConfiguration(process.env);
     const workflows=new PostgresWorkflowStore(pool,tenant);
-    const reportKey=process.env.AUTOGUARDIAN_REPORT_EVIDENCE_KEY;
-    if(reportKey&&!/^[a-f0-9]{64}$/i.test(reportKey))throw new Error('Invalid AUTOGUARDIAN_REPORT_EVIDENCE_KEY');
+    const billing=configuredBilling(process.env,pool,tenant);
     const app = await createApp(identity, accounts, process.env.CORS_ORIGIN,
       new PostgresVehicleStore(pool, tenant), { auth: allowDevelopmentEmail?new DevelopmentDraftVerifier(identity,true):staffAuth,
         store: new PostgresEnrollmentStore(pool,tenant,!allowDevelopmentEmail), seals:new PostgresSealStore(pool,tenant,!allowDevelopmentEmail),
@@ -53,8 +57,11 @@ async function main() {
         evidence, registrationReviews:new RegistrationReviewService(new PostgresRegistrationReviewStore(pool,tenant),evidence) },
       {accountAuth:allowDevelopmentEmail?identity:accountAuth,staffAuth:allowDevelopmentEmail?identity:staffAuth,
         staffProofAuth:staffAuth,consentAuth:accountAuth,consents:new PostgresConsentStore(pool,tenant)},
-      sms?new TwilioSmsWebhooks(new PostgresSmsStore(pool,tenant),sms):undefined,
-      {auth:accountAuth,staffAuth,checks:configuredChecks(process.env,workflows),evidence:new ReportEvidenceService(workflows,reportKey?Buffer.from(reportKey,'hex'):undefined)});
+      sms?new AfricasTalkingSmsWebhooks(new PostgresSmsStore(pool,tenant),sms):undefined,
+      {auth:accountAuth,staffAuth,checks:configuredChecks(process.env,workflows),evidence:configuredReportEvidence(process.env,workflows)},
+      billing?{auth:accountAuth,staffAuth,service:billing}:undefined,
+      {auth:staffAuth,service:new PilotAdministrationService(pool,tenant)},
+      {auth:accountAuth,staffAuth,store:new BillingStore(pool,tenant),live:configuredLiveBilling(process.env,pool,tenant)},configuredTelecom(process.env,pool,tenant));
     const shutdown = app.close.bind(app);
     app.close = async () => { await shutdown(); await pool.end(); };
     await app.listen(port, process.env.HOST ?? '127.0.0.1');

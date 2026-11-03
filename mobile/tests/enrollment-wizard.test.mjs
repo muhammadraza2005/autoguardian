@@ -1,8 +1,43 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {connectedAgentRoute,developmentAgentAllowed,enrollmentRoute,enrollmentSteps,savedWizardSteps,wizardParams} from '../src/features/enrollment/wizard.ts';
+import {connectedAgentRoute,developmentAgentAllowed,draftQueryMountOptions,enrollmentRoute,enrollmentSteps,savedWizardSteps,wizardParams} from '../src/features/enrollment/wizard.ts';
+import {QueryClient,QueryObserver} from '@tanstack/react-query';
 import {wizardEn,wizardFr} from '../src/i18n/wizardResources.ts';
 const id='00000000-0000-4000-8000-000000000001';
+test('embedded seals reuse the wizard draft without restarting loading; standalone and manual refresh still fetch',async()=>{
+  const client=new QueryClient();let reads=0;
+  const options={queryKey:['enrollment-draft','tenant','agent',id],queryFn:async()=>({id,revision:++reads}),
+    gcTime:0,retry:false,networkMode:'always'};
+  const parent=new QueryObserver(client,options);
+  const stopParent=parent.subscribe(()=>{});
+  let stopChild;
+  try{
+    await parent.refetch();
+    const initialReads=reads;
+    const child=new QueryObserver(client,{...options,...draftQueryMountOptions(true)});
+    stopChild=child.subscribe(()=>{});
+    await new Promise(resolve=>setTimeout(resolve,10));
+    assert.equal(reads,initialReads);
+    assert.equal(parent.getCurrentResult().isFetching,false);
+    assert.equal(child.getCurrentResult().data.id,id);
+    await child.refetch();
+    assert.equal(reads,initialReads+1);
+    stopChild();stopChild=undefined;
+    // Remounting after a parent refresh must not trigger the loop again.
+    await parent.refetch();
+    const beforeRemount=reads;
+    const remounted=new QueryObserver(client,{...options,...draftQueryMountOptions(true)});
+    stopChild=remounted.subscribe(()=>{});
+    await new Promise(resolve=>setTimeout(resolve,10));
+    assert.equal(reads,beforeRemount);
+    stopChild();stopChild=undefined;
+    const standalone=new QueryObserver(client,{...options,...draftQueryMountOptions(false)});
+    stopChild=standalone.subscribe(()=>{});
+    await new Promise(resolve=>setTimeout(resolve,10));
+    assert.equal(reads,beforeRemount+1);
+    assert.equal(standalone.getCurrentResult().isFetching,false);
+  }finally{stopChild?.();stopParent();client.clear();}
+});
 test('connected agent shell is restricted to development and genuine organization-scoped roles',()=>{
   const agent={roles:[{code:'ENROLLMENT_AGENT',organizationId:id}]};
   assert.equal(developmentAgentAllowed(true,agent),true);

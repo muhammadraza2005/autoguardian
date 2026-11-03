@@ -8,6 +8,7 @@ import {ApiError} from '@/services/api/client';
 import {Action,Card,Copy,Heading,Notice} from '@/components/ui/Stitch';
 import {readSubmission,executeSubmission,type SubmissionAttempt} from './submission';
 import {loadSubmissionRecovery,saveSubmissionRecovery,removeSubmissionRecovery} from './submissionRecovery';
+import {PaymentPanel} from '@/features/billing/PaymentPanel';
 export function SubmissionPanel({draftId,disabled=false,onBusyChange}:{draftId:string;disabled?:boolean;onBusyChange?:(busy:boolean)=>void}){
   const {t}=useTranslation(),{profile,request}=useSession(),cache=useQueryClient();
   const queryKey=['enrollment-submission',profile?.tenantId,profile?.id,draftId];
@@ -53,6 +54,7 @@ export function SubmissionPanel({draftId,disabled=false,onBusyChange}:{draftId:s
     {(query.isPending||query.isFetching||restoring)&&<Copy>{t('registrationSubmission.loading')}</Copy>}
     {(query.isError||error)&&<Notice tone="danger">{t('registrationSubmission.failed')}</Notice>}
     {value&&<><Copy>{t('registrationSubmission.states.'+value.status)}</Copy>
+      {value.status==='DRAFT'&&<PaymentPanel key={draftId+':'+value.snapshotRevision} purpose="REGISTRATION" targetId={draftId} targetRevision={value.snapshotRevision} production={value.mode==='PRODUCTION'}/>}
       {value.mode==='DEVELOPMENT'&&<Notice tone="warning">{t('registrationSubmission.sample')}</Notice>}
       {!value.ownerReady&&<Notice>{t('registrationSubmission.ownerPending')}</Notice>}
       {value.status!=='ACTIVE'&&value.checks.map(check=><Copy key={check.code}>

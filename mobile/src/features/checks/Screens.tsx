@@ -10,6 +10,10 @@ import {ApiError} from '@/services/api/client';
 import {AppHeader,StitchPage,Heading,Copy,Card,Label,Action,Notice,stitchStyles as u} from '@/components/ui/Stitch';
 import {checkResult,checkView,inboxItem,readCheck,safeVehicle} from './contracts';
 import {z} from 'zod';
+import {PaymentPanel} from '@/features/billing/PaymentPanel';
+import {quoteSchema} from '@/features/billing/contracts';
+import {PinEntry,useOwnerPinStatus,useTransientPin} from '@/features/ownerPin/PinEntry';
+import {pinInput,requestPinProof} from '@/features/ownerPin/contracts';
 
 export function useScreenFocused(){
   const [focused,setFocused]=useState(false);
@@ -23,6 +27,7 @@ function useClock(){const [now,setNow]=useState(()=>Date.now());useEffect(()=>{c
 export function WorkflowError({error}:{error:unknown}){
   const {t}=useTranslation();
   const code=error instanceof ApiError?error.code:undefined,status=error instanceof ApiError?error.status:undefined;
+  if(code?.startsWith('PIN_')||code==='OWNER_PIN_ACCESS_REQUIRED')return <Notice tone="danger">{t('ownerPin.error')}</Notice>;
   const key=code==='CHECKS_NOT_CONFIGURED'?'setup':code==='CHECK_AMBIGUOUS_IDENTIFIER'?'ambiguous':status===429?'rateLimit':status===403?'denied':status===404?'unknown':status===409?'changed':'error';
   return <Notice tone="danger">{t('m2.'+key)}</Notice>;
 }
@@ -36,13 +41,20 @@ function Summary({vehicle}:{vehicle:z.infer<typeof safeVehicle>}){
 }
 export function CheckInputScreen(){
   const {t}=useTranslation(),router=useRouter(),{request}=useSession();
+  const params=useLocalSearchParams<{billingKey?:string}>(),savedKey=z.uuid().safeParse(params.billingKey);
+  const [paymentKey,setPaymentKey]=useState<string|null>(null);
   const [method,setMethod]=useState<'plate'|'chassis'|'seal'|'qr'>('plate'),[value,setValue]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState<unknown>();
   const [scan,setScan]=useState(false),[permission,requestPermission]=useCameraPermissions(),focused=useScreenFocused();
-  const key=useRef<string|null>(null),lock=useRef(false);
-  function change(v:string){setValue(v);key.current=null;setError(undefined);}
+  const key=useRef<string|null>(savedKey.success?savedKey.data:null),lock=useRef(false);
+  function change(v:string){setValue(v);if(!paymentKey&&!savedKey.success)key.current=null;setError(undefined);}
   async function submit(){
     if(lock.current)return;lock.current=true;setBusy(true);setError(undefined);key.current??=randomUUID();
-    try{const result=checkResult.parse(await request('/v1/vehicle-checks',{method:'POST',body:{method,value:value.trim()},idempotencyKey:key.current}));
+    try{
+      const quote=await request('/v1/billing/check-quote?key='+key.current).then(quoteSchema.parse).catch(e=>{
+        if(e instanceof ApiError&&e.status===404)return null;throw e;
+      });
+      if(quote?.configured&&!quote.allowed){setPaymentKey(key.current);return;}
+      const result=checkResult.parse(await request('/v1/vehicle-checks',{method:'POST',body:{method,value:value.trim()},idempotencyKey:key.current}));
       router.push({pathname:'/live-checks/[id]',params:{id:result.id}});
     }catch(e){setError(e);}finally{lock.current=false;setBusy(false);}
   }
@@ -55,7 +67,7 @@ export function CheckInputScreen(){
         onBarcodeScanned={({data})=>{setMethod('qr');change(data);setScan(false);}}/>}
       {scan&&!permission?.granted&&<Notice>{t('m2.cameraDenied')}</Notice>}
       <Action label={t(busy?'devAuth.working':'m2.create')} disabled={busy||!value.trim()} onPress={()=>void submit()}/>
-    </Card>{error!==undefined&&<WorkflowError error={error}/>}<Safety/>
+    </Card>{paymentKey&&<PaymentPanel key={paymentKey} purpose="CHECK" targetId={paymentKey}/>}{error!==undefined&&<WorkflowError error={error}/>}<Safety/>
     <Action secondary label={t('m2.checkHistory')} onPress={()=>router.push('/live-checks/history')}/>
     <Action secondary label={t('devAuth.account')} onPress={()=>router.replace('/live-account')}/>
   </Page>;
@@ -83,6 +95,8 @@ export function CheckResultScreen(){
 export function CheckHistoryScreen({owner=false}:{owner?:boolean}){
   const {t}=useTranslation(),router=useRouter(),{request,profile}=useSession(),focused=useScreenFocused();
   const now=useClock();
+  const pinStatus=useOwnerPinStatus(owner&&focused),pin=useTransientPin();
+  const [selected,setSelected]=useState<{id:string;decision:'approved'|'refused'}|null>(null);
   const [error,setError]=useState<unknown>(),[busy,setBusy]=useState(false),[saved,setSaved]=useState<string|null>(null),lock=useRef(false);
   const query=useInfiniteQuery({queryKey:['check-list',profile?.tenantId,profile?.id,owner],initialPageParam:null as string|null,
     queryFn:async({pageParam,signal})=>{
@@ -91,24 +105,40 @@ export function CheckHistoryScreen({owner=false}:{owner?:boolean}){
     },getNextPageParam:page=>page.nextCursor??undefined,enabled:focused,retry:false,gcTime:0,refetchOnMount:'always',refetchInterval:5000});
   async function decide(id:string,decision:'approved'|'refused'){
     if(lock.current)return;lock.current=true;setBusy(true);setError(undefined);setSaved(null);
-    try{const reply=z.object({id:z.uuid(),outcome:z.enum(['approved','refused']),sampleOnly:z.literal(true)}).strict().parse(
-      await request('/v1/me/check-requests/'+id+'/decision',{method:'POST',body:{decision}}));
+    const generation=pin.generation.current;
+    try{let proof:string|undefined;
+      if(pinStatus.data?.policyEnabled){proof=await requestPinProof(request,{requestId:id,decision},pin.pin);if(generation!==pin.generation.current)throw new Error();}
+      pin.clear();const reply=z.object({id:z.uuid(),outcome:z.enum(['approved','refused']),sampleOnly:z.literal(true)}).strict().parse(
+      await request('/v1/me/check-requests/'+id+'/decision',{method:'POST',body:{decision,...(proof?{proof}:{})}}));
       if(reply.id!==id||reply.outcome!==decision)throw new Error();setSaved(id);await query.refetch();}
-    catch(e){setError(e);await query.refetch();}finally{lock.current=false;setBusy(false);}
+    catch(e){setError(e);await query.refetch();}finally{pin.clear();setSelected(null);lock.current=false;setBusy(false);}
   }
+  function choose(id:string,decision:'approved'|'refused'){
+    pin.clear();if(pinStatus.data?.policyEnabled)setSelected({id,decision});else void decide(id,decision);
+  }
+  const pinUnavailable=owner&&(pinStatus.isPending||pinStatus.isError||!!pinStatus.data?.policyEnabled&&(!pinStatus.data.configured||!pinStatus.data.phoneCurrent));
   const items=!query.isError&&!query.isRefetching?query.data?.pages.flatMap(p=>p.items)??[]:[];
   return <Page><Heading>{t(owner?'m2.inbox':'m2.checkHistory')}</Heading><Notice>{t('m2.development')}</Notice>
     {query.isPending&&<Copy>{t('devAuth.loading')}</Copy>}{query.isError&&<WorkflowError error={query.error}/>} {error!==undefined&&<WorkflowError error={error}/>}
     {saved&&<Notice>{t('m2.decisionSaved')} {saved}</Notice>}
+    {owner&&pinStatus.isError&&<WorkflowError error={pinStatus.error}/>}
+    {owner&&pinStatus.data?.policyEnabled&&(!pinStatus.data.configured||!pinStatus.data.phoneCurrent)&&<Notice>{t('ownerPin.setup')}</Notice>}
     {!query.isPending&&!query.isError&&items.length===0&&<Notice>{t('m2.empty')}</Notice>}
     {items.map(item=><Card key={item.id}><Copy selectable>{item.id}</Copy>
       {'plate' in item&&<Label>{item.plate??t('ownedVehicles.noPlate')}</Label>}
       <Copy>{new Date(item.responseDeadlineAt).toLocaleString()}</Copy>
-      {owner?<><Action label={t('m2.approve')} disabled={busy||Date.parse(item.responseDeadlineAt)<=now} onPress={()=>void decide(item.id,'approved')}/>
-        <Action danger label={t('m2.refuse')} disabled={busy||Date.parse(item.responseDeadlineAt)<=now} onPress={()=>void decide(item.id,'refused')}/></>
+      {owner?<><Action label={t('m2.approve')} disabled={busy||pinUnavailable||Date.parse(item.responseDeadlineAt)<=now} onPress={()=>choose(item.id,'approved')}/>
+        <Action danger label={t('m2.refuse')} disabled={busy||pinUnavailable||Date.parse(item.responseDeadlineAt)<=now} onPress={()=>choose(item.id,'refused')}/>
+        {selected?.id===item.id&&<><Copy>{t(selected.decision==='approved'?'ownerPin.confirmApprove':'ownerPin.confirmRefuse')}</Copy>
+          <PinEntry value={pin.pin} onChange={pin.setPin} disabled={busy}/>
+          <Action label={t(selected.decision==='approved'?'m2.approve':'m2.refuse')} disabled={busy||!pinInput(pin.pin)||Date.parse(item.responseDeadlineAt)<=now}
+            onPress={()=>void decide(selected.id,selected.decision)}/>
+          <Action secondary label={t('ownerPin.cancel')} disabled={busy} onPress={()=>{pin.clear();setSelected(null);}}/></>}
+        </>
         :<Action secondary label={t('m2.result')} onPress={()=>router.push({pathname:'/live-checks/[id]',params:{id:item.id}})}/>}</Card>)}
     {query.hasNextPage&&<Action secondary label={t('ownedVehicles.loadMore')} disabled={query.isFetching} onPress={()=>void query.fetchNextPage()}/>}
     <Action secondary label={t('ownedVehicles.refresh')} disabled={query.isFetching} onPress={()=>void query.refetch()}/>
+    {owner&&<Action secondary label={t('ownerPin.title')} onPress={()=>router.push('/owner-pin')}/>}
     <Action secondary label={t('devAuth.account')} onPress={()=>router.replace('/live-account')}/>
   </Page>;
 }

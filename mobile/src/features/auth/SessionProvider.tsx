@@ -9,12 +9,18 @@ import { profileSchema, profileSession, type AccountProfile } from './profile';
 import { type AppSection, type SessionView } from './access';
 import {preserveAuthView,profileScope} from './authEvents';
 import {workingCopies} from '@/features/enrollment/workingCopies';
+import {OfflineSyncBridge} from '@/features/enrollment/OfflineSyncBridge';
+import NetInfo from '@react-native-community/netinfo';
+import {offlineAccess} from './offlineAccessStore';
+import {offlineIdentity} from './offlineAccess';
 
 type SessionContextValue = {
   session: SessionView | null;
   profile: AccountProfile | null;
   loading: boolean;
   error: boolean;
+  offlineReadOnly: boolean;
+  offlineProfile: AccountProfile | null;
   setPreviewSection: (section: AppSection) => void;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -30,9 +36,18 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [profile, setProfile] = useState<AccountProfile | null>(null);
   const [loading, setLoading] = useState(!runtime.isDemo);
   const [error, setError] = useState(false);
+  const [offlineUntil,setOfflineUntil]=useState<number|null>(null);
+  const [offlineProfile,setOfflineProfile]=useState<AccountProfile|null>(null);
   const refreshRef = useRef<() => void>(() => {});
   const clearIdentityRef = useRef<() => void>(() => {});
   const requestRef = useRef<AuthenticatedRequest>(async () => { throw new ApiError(401, 'Sign in again.'); });
+  useEffect(()=>{
+    if(offlineUntil===null)return;
+    const lock=()=>{workingCopies.lock();setProfile(null);setSession(null);setOfflineUntil(null);setOfflineProfile(null);setError(true);};
+    const timer=setTimeout(lock,Math.max(0,offlineUntil-Date.now()));
+    const subscription=AppState.addEventListener('change',state=>{if(state==='active'&&Date.now()>=offlineUntil)lock();});
+    return()=>{clearTimeout(timer);subscription.remove();};
+  },[offlineUntil]);
 
   useEffect(() => {
     if (runtime.isDemo) return;
@@ -70,14 +85,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
         const generation = ++profileRevision;
         const previousProfile = currentProfile;
         if (!preserve) revision++;
-        if (!auth || (currentAuth && currentAuth.user.id!==auth.user.id)) void Promise.resolve(workingCopies.clear()).catch(() => {});
+        if (!auth || (currentAuth && currentAuth.user.id!==auth.user.id)) {
+          void Promise.resolve(workingCopies.clear()).catch(() => {});
+          void offlineAccess.clear().catch(()=>{});
+        }
         currentAuth = auth;
         if (!preserve) profileReady = false;
         cancel?.abort();
         cancel = new AbortController();
         const requestCancel = cancel;
         if (!preserve) {
-          currentProfile=null;queryClient.clear();setSession(null);setProfile(null);setLoading(Boolean(auth));
+          currentProfile=null;queryClient.clear();setSession(null);setProfile(null);setOfflineUntil(null);setOfflineProfile(null);setLoading(Boolean(auth));
         }
         setError(false);
         if (!auth) return;
@@ -94,12 +112,31 @@ export function SessionProvider({ children }: PropsWithChildren) {
             if (!mounted || profileRevision !== generation) return;
             workingCopies.identify(profileScope(verifiedProfile));currentProfile=verifiedProfile;
             profileReady = true;
-            setProfile(verifiedProfile); setSession(profileSession(verifiedProfile));
+            setOfflineUntil(null);setOfflineProfile(null);setProfile(verifiedProfile); setSession(profileSession(verifiedProfile));
+            const identity=offlineIdentity(auth.access_token,auth.user.id);
+            if(Platform.OS!=='web'&&identity&&verifiedProfile.roles.some(r=>r.code==='ENROLLMENT_AGENT'&&r.organizationId)){
+              try{
+                const lease=await apiRequest<unknown>('/v1/billing/operations/offline-lease',{method:'POST',body:{},accessToken:auth.access_token,signal});
+                if(mounted&&profileRevision===generation)await offlineAccess.save(identity,verifiedProfile,lease);
+              }catch(failure){if(mounted&&profileRevision===generation&&failure instanceof ApiError&&[401,403,404].includes(failure.status))await offlineAccess.clear().catch(()=>{});}
+            }else await offlineAccess.clear().catch(()=>{});
           })
-          .catch(error => {
+          .catch(async error => {
             if (!mounted || profileRevision!==generation) return;
-            if (preserve && error instanceof ApiError && [401,403].includes(error.status)) {load(null);setError(true);}
-            else if (!preserve) setError(true);
+            if (error instanceof ApiError && [401,403].includes(error.status)) {load(null);setError(true);return;}
+            if(!preserve&&Platform.OS!=='web'){
+              try{
+                const network=await NetInfo.fetch(),identity=offlineIdentity(auth.access_token,auth.user.id);
+                if(identity&&(network.isConnected===false||network.isInternetReachable===false)){
+                  const recovery=await offlineAccess.recover(identity);
+                  if(recovery&&mounted&&profileRevision===generation){
+                    await workingCopies.prepare(profileScope(recovery.profile));
+                    if(mounted&&profileRevision===generation){setProfile(null);setOfflineProfile(recovery.profile);setSession(null);setOfflineUntil(recovery.expiresAt);setError(false);return;}
+                  }
+                }
+              }catch{/* Invalid or unavailable ciphertext leaves recovery locked. */}
+            }
+            if(!preserve)setError(true);
           })
           .finally(() => { clearTimeout(deadline); if (mounted && profileRevision===generation) setLoading(false); });
       };
@@ -143,17 +180,17 @@ export function SessionProvider({ children }: PropsWithChildren) {
   }
   async function signOut() {
     clearIdentityRef.current();
-    setSession(null); setProfile(null); queryClient.clear();
-    const cleanupFailed=await Promise.resolve(workingCopies.clear()).then(()=>false,()=>true);
+    setSession(null); setProfile(null);setOfflineUntil(null);setOfflineProfile(null); queryClient.clear();
+    const cleanupFailed=(await Promise.allSettled([offlineAccess.clear(),Promise.resolve(workingCopies.clear())])).some(result=>result.status==='rejected');
     if (!runtime.isDemo) {
       const { error: authError } = await getSupabaseClient().auth.signOut({ scope: 'local' });
       if (authError) throw new Error('Sign-out failed.');
     }
     if(cleanupFailed)throw new Error('Encrypted recovery cleanup failed.');
   }
-  return <SessionContext.Provider value={{ session, profile, loading, error, setPreviewSection,
+  return <SessionContext.Provider value={{ session, profile, loading, error,offlineReadOnly:offlineUntil!==null,offlineProfile, setPreviewSection,
     signInWithEmail, signOut, refreshProfile: () => refreshRef.current(),
-    request: (path, options) => requestRef.current(path, options) }}>{children}</SessionContext.Provider>;
+    request: (path, options) => requestRef.current(path, options) }}><OfflineSyncBridge/>{children}</SessionContext.Provider>;
 }
 export function useSession() {
   const value = useContext(SessionContext);
